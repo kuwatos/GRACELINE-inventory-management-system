@@ -1,0 +1,42 @@
+## Summary
+
+We have two files to maintain, schema.ts and index.ts
+schema.ts contains the schema. If there are any changes, run this:
+
+npx drizzle-kit generate
+This generates the SQL file equivalent of the schema made in TSX
+and compare the current database and SQL file
+
+npx drizzle-kit migrate
+This will now apply the changes to the database schema.
+
+index.ts contains the actions to do in the database. To run it, use the command:
+
+npx tsx src/index.ts
+
+However, di ko sure if sa index.ts dapat ilagay lahat ng database functions kasi nabanggit ni tep na ilagay sa actions/auth-action.ts
+
+## Long version, from docs
+
+You can directly apply changes to your database using the drizzle-kit push command. This is a convenient method for quickly testing new schema designs or modifications in a local development environment, allowing for rapid iterations without the need to manage migration files:
+
+npx drizzle-kit push
+
+Alternatively, you can generate migrations using the drizzle-kit generate command and then apply them using the drizzle-kit migrate command:
+
+Generate migrations:
+
+npx drizzle-kit generate
+
+Apply migrations:
+
+npx drizzle-kit migrate
+
+Step 8 - Run index.ts file
+To run any TypeScript files, you have several options, but let’s stick with one: using tsx
+
+You’ve already installed tsx, so we can run our queries now
+
+Run index.ts script
+
+npx tsx src/index.ts
