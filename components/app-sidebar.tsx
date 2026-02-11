@@ -43,22 +43,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navItems = sideBarNav[navKey]
 
   return (
-    <Sidebar {...props} className="!bg-gradient-to-b from-[#06418d] to-[#0f2a53] text-white border-r-0 rounded-r-3xl [&>div]:bg-transparent">
+    <Sidebar {...props} className="bg-[#0f172a] border-0! text-white [&>div]:bg-transparent p-1">
       {/* --- HEADER: USER PROFILE --- */}
-      <SidebarHeader >
+      <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <User className="size-4" />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
-              </div>
+            {/* Clicking the logo usually takes you to the Dashboard Home */}
+            <SidebarMenuButton size="lg" asChild className="hover:bg-transparent active:bg-primary">
+              <Link href="/dashboard" >
+
+                {/* 2. The Company Name */}
+                <div className="grid flex-1 text-left text-sm leading-tight just hover:bg-transparent">
+                  <span className="truncate font-bold text-2xl tracking-wide text-white">GraceLine</span>
+                </div>
+                
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -68,8 +67,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SidebarGroup>
           {/* Capitalize the Title (e.g. "admin" -> "Admin Menu") */}
-          <SidebarGroupLabel className="uppercase tracking-wider font-bold text-xs text-white">
-            {navKey} Menu
+          <SidebarGroupLabel className="uppercase tracking-wider font-bold text-[10px] text-white">Menu
           </SidebarGroupLabel>
           
           <SidebarGroupContent >
@@ -81,7 +79,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
                 return (
                   <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                    <SidebarMenuButton asChild isActive={isActive} className="hover:bg-gray-400/30 hover:text-white 
+                    data-[active=true]:bg-green-500" tooltip={item.label}>
                       <Link href={item.href}>
                         <Icon />
                         <span>{item.label}</span>
@@ -97,17 +96,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       {/* --- FOOTER: LOGOUT --- */}
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => console.log("Logout Clicked")} className="">
-              <LogOut />
-              <span>Log out</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            size="lg"
+            onClick={() => console.log("Logout Clicked")} // Whole bar is clickable
+            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+          >
+            {/* 1. The Avatar Box */}
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white text-black">
+              <User className="size-4" />
+            </div>
 
-      <SidebarRail />
+            {/* 2. The Text Info */}
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-semibold">{user.name}</span>
+              <span className="truncate text-xs">{user.email}</span>
+            </div>
+
+            {/* 3. The Logout Icon (Pushed to the right) */}
+            {/* ml-auto = margin-left: auto (Pushes this element to the far right) */}
+            <LogOut className="ml-auto size-4" />
+            
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </SidebarFooter>
     </Sidebar>
   )
 }
