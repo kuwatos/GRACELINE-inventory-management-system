@@ -1,6 +1,3 @@
-//Sample only, to be replaced with actual Graceline schema. This was only grabbed sa Drizzle docs
-
-import { is } from "drizzle-orm";
 import {
   pgTable,
   serial,
@@ -9,15 +6,22 @@ import {
   date,
   boolean,
   varchar,
+  timestamp,
+  numeric,
 } from "drizzle-orm/pg-core";
 
 // --- User & Action Management ---
 
-export const usersTable = pgTable("users_tb", {
+export const usersTable = pgTable("user_tb", {
   userId: serial("user_id").primaryKey(),
   userType: text("user_type").notNull(),
   username: text("username").notNull(),
+});
+
+export const passwordsTable = pgTable("password_tb", {
+  userId: integer("user_id").references(() => usersTable.userId),
   password: text("password").notNull(),
+  lastChangedAt: timestamp("last_changed_at"),
 });
 
 export const actionsTable = pgTable("action_tb", {
@@ -36,33 +40,52 @@ export const logsTable = pgTable("log_tb", {
   remarks: varchar("remarks", { length: 255 }),
 });
 
+export const reportsTable = pgTable("report_tb", {
+  reportId: serial("report_id").primaryKey(),
+  userId: integer("user_id").references(() => usersTable.userId),
+  reportType: text("report_type").notNull(),
+  dateCreated: date("date_created").defaultNow(),
+  dateStart: date("date_start"),
+  dateEnd: date("date_end"),
+});
+
+// --- Projects ---
+
+export const projectsTable = pgTable("project_tb", {
+  projectId: serial("project_id").primaryKey(),
+  projectName: text("project_name").notNull(),
+});
+
 // --- Suppliers & Products ---
 
 export const suppliersTable = pgTable("supplier_tb", {
   supplierId: serial("supplier_id").primaryKey(),
   supplierName: text("supplier_name").notNull(),
-  supplierContact: text("supplier_contact").notNull(),
+  supplierLandline: text("supplier_landline"),
+  supplierEmail: text("supplier_email"),
+  supplierMobile: text("supplier_mobile"),
 });
 
-export const inventoryTable = pgTable("inventory_tb", {
-  productId: integer("product_id").primaryKey(), // 1:1 or managed via Items
-  productQuantity: integer("product_quantity").notNull().default(0),
-});
-
-export const itemsTable = pgTable("items_tb", {
-  productId: serial("product_id")
-    .primaryKey()
-    .references(() => inventoryTable.productId),
+export const itemsTable = pgTable("item_tb", {
+  productId: serial("product_id").primaryKey(),
   productName: text("product_name").notNull(),
   productCategory1: text("product_category1"),
   productCategory2: text("product_category2"),
   productCategory3: text("product_category3"),
+  productDesc: text("product_desc"),
+  productQuantity: integer("product_quantity").default(0),
+  reorderLevel: integer("reorder_level"),
+  archived: boolean("archived").default(false),
+});
+
+export const supplierItemsTable = pgTable("supplier_item_tb", {
+  supplierItemId: serial("supplier_item_id").primaryKey(),
   supplierId: integer("supplier_id").references(
     () => suppliersTable.supplierId,
   ),
-  productDesc: text("product_desc"),
-  reorderLevel: integer("reorder_level"),
-  archived: boolean("archived").default(false),
+  productId: integer("product_id").references(() => itemsTable.productId),
+  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }),
+  lastUpdated: date("last_updated"),
 });
 
 // --- Orders ---
@@ -74,7 +97,11 @@ export const ordersTable = pgTable("order_tb", {
   supplierId: integer("supplier_id").references(
     () => suppliersTable.supplierId,
   ),
-  deliveryDate: date("delivery_date"),
+  expectedDeliveryDate: date("expected_delivery_date"),
+  actualDeliveryDate: date("actual_delivery_date"),
+  projectId: integer("project_id").references(() => projectsTable.projectId),
+  createdBy: integer("created_by").references(() => usersTable.userId),
+  approvedBy: integer("approved_by").references(() => usersTable.userId),
 });
 
 export const orderProductsTable = pgTable("order_product_tb", {
@@ -86,27 +113,16 @@ export const orderProductsTable = pgTable("order_product_tb", {
 
 // --- Notifications ---
 
-export const notificationsTable = pgTable("notifications_tb", {
+export const notificationsTable = pgTable("notification_tb", {
   notifId: serial("notif_id").primaryKey(),
   department: text("department").notNull(),
   description: text("description").notNull(),
 });
 
-export const userNotificationsTable = pgTable("user_notifications_tb", {
+export const userNotificationsTable = pgTable("user_notification_tb", {
   userNotifId: serial("user_notif_id").primaryKey(),
-  notifId: integer("notif_id").references(() => notificationsTable.notifId),
   userId: integer("user_id").references(() => usersTable.userId),
+  notifId: integer("notif_id").references(() => notificationsTable.notifId),
   isRead: boolean("is_read").default(false),
   createdAt: date("created_at").defaultNow(),
-});
-
-// --- Reporting ---
-
-export const reportsTable = pgTable("reports_tb", {
-  reportId: serial("report_id").primaryKey(),
-  userId: integer("user_id").references(() => usersTable.userId),
-  reportType: text("report_type").notNull(),
-  dateCreated: date("date_created").defaultNow(),
-  dateStart: date("date_start"),
-  dateEnd: date("date_end"),
 });
