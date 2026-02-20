@@ -1,5 +1,6 @@
 //Sample only, to be replaced with actual Graceline schema. This was only grabbed sa Drizzle docs
 
+import { is } from "drizzle-orm";
 import {
   pgTable,
   serial,
@@ -91,14 +92,12 @@ export const notificationsTable = pgTable("notifications_tb", {
   description: text("description").notNull(),
 });
 
-export const notificationsListTable = pgTable("notifications_list_tb", {
-  notifListId: serial("notif_list_id").primaryKey(),
+export const userNotificationsTable = pgTable("user_notifications_tb", {
+  userNotifId: serial("user_notif_id").primaryKey(),
   notifId: integer("notif_id").references(() => notificationsTable.notifId),
-  date: date("date").notNull(),
-  resolvedAd: boolean("resolved_ad").default(false),
-  resolvedPur: boolean("resolved_pur").default(false),
-  resolvedFin: boolean("resolved_fin").default(false),
-  resolvedWare: boolean("resolved_ware").default(false),
+  userId: integer("user_id").references(() => usersTable.userId),
+  isRead: boolean("is_read").default(false),
+  createdAt: date("created_at").defaultNow(),
 });
 
 // --- Reporting ---

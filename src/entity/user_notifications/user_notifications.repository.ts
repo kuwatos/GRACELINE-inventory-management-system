@@ -1,0 +1,40 @@
+import { db } from "../../index";
+import { userNotificationsTable } from "../../db/schema";
+import { eq } from "drizzle-orm";
+
+//CREATE
+export async function createUserNotification(data: {
+  notifId: number;
+  userId: number;
+  isRead: boolean;
+  //   createdAt: Date; //removed because it defaults to now() in the schema, so it can be optional in the input
+}) {
+  return db.insert(userNotificationsTable).values(data).returning();
+}
+
+//READ
+export async function readUserNotification() {
+  return db.select().from(userNotificationsTable);
+}
+
+//UPDATE
+export async function updateUserNotification(data: {
+  id: number;
+  isRead: boolean;
+}) {
+  return db
+    .update(userNotificationsTable)
+    .set({
+      isRead: data.isRead,
+    })
+    .where(eq(userNotificationsTable.userNotifId, data.id));
+}
+
+//DELETE
+// export async function deleteUserNotification(id: number) {
+//   return db
+//     .delete(userNotificationsTable)
+//     .where(eq(userNotificationsTable.userNotifId, id));
+// }
+
+//NOTE: Delete function not needed

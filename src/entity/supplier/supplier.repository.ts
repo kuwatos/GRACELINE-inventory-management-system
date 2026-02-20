@@ -1,5 +1,4 @@
 // CRUD lives here
-
 import { db } from "../../index";
 import { suppliersTable } from "../../db/schema";
 import { eq } from "drizzle-orm";
