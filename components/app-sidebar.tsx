@@ -35,6 +35,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // 👇 2. THE LOGIC FROM LAST NIGHT
   // Get the section from the URL (e.g. "warehouse", "admin")
   const section = pathname.split('/')[1]
+  const sectionDashboard = '/' + section
   
   // If the section exists in your config, use it. Otherwise default to "admin".
   const navKey = (section in sideBarNav ? section : "admin") as keyof typeof sideBarNav
@@ -50,7 +51,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             {/* Clicking the logo usually takes you to the Dashboard Home */}
             <SidebarMenuButton size="lg" asChild className="hover:bg-transparent active:bg-primary">
-              <Link href="/dashboard" >
+              <Link href={sectionDashboard} >
 
                 {/* 2. The Company Name */}
                 <div className="grid flex-1 text-left text-sm leading-tight just hover:bg-transparent">
