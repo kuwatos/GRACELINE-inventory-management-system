@@ -24,12 +24,15 @@ export const passwordsTable = pgTable("password_tb", {
   lastChangedAt: timestamp("last_changed_at"),
 });
 
+//List of actions that can be logged in the system. Purpose niya lang is to be a list ng ilalagay sa logs tas nasa logs na yung
+//may value and timestamp kung kelan ginawa yung action.
 export const actionsTable = pgTable("action_tb", {
   actionId: serial("action_id").primaryKey(),
   actionDesc: text("action_desc").notNull(),
   tableAffected: text("table_affected").notNull(),
 });
 
+//Logs of actions performed by users. May prevValue at newValue para makita yung changes na ginawa sa isang record, and remarks for any additional info.
 export const logsTable = pgTable("log_tb", {
   logId: serial("log_id").primaryKey(),
   userId: integer("user_id").references(() => usersTable.userId),
@@ -66,6 +69,7 @@ export const suppliersTable = pgTable("supplier_tb", {
   supplierMobile: text("supplier_mobile"),
 });
 
+//List of items in the inventory, with their details and quantity on hand. Eto na yung naging bagong inventory
 export const itemsTable = pgTable("item_tb", {
   productId: serial("product_id").primaryKey(),
   productName: text("product_name").notNull(),
@@ -78,6 +82,7 @@ export const itemsTable = pgTable("item_tb", {
   archived: boolean("archived").default(false),
 });
 
+//List of suppliers and the products they supply, with the unit price and last updated date for each supplier-product combination.
 export const supplierItemsTable = pgTable("supplier_item_tb", {
   supplierItemId: serial("supplier_item_id").primaryKey(),
   supplierId: integer("supplier_id").references(
@@ -90,6 +95,7 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
 
 // --- Orders ---
 
+//List of orders
 export const ordersTable = pgTable("order_tb", {
   orderId: serial("order_id").primaryKey(),
   orderStatus: text("order_status").notNull(),
@@ -104,6 +110,8 @@ export const ordersTable = pgTable("order_tb", {
   approvedBy: integer("approved_by").references(() => usersTable.userId),
 });
 
+//List of products in each order, with the quantity ordered for each product.
+//Eto yung naglilink sa orders at items table, kasi one order pwede may multiple products, and one product pwede maorder sa multiple orders.
 export const orderProductsTable = pgTable("order_product_tb", {
   orderProductId: serial("order_product_id").primaryKey(),
   orderId: integer("order_id").references(() => ordersTable.orderId),
@@ -113,12 +121,15 @@ export const orderProductsTable = pgTable("order_product_tb", {
 
 // --- Notifications ---
 
+//List of notifications that can be sent to users, with the department responsible for the notification and a description of the notification.
+//Same logic lang with the actions table na list lang sial pareho and cant really be updated
 export const notificationsTable = pgTable("notification_tb", {
   notifId: serial("notif_id").primaryKey(),
   department: text("department").notNull(),
   description: text("description").notNull(),
 });
 
+//List of notifications sent to users, eto na yung lumalabas sa users
 export const userNotificationsTable = pgTable("user_notification_tb", {
   userNotifId: serial("user_notif_id").primaryKey(),
   userId: integer("user_id").references(() => usersTable.userId),
