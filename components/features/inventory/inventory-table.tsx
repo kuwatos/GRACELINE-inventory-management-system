@@ -11,29 +11,40 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 
-const MOCK_DATA = [
-  { id: "1", code: "PNL-101", name: '3/4" Marine Plywood 4x8', category: "Panels", quantity: 85, reorderLevel: 40 },
-  { id: "2", code: "PNL-102", name: '1/2" MDF Board 4x8', category: "Panels", quantity: 110, reorderLevel: 50 },
-  { id: "3", code: "HW-201", name: "Soft-Close Cabinet Hinge (Pair)", category: "Hardware", quantity: 620, reorderLevel: 250 },
-  { id: "4", code: "HW-202", name: "18-inch Drawer Slides (Pair)", category: "Hardware", quantity: 15, reorderLevel: 200 },
-  { id: "5", code: "FIN-301", name: "White Laminate Sheet 4x8", category: "Finishes", quantity: 15, reorderLevel: 30 },
-  { id: "6", code: "FAS-501", name: "1.5\" Cabinet Screws (Box of 100)", category: "Hardware", quantity: 95, reorderLevel: 100 },
-  { id: "7", code: "ADH-401", name: "Titebond II Wood Glue (1 Gallon)", category: "Adhesives", quantity: 20, reorderLevel: 25 },
-  { id: "8", code: "TI-2001", name: "Office Chair", category: "Office Space", quantity: 85, reorderLevel: 10 },
-];
-
-interface InventoryTableProps {
-  onEdit: (item: any) => void;
+// 1. Define exactly what a row of data looks like
+export interface InventoryItem {
+  id: string;
+  code: string;
+  name: string;
+  category: string;
+  quantity: number;
+  reorderLevel: number;
 }
 
-export const InventoryTable = ({ onEdit }: InventoryTableProps) => {
+// 2. Add 'data' to your props so the parent can pass it down
+interface InventoryTableProps {
+  data: InventoryItem[]; 
+  onEdit: (item: InventoryItem) => void; // Removed the 'any' type!
+}
+
+export const InventoryTable = ({ data, onEdit }: InventoryTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
   
+  // 1. THE FIX: Put the safety check FIRST before any math happens!
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="p-8 text-center text-gray-500 border rounded-xl border-dashed">
+        No inventory items found. Click &quot;Add New Inventory Item&quot; to get started.
+      </div>
+    );
+  }
+
+  // 2. THEN do the pagination math safely
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = MOCK_DATA.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(MOCK_DATA.length / itemsPerPage);
+  const currentItems = data.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(data.length / itemsPerPage);
 
   return (
     <div className="overflow-hidden">
@@ -108,7 +119,7 @@ export const InventoryTable = ({ onEdit }: InventoryTableProps) => {
       {/* Dynamic Pagination Footer */}
       <div className="pt-8 flex items-center justify-between text-[11px] text-gray-400 uppercase tracking-tighter">
         <span>
-          Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, MOCK_DATA.length)} of {MOCK_DATA.length} results
+          Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, data.length)} of {data.length} results
         </span>
         <div className="flex items-center gap-1">
           <Button 
@@ -139,7 +150,7 @@ export const InventoryTable = ({ onEdit }: InventoryTableProps) => {
             variant="outline"
             className="h-8 px-3 text-[11px] border-gray-200 hover:bg-gray-50 disabled:opacity-30"
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
+            disabled={currentPage === totalPages || totalPages === 0}
           >
             Next
           </Button>
