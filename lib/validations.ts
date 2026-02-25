@@ -25,11 +25,7 @@ const baseSupplierSchema = z.object({
 });
 
 // Schema for New Supplier
-export const newSupplierSchema = z.object({
-  ...baseSupplierSchema,
-});
+export const newSupplierSchema = baseSupplierSchema;
 
 // Schema for Edit Supplier
-export const editSupplierSchema = z.object({
-  ...baseSupplierSchema,
-});
+export const editSupplierSchema = baseItemSchema;
