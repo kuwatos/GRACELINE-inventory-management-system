@@ -1,9 +1,15 @@
+import { de } from "date-fns/locale";
 import * as z from "zod";
 
+//=============== ITEM =================
 // 1. The Shared Base Schema (The strict rules for a Product)
 export const baseItemSchema = z.object({
-  supplierId: z.string().min(1, "Please select a supplier"),
-  category: z.string().min(1, "Invalid category").max(25, "Invalid category"),
+  supplierId: z.string().trim().min(1, "Please select a supplier"),
+  category: z
+    .string()
+    .trim()
+    .min(1, "Invalid category")
+    .max(25, "Invalid category"),
   productName: z
     .string()
     .min(3, "Product name must be at least 3 characters")
@@ -19,28 +25,73 @@ export const baseItemSchema = z.object({
 export const newItemSchema = baseItemSchema;
 
 // 3. The Edit Item Schema (Base rules + Quantity & Reason)
-export const editItemSchema = baseItemSchema.extend({
-  newQuantity: z.coerce
-    .number<number>()
-    .int()
-    .min(0, "Quantity cannot be negative")
-    .optional(),
-  reason: z.string().optional(),
-});
+export const editItemSchema = baseItemSchema
+  .extend({
+    newQuantity: z.coerce
+      .number<number>()
+      .int()
+      .min(0, "Quantity cannot be negative")
+      .optional(),
+    reason: z.string().trim().optional(),
+  })
+  .partial();
 
+//=============== SUPPLIER =================
 // The base rules for a supplier
 const baseSupplierSchema = z.object({
-  name: z.string().min(2, "Supplier name must be at least 2 characters"),
-  contact: z.string().min(2, "Contact person must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
+  name: z.string().trim().min(2, "Supplier name must be at least 2 characters"),
+  contact: z
+    .string()
+    .trim()
+    .min(2, "Contact person must be at least 2 characters"),
+  email: z.string().trim().email("Please enter a valid email address"),
 });
 
 // Schema for New Supplier
-export const newSupplierSchema = z.object({
-  ...baseSupplierSchema,
-});
+export const newSupplierSchema = baseSupplierSchema;
 
 // Schema for Edit Supplier
-export const editSupplierSchema = z.object({
-  ...baseSupplierSchema,
+export const editSupplierSchema = baseSupplierSchema.partial();
+
+//=============== ORDER =================
+const baseOrderSchema = z.object({
+  supplierId: z.string().trim().min(1, "Please select a supplier"),
+  deliveryDate: z.coerce.date().refine((date) => date > new Date(), {
+    message: "Delivery date must be in the future",
+  }),
+  // product:
+  //TODO: Add logic to pass a list of products here
 });
+
+export const newOrderSchema = baseOrderSchema;
+
+export const editOrderSchema = baseOrderSchema
+  .partial()
+  .refine((data) => !("supplierId" in data), {
+    message: "Supplier cannot be changed",
+  });
+//The supplier cannot be changed once the order is created
+
+//=============== REPORTS =================
+const baseReportSchema = z.object({
+  reportType: z.string().trim().min(1, "Please select a report type"),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date(),
+});
+
+export const newReportSchema = baseReportSchema;
+
+//Can not edit a report, no editReportSchema needed
+
+//=============== PROJECTS =================
+const baseProjectSchema = z.object({
+  projectName: z
+    .string()
+    .trim()
+    .min(2, "Project name must be at least 2 characters long")
+    .max(100, "Project name must be at most 100 characters long"),
+});
+
+export const newProjectSchema = baseProjectSchema;
+
+export const editProjectSchema = baseProjectSchema;
