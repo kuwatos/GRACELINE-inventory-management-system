@@ -29,11 +29,11 @@ export const editItemSchema = baseItemSchema.extend({
 });
 
 // The base rules for a supplier
-const baseSupplierSchema = {
+const baseSupplierSchema = z.object({
   name: z.string().min(2, "Supplier name must be at least 2 characters"),
   contact: z.string().min(2, "Contact person must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-};
+});
 
 // Schema for New Supplier
 export const newSupplierSchema = z.object({
