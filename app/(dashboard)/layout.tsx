@@ -20,9 +20,9 @@ export default function RootLayout({
 
   
 return (
-     <SidebarProvider className="md:rounded-3xl overflow-hidden">
+     <SidebarProvider className="flex h-screen sm:rounded-3xl overflow-hidden">
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="flex-1 overflow-y-auto h-full">
         <DashboardHeader />
         <div className="p-5">
           {children}

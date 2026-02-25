@@ -8,7 +8,7 @@ export default function DashboardHeader(){
 
 
   return(
-    <div className="flex items-center pl-5 w-full h-20 border-b-[1] border-b-[#0f172a]/15 font-bold text-2xl gap-3">
+    <div className="flex items-center p-5 pl-5 w-full h-20 border-b-[1] border-b-[#0f172a]/15 font-bold text-2xl gap-3">
       <SidebarTrigger className="md:hidden" />
       {user} Dashboard
     </div>
