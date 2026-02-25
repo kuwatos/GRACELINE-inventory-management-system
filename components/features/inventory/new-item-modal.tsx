@@ -49,6 +49,8 @@ import {
 
 import {toast} from "sonner"
 
+import { newItemSchema } from "@/lib/validation";
+
 const FAKE_SUPPLIERS = [
   { id: "office-supplies", name: "Office Supplies Co." },
   { id: "global-parts", name: "Global Parts Ltd" },
@@ -62,19 +64,12 @@ const INITIAL_CATEGORIES = [
   { id: "adhesives", name: "Adhesives" },
 ];
 
-const formSchema = z.object({
-  supplierId: z.string().min(1, "Please select a supplier"),
-  category: z.string().min(1, "Invalid category").max(25, "Invalid category"),
-  productName: z.string().min(3, "Product name must be at least 3 characters").max(100, "Product name must be at most 100 characters"),
-  reorderLevel: z.coerce.number<number>().int("Reorder level must be a whole number").min(1, "Level must at least be 1").max(1000, "You exceeded the maximum level"),
-});
-
 export const NewItemModal = ({ isOpen, onClose }: any) => {
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   const [categorySearch, setCategorySearch] = useState("");
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof newItemSchema>>({
+    resolver: zodResolver(newItemSchema),
     defaultValues: {
       supplierId: "",
       category: "",
@@ -85,7 +80,7 @@ export const NewItemModal = ({ isOpen, onClose }: any) => {
   
   const { isSubmitting} = form.formState;
 
-  async function onSubmit(data: z.infer<typeof formSchema>) {
+  async function onSubmit(data: z.infer<typeof newItemSchema>) {
     try {
       // Simulate a database call
       await new Promise((resolve) => setTimeout(resolve, 1500)); 
