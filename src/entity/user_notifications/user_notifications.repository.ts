@@ -30,11 +30,4 @@ export async function updateUserNotification(data: {
     .where(eq(userNotificationsTable.userNotifId, data.id));
 }
 
-//DELETE
-// export async function deleteUserNotification(id: number) {
-//   return db
-//     .delete(userNotificationsTable)
-//     .where(eq(userNotificationsTable.userNotifId, id));
-// }
-
 //NOTE: Delete function not needed

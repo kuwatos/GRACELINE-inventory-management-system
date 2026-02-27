@@ -6,7 +6,9 @@ import { eq } from "drizzle-orm";
 //CREATE
 export async function createSupplier(data: {
   supplierName: string;
-  supplierContact: string;
+  supplierLandline?: string;
+  supplierEmail?: string;
+  supplierMobile: string;
 }) {
   return db.insert(suppliersTable).values(data).returning();
 }
@@ -19,19 +21,23 @@ export async function readSuppliers() {
 //UPDATE
 export async function updateSupplier(data: {
   id: number;
-  supplierName: string;
-  supplierContact: string;
+  supplierName?: string;
+  supplierLandline?: string;
+  supplierEmail?: string;
+  supplierMobile?: string;
 }) {
+  const { id, ...fields } = data;
+
   return db
     .update(suppliersTable)
-    .set({
-      supplierName: data.supplierName,
-      supplierContact: data.supplierContact,
-    })
+    .set(fields)
     .where(eq(suppliersTable.supplierId, data.id));
 }
 
 //DELETE
 export async function deleteSupplier(id: number) {
-  return db.delete(suppliersTable).where(eq(suppliersTable.supplierId, id));
+  return db
+    .delete(suppliersTable)
+    .where(eq(suppliersTable.supplierId, id))
+    .returning();
 }

@@ -76,6 +76,8 @@ export const itemsTable = pgTable("item_tb", {
   productCategory1: text("product_category1"),
   productCategory2: text("product_category2"),
   productCategory3: text("product_category3"),
+  productCategory4: text("product_category4"),
+  productCategory5: text("product_category5"),
   productDesc: text("product_desc"),
   productQuantity: integer("product_quantity").default(0),
   reorderLevel: integer("reorder_level"),
