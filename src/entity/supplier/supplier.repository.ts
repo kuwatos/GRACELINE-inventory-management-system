@@ -17,10 +17,6 @@ export async function readSuppliers() {
 }
 
 //UPDATE
-//Note: Depending on the execution, we can split this into two functions:
-// one for updating the name, and another for updating the contact.
-// For now, we can just have one function that updates both.
-// Doing it exhaustively can make logs easier.
 export async function updateSupplier(data: {
   id: number;
   supplierName: string;
