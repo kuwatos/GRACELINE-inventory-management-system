@@ -2,49 +2,35 @@
 import { db } from "../../index";
 import { logsTable } from "../../db/schema";
 import { eq } from "drizzle-orm";
+import { createClient } from "@/utils/supabase/server";
+import { User } from "next-auth";
+
+const supabase = createClient();
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+if (!user) throw new Error("Unauthorized");
 
 //CREATE
-export async function createItem(data: {
-  productName: string;
-  productCategory1: string;
-  productCategory2?: string;
-  productCategory3?: string;
-  productCategory4?: string;
-  productCategory5?: string;
-  productDesc?: string;
-  productQuantity?: number;
-  reorderLevel: number;
+export async function createLog(data: {
+  // Change the value of userId to user.id once we have the auth system in place
+  // userId: number;
+  actionId: number;
+  targetId: number;
+  prevValue?: string;
+  newValue: string;
+  remarks?: string;
 }) {
-  return db.insert(itemsTable).values(data).returning();
+  return db.insert(logsTable).values(data).returning();
 }
 
 //READ
-export async function readItems() {
-  return db.select().from(itemsTable);
-}
-
-//UPDATE
-export async function updateItem(data: {
-  id: number;
-  productName?: string;
-  productCategory1?: string;
-  productCategory2?: string;
-  productCategory3?: string;
-  productCategory4?: string;
-  productCategory5?: string;
-  productDesc?: string;
-  productQuantity?: number;
-  reorderLevel?: number;
-}) {
-  const { id, ...fields } = data;
-
-  return db
-    .update(itemsTable)
-    .set(fields)
-    .where(eq(itemsTable.productId, data.id));
+export async function readLogs() {
+  return db.select().from(logsTable);
 }
 
 //DELETE
-export async function deleteItem(id: number) {
-  return db.delete(itemsTable).where(eq(itemsTable.productId, id)).returning();
+export async function deleteLog(id: number) {
+  return db.delete(logsTable).where(eq(logsTable.logId, id)).returning();
 }
