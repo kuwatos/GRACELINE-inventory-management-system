@@ -18,6 +18,7 @@ export async function readUserNotification() {
 }
 
 //UPDATE
+//This is the toggle function for marking a notification as read or unread
 export async function updateUserNotification(data: {
   id: number;
   isRead: boolean;
@@ -30,4 +31,5 @@ export async function updateUserNotification(data: {
     .where(eq(userNotificationsTable.userNotifId, data.id));
 }
 
-//NOTE: Delete function not needed
+//DELETE
+// Delete function not needed

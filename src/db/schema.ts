@@ -48,9 +48,9 @@ export const reportsTable = pgTable("report_tb", {
   reportId: serial("report_id").primaryKey(),
   userId: integer("user_id").references(() => usersTable.userId),
   reportType: text("report_type").notNull(),
-  dateCreated: date("date_created").defaultNow(),
-  dateStart: date("date_start"),
-  dateEnd: date("date_end"),
+  dateCreated: timestamp("date_created").defaultNow(),
+  dateStart: timestamp("date_start"),
+  dateEnd: timestamp("date_end"),
 });
 
 // --- Projects ---
@@ -93,7 +93,7 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
   ),
   productId: integer("product_id").references(() => itemsTable.productId),
   unitPrice: numeric("unit_price", { precision: 10, scale: 2 }),
-  lastUpdated: date("last_updated"),
+  lastUpdated: timestamp("last_updated").defaultNow(),
 });
 
 // --- Orders ---
@@ -102,12 +102,12 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
 export const ordersTable = pgTable("order_tb", {
   orderId: serial("order_id").primaryKey(),
   orderStatus: text("order_status").notNull(),
-  orderDate: date("order_date").notNull(),
+  orderDate: timestamp("order_date").notNull(),
   supplierId: integer("supplier_id").references(
     () => suppliersTable.supplierId,
   ),
-  expectedDeliveryDate: date("expected_delivery_date"),
-  actualDeliveryDate: date("actual_delivery_date"),
+  expectedDeliveryDate: timestamp("expected_delivery_date"),
+  actualDeliveryDate: timestamp("actual_delivery_date"),
   projectId: integer("project_id").references(() => projectsTable.projectId),
   createdBy: integer("created_by").references(() => usersTable.userId),
   approvedBy: integer("approved_by").references(() => usersTable.userId),

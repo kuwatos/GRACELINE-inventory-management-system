@@ -7,6 +7,7 @@ import { create } from "domain";
 
 //CREATE
 export async function createUser(data: { username: string; userType: string }) {
+  // TODO: Add passsword
   const [newUser] = await db.insert(usersTable).values(data).returning();
   await createLog({
     actionId: 3,
