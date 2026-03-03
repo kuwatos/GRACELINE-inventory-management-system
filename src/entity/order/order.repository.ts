@@ -1,7 +1,7 @@
 // CRUD lives here
 import { db } from "../../index";
 import { ordersTable } from "../../db/schema";
-import { eq, count } from "drizzle-orm";
+import { eq, count, and, or, ilike, isNotNull } from "drizzle-orm";
 
 //CREATE
 export async function createOrder(data: {
@@ -38,6 +38,43 @@ export async function readReceivedOrders() {
     .select({ count: count() })
     .from(ordersTable)
     .where(eq(ordersTable.orderStatus, "Received"));
+}
+
+//SEARCH
+export async function searchOrders(filters: {
+  keyword?: string;
+  category?: string;
+  approved?: boolean;
+}) {
+  // Create a list of conditions
+  const conditions = [];
+
+  // Add keyword if it exists
+  if (filters.keyword) {
+    conditions.push(
+      or(
+        ilike(ordersTable.orderId, `%${filters.keyword}%`),
+        ilike(ordersTable.projectId, `%${filters.keyword}%`),
+        ilike(ordersTable.supplierId, `%${filters.keyword}%`),
+      ),
+    );
+  }
+
+  // Add condition to include all low stock items
+  if (filters.category) {
+    conditions.push(eq(ordersTable.orderStatus, filters.category));
+  }
+
+  // Add condition to include all low stock items
+  if (filters.approved) {
+    conditions.push(isNotNull(ordersTable.approvedBy));
+  }
+
+  // Run the query with all active conditions
+  return db
+    .select()
+    .from(ordersTable)
+    .where(and(...conditions));
 }
 
 //UPDATE

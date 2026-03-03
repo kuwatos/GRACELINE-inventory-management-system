@@ -1,7 +1,7 @@
 // CRUD lives here
 import { db } from "../../index";
 import { suppliersTable } from "../../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, ilike, and } from "drizzle-orm";
 
 //CREATE
 export async function createSupplier(data: {
@@ -16,6 +16,23 @@ export async function createSupplier(data: {
 //READ
 export async function readSuppliers() {
   return db.select().from(suppliersTable);
+}
+
+//SEARCH
+export async function searchSuppliers(filters: { keyword?: string }) {
+  // Create a list of conditions
+  const conditions = [];
+
+  // Add keyword if it exists
+  if (filters.keyword) {
+    conditions.push(ilike(suppliersTable.supplierName, `%${filters.keyword}%`));
+  }
+
+  // Run the query with all active conditions
+  return db
+    .select()
+    .from(suppliersTable)
+    .where(and(...conditions));
 }
 
 //UPDATE

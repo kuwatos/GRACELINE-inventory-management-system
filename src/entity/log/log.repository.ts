@@ -1,7 +1,7 @@
 // CRUD lives here
 import { db } from "../../index";
 import { logsTable } from "../../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, ilike, or, and } from "drizzle-orm";
 import { createClient } from "@/utils/supabase/server";
 import { User } from "next-auth";
 
@@ -14,7 +14,6 @@ if (!user) throw new Error("Unauthorized");
 
 //CREATE
 export async function createLog(data: {
-  // Change the value of userId to user.id once we have the auth system in place
   // userId: number;
   actionId: number;
   targetId: number;
@@ -28,6 +27,31 @@ export async function createLog(data: {
 //READ
 export async function readLogs() {
   return db.select().from(logsTable);
+}
+
+//SEARCH
+export async function searchLogs(filters: {
+  keyword?: string;
+  category?: string;
+}) {
+  // Create a list of conditions
+  const conditions = [];
+
+  // Add keyword if it exists
+  if (filters.keyword) {
+    conditions.push(
+      or(
+        ilike(logsTable.targetId, `%${filters.keyword}%`),
+        ilike(logsTable.remarks, `%${filters.keyword}%`),
+      ),
+    );
+  }
+
+  // Run the query with all active conditions
+  return db
+    .select()
+    .from(logsTable)
+    .where(and(...conditions));
 }
 
 //DELETE

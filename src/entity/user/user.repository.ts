@@ -1,7 +1,7 @@
 // CRUD lives here
 import { db } from "../../index";
 import { usersTable } from "../../db/schema";
-import { eq, ilike } from "drizzle-orm";
+import { and, or, ilike, eq, lte } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { create } from "domain";
 
@@ -22,11 +22,28 @@ export async function readUsers() {
 }
 
 //SEARCH
-export async function searchUsers(name: string) {
+export async function searchUsers(filters: {
+  keyword?: string;
+  category?: string;
+}) {
+  // Create a list of conditions
+  const conditions = [];
+
+  // Add keyword if it exists
+  if (filters.keyword) {
+    conditions.push(ilike(usersTable.username, `%${filters.keyword}%`));
+  }
+
+  // Add category filter if selected
+  if (filters.category) {
+    conditions.push(eq(usersTable.userType, filters.category));
+  }
+
+  // Run the query with all active conditions
   return db
     .select()
     .from(usersTable)
-    .where(ilike(usersTable.username, `%${name}%`));
+    .where(and(...conditions));
 }
 
 //UPDATE

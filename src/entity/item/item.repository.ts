@@ -1,7 +1,7 @@
 // CRUD lives here
 import { db } from "../../index";
 import { itemsTable } from "../../db/schema";
-import { eq, lte, ilike, or } from "drizzle-orm";
+import { eq, lte, ilike, or, and } from "drizzle-orm";
 
 //CREATE
 export async function createItem(data: {
@@ -31,29 +31,44 @@ export async function readLowStockItems() {
     .where(lte(itemsTable.productQuantity, itemsTable.reorderLevel));
 }
 
-//SEARCH BY KEYWORD
-export async function searchItems(keyword: string) {
-  return db
-    .select()
-    .from(itemsTable)
-    .where(
+//SEARCH
+export async function searchItems(filters: {
+  keyword?: string;
+  category?: string;
+  lowStock?: boolean;
+}) {
+  // Create a list of conditions
+  const conditions = [];
+
+  // Add keyword if it exists
+  if (filters.keyword) {
+    conditions.push(
       or(
-        ilike(itemsTable.productName, `%${keyword}%`),
-        ilike(itemsTable.productCategory1, `%${keyword}%`),
-        ilike(itemsTable.productCategory2, `%${keyword}%`),
-        ilike(itemsTable.productCategory3, `%${keyword}%`),
-        ilike(itemsTable.productCategory4, `%${keyword}%`),
-        ilike(itemsTable.productCategory5, `%${keyword}%`),
+        ilike(itemsTable.productName, `%${filters.keyword}%`),
+        ilike(itemsTable.productCategory1, `%${filters.keyword}%`),
+        ilike(itemsTable.productCategory2, `%${filters.keyword}%`),
+        ilike(itemsTable.productCategory3, `%${filters.keyword}%`),
+        ilike(itemsTable.productCategory4, `%${filters.keyword}%`),
+        ilike(itemsTable.productCategory5, `%${filters.keyword}%`),
       ),
     );
-}
+  }
 
-//SEARCH BY CATEGORY
-export async function filterItems(category: string) {
+  //  Add category filter if selected
+  if (filters.category) {
+    conditions.push(eq(itemsTable.productCategory1, filters.category));
+  }
+
+  // Add numeric filter (e.g., Low Stock)
+  if (filters.lowStock) {
+    conditions.push(lte(itemsTable.productQuantity, itemsTable.reorderLevel));
+  }
+
+  // Run the query with all active conditions
   return db
     .select()
     .from(itemsTable)
-    .where(ilike(itemsTable.productCategory1, `%${category}%`));
+    .where(and(...conditions));
 }
 
 //UPDATE
