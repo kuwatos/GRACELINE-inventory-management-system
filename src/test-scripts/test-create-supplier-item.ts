@@ -34,3 +34,6 @@ async function main() {
 }
 
 main();
+
+//TO RUN:
+// npx tsx src/test-scripts/test-create-supplier-item.ts

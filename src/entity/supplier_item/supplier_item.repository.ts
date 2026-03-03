@@ -35,13 +35,12 @@ export async function updateItem(data: {
   supplierId?: number;
   productId?: number;
   unitPrice?: string;
-  lastUpdated?: Date; //optional because it will be set to now() by default in the function
 }) {
-  const { id, lastUpdated, ...fields } = data;
+  const { id, ...fields } = data;
 
   return db
     .update(supplierItemsTable)
-    .set({ ...fields, lastUpdated: new Date() })
+    .set({ ...fields })
     .where(eq(supplierItemsTable.supplierItemId, data.id))
     .returning();
 }
