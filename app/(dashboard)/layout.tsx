@@ -9,7 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import DashboardHeader from "@/components/features/dashboard-header";
+import DashboardHeader from "@/components/dashboard-header";
 
 
 export default function RootLayout({

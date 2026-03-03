@@ -1,145 +1,177 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Trash2, X } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useEffect } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Plus, Trash2 } from "lucide-react";
+import { editOrderSchema } from "@/lib/validations";
+import { cn } from "@/lib/utils";
+import { Order } from "./order-history-table";
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EditOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  orderData?: any;
+  orderData: Order | null;
 }
 
 export const EditOrderModal = ({ isOpen, onClose, orderData }: EditOrderModalProps) => {
-  const [products, setProducts] = useState([
-    { id: 1, name: "chair", qty: "5" },
-    { id: 2, name: "mouse", qty: "10" }
-  ]);
+  const form = useForm<z.infer<typeof editOrderSchema>>({
+    resolver: zodResolver(editOrderSchema),
+    defaultValues: {
+      supplier: "",
+      expected: "",
+      products: [{ productId: "", qty: 1 }],
+    },
+  });
 
-  const addProduct = () => setProducts([...products, { id: Date.now(), name: "", qty: "" }]);
-  const removeProduct = (id: number) => setProducts(products.filter((p) => p.id !== id));
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "products",
+  });
+
+  // Load data into the form when the modal opens
+  useEffect(() => {
+    if (isOpen && orderData) {
+      form.reset({
+        supplier: orderData.supplier,
+        expected: orderData.expected || "", 
+        // Read the real products, or provide a blank row if none exist
+        products: orderData.products && orderData.products.length > 0 
+          ? orderData.products.map(p => ({ productId: p.productId, qty: p.qty }))
+          : [{ productId: "", qty: 1 }],
+      });
+    }
+  }, [isOpen, orderData, form]);
+
+  const handleClose = () => {
+    form.reset();
+    onClose();
+  };
+
+  function onSubmit(values: z.infer<typeof editOrderSchema>) {
+    console.log("Ready for Supabase Update:", values);
+    handleClose();
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden border-none shadow-2xl">
-        
-        {/* Header - Compact style */}
-        <DialogHeader className="px-6 py-6 border-b border-gray-100">
-          <DialogTitle className="text-2xl font-medium text-gray-900 text-center">
-            Edit Order: {orderData?.id || "PO-1001"}
+        <DialogHeader className="px-8 py-8 border-b border-gray-100 flex justify-center items-center">
+          <DialogTitle className="text-2xl font-medium text-gray-900">
+            Edit Order: {orderData?.id}
           </DialogTitle>
         </DialogHeader>
 
-        {/* Body with ScrollArea to keep modal height stable */}
-        <ScrollArea className="max-h-[60vh]">
-          <div className="px-10 py-6 space-y-6">
-            <div className="grid grid-cols-1 gap-5">
-              
-              {/* Supplier Name */}
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold text-gray-700 ml-1">Supplier Name</Label>
-                <Input 
-                  defaultValue={orderData?.supplier || "Office Supplies Co."}
-                  className="h-10 rounded-xl border-gray-200 focus-visible:ring-black/5"
-                />
-              </div>
-
-              {/* Delivery Date */}
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold text-gray-700 ml-1">Delivery Date</Label>
-                <Input 
-                  type="date"
-                  defaultValue="2025-12-04"
-                  className="h-10 rounded-xl border-gray-200 focus-visible:ring-black/5"
-                />
-              </div>
-
-              {/* Products Dynamic List */}
-              <div className="space-y-4 pt-2">
-                <Label className="text-lg font-bold text-gray-800 ml-1">Products</Label>
-                <div className="space-y-3">
-                  {products.map((product, index) => (
-                    <div key={product.id} className="flex gap-3 items-end bg-gray-50/50 p-4 rounded-xl border border-gray-100">
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">
-                          Product {index + 1}
-                        </Label>
-                        <Select defaultValue={product.name}>
-                          <SelectTrigger className="h-10 bg-white rounded-xl border-gray-200 focus:ring-black/5 text-sm">
-                            <SelectValue placeholder="Select Product" />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <ScrollArea className="max-h-[65vh]">
+              <div className="p-8 space-y-8">
+                <div className="grid grid-cols-2 gap-5">
+                  <FormField control={form.control} name="supplier" render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className={cn("h-11 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0", !field.value && "text-gray-400")}>
+                            <SelectValue placeholder="Select supplier..." />
                           </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="chair">Office Chair - Ergonomic</SelectItem>
-                            <SelectItem value="mouse">Wireless Mouse</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="w-20 space-y-1.5">
-                        <Label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">Qty</Label>
-                        <Input 
-                          type="number" 
-                          defaultValue={product.qty}
-                          className="h-10 bg-white rounded-xl border-gray-200 focus-visible:ring-black/5 text-sm" 
-                        />
-                      </div>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Office Supplies Co.">Office Supplies Co.</SelectItem>
+                          <SelectItem value="Furniture Plus">Furniture Plus</SelectItem>
+                          <SelectItem value="Industrial Supply Inc.">Industrial Supply Inc.</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-xs text-red-500 ml-1" />
+                    </FormItem>
+                  )} />
 
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => removeProduct(product.id)}
-                        className="h-10 w-10 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
+                  <FormField control={form.control} name="expected" render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Expected Delivery</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="date" className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                      </FormControl>
+                      <FormMessage className="text-xs text-red-500 ml-1" />
+                    </FormItem>
+                  )} />
                 </div>
 
-                <Button 
-                  variant="outline" 
-                  onClick={addProduct}
-                  className="w-full h-12 border-dashed border-2 border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 rounded-xl transition-all"
-                >
-                  <Plus className="w-4 h-4 mr-2" /> Add Product
-                </Button>
-              </div>
-            </div>
-          </div>
-        </ScrollArea>
+                <div className="space-y-4 pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <FormLabel className="text-lg font-bold text-gray-800 ml-1">Products</FormLabel>
+                    <FormMessage className="text-xs text-red-500">
+                      {form.formState.errors.products?.root?.message}
+                    </FormMessage>
+                  </div>
 
-        {/* Footer - Consistent with Inventory and Users */}
-        <DialogFooter className="px-10 py-6 bg-gray-50/50 flex flex-row justify-end gap-3">
-          <Button 
-            variant="outline"
-            onClick={onClose}
-            className="px-6 h-10 rounded-xl border-gray-200 text-gray-500 font-bold hover:bg-white hover:text-black transition-all"
-          >
-            Cancel
-          </Button>
-          <Button 
-            className="px-8 h-10 bg-black text-white rounded-xl font-bold hover:bg-zinc-800 shadow-lg shadow-black/10 transition-all active:scale-[0.98]"
-          >
-            Submit Changes
-          </Button>
-        </DialogFooter>
+                  <div className="space-y-3">
+                    {fields.map((field, index) => (
+                      <div key={field.id} className="flex gap-3 items-end bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                        <div className="flex-1">
+                          <FormField control={form.control} name={`products.${index}.productId`} render={({ field: productField }) => (
+                            <FormItem className="space-y-1.5">
+                              <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Product {index + 1}</FormLabel>
+                              <Select onValueChange={productField.onChange} value={productField.value}>
+                                <FormControl>
+                                  <SelectTrigger className="h-11 bg-white rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0">
+                                    <SelectValue placeholder="Select product..." />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="PROD-001">Office Chair - Ergonomic</SelectItem>
+                                  <SelectItem value="PROD-002">Wireless Mouse</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage className="text-xs text-red-500 ml-1" />
+                            </FormItem>
+                          )} />
+                        </div>
+                        
+                        <div className="w-24">
+                          <FormField control={form.control} name={`products.${index}.qty`} render={({ field: qtyField }) => (
+                            <FormItem className="space-y-1.5">
+                              <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Qty</FormLabel>
+                              <FormControl>
+                                <Input {...qtyField} type="number" className="h-11 bg-white rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                              </FormControl>
+                              <FormMessage className="text-xs text-red-500 ml-1" />
+                            </FormItem>
+                          )} />
+                        </div>
+
+                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="h-11 w-11 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Button type="button" variant="outline" onClick={() => append({ productId: "", qty: 1 })} className="w-full h-12 border-dashed border-2 border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 rounded-xl transition-all font-bold">
+                    <Plus className="w-4 h-4 mr-2" /> Add Product Row
+                  </Button>
+                </div>
+              </div>
+            </ScrollArea>
+
+            <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3">
+              <Button type="button" variant="outline" onClick={handleClose} className="px-8 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/70">
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

@@ -1,59 +1,130 @@
-// app/components/features/users/user-table.tsx
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Edit3, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-interface UserTableProps {
-  onEdit: (user: any) => void;
+export interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  department: string;
 }
 
-const MOCK_USERS = [
-  { id: "USER 3001", username: "John Carlo Benter", dept: "Warehouse" },
-  { id: "USER 3002", username: "Sara Mitchell", dept: "Purchasing" },
-  { id: "USER 3003", username: "Michael Chen", dept: "Admin" },
-  { id: "USER 3004", username: "Gustavo Fring", dept: "Finance" },
-  { id: "USER 3005", username: "John Davis", dept: "Warehouse" },
-  { id: "USER 3006", username: "Sarah Johnson", dept: "Admin" },
-];
+interface UserTableProps {
+  data: User[];
+  onEdit: (user: User) => void;
+  onDelete: (user: User) => void;
+}
 
-export const UserTable = ({ onEdit }: UserTableProps) => {
+export const UserTable = ({ data = [], onEdit, onDelete }: UserTableProps) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
+  
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="p-8 text-center text-gray-500 border rounded-xl border-dashed">
+        No users found. Click &quot;Add New User&quot; to get started.
+      </div>
+    );
+  }
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = data.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+
   return (
-    <div className="rounded-md border border-gray-100 overflow-hidden">
-      <table className="w-full text-left text-sm border-collapse">
-        <thead>
-          <tr className="bg-gray-50/50 border-b border-gray-100">
-            <th className="px-8 py-4 text-[11px] uppercase tracking-widest text-gray-400 font-bold text-center">User ID</th>
-            <th className="px-8 py-4 text-[11px] uppercase tracking-widest text-gray-400 font-bold text-center">Username</th>
-            <th className="px-8 py-4 text-[11px] uppercase tracking-widest text-gray-400 font-bold text-center">Department</th>
-            <th className="px-8 py-4 text-[11px] uppercase tracking-widest text-gray-400 font-bold text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-50">
-          {MOCK_USERS.map((user) => (
-            <tr key={user.id} className="group hover:bg-black transition-colors cursor-default">
-              <td className="px-8 py-5 text-[12px] text-gray-500 group-hover:text-zinc-400 text-center font-mono">{user.id}</td>
-              <td className="px-8 py-5 font-medium text-gray-800 group-hover:text-white text-center">{user.username}</td>
-              <td className="px-8 py-5 text-gray-600 group-hover:text-zinc-300 text-center">{user.dept}</td>
-              <td className="px-8 py-5 text-right">
-                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button 
-                    variant="secondary" 
-                    size="sm" 
-                    className="h-7 px-4 text-[10px] font-bold uppercase bg-white text-black hover:bg-gray-200"
-                    onClick={() => onEdit(user)}
-                  >
-                    Edit
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-red-500">
+    <div className="rounded-2xl border border-gray-100 overflow-hidden">
+      <Table className="text-sm border-collapse">
+        <TableHeader>
+          <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
+            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">User ID</TableHead>
+            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Name</TableHead>
+            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Department</TableHead>
+            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {currentItems.map((user) => (
+            <TableRow 
+              key={user.id} 
+              className="group hover:bg-black transition-colors cursor-default border-b border-gray-50"
+            >
+              <TableCell className="px-6 py-5 font-mono text-xs text-gray-500 group-hover:text-zinc-400">
+                {user.id}
+              </TableCell>
+              <TableCell className="px-6 py-5 font-medium text-gray-800 group-hover:text-white">
+                {user.firstName} {user.lastName}
+              </TableCell>
+              <TableCell className="px-6 py-5">
+                <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase group-hover:bg-white/10 group-hover:text-white">
+                  {user.department}
+                </span>
+              </TableCell>
+              <TableCell className="px-6 py-5 text-right">
+                <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => onEdit(user)} className="text-zinc-400 hover:text-white transition-colors">
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => onDelete(user)} className="text-zinc-400 hover:text-red-400 transition-colors">
                     <Trash2 className="w-4 h-4" />
-                  </Button>
+                  </button>
                 </div>
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
+
+      {/* Dynamic Pagination Footer */}
+      <div className="p-6 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400 uppercase tracking-tighter bg-white">
+        <span>
+          Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, data.length)} of {data.length} results
+        </span>
+        <div className="flex items-center gap-1">
+          <Button 
+            variant="outline"
+            className="h-8 px-3 text-[11px] border-gray-200 hover:bg-gray-50 disabled:opacity-30"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          
+          {[...Array(totalPages)].map((_, i) => (
+            <Button 
+              key={i}
+              variant={currentPage === i + 1 ? "default" : "outline"}
+              onClick={() => setCurrentPage(i + 1)}
+              className={`h-8 w-8 p-0 text-[11px] ${
+                currentPage === i + 1 
+                  ? "bg-black text-white hover:bg-zinc-800" 
+                  : "border-gray-200 hover:bg-gray-50 text-gray-600"
+              }`}
+            >
+              {i + 1}
+            </Button>
+          ))}
+          
+          <Button 
+            variant="outline"
+            className="h-8 px-3 text-[11px] border-gray-200 hover:bg-gray-50 disabled:opacity-30"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages || totalPages === 0}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

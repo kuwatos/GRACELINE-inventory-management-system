@@ -1,6 +1,6 @@
 'use client'
 import  {usePathname} from 'next/navigation'
-import { SidebarTrigger } from '../ui/sidebar'
+import { SidebarTrigger } from './ui/sidebar'
 
 export default function DashboardHeader(){
   const pathname = usePathname()

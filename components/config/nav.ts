@@ -6,24 +6,32 @@ import {
   ShoppingBag,
   UsersRound,
   BellDot,
-  Truck
+  Truck,
+  PackageCheck
 } from 'lucide-react'
 
 // Define the type so TypeScript knows what "icon" is
 export type NavItem = {
   label: string;
   href: string;
-  icon: any;
+  icon: unknown;
 };
 
-export const sideBarNav = {
+interface SideBarConfig {
+  admin: NavItem[];
+  purchasing: NavItem[];
+  finance: NavItem[];
+  warehouse: NavItem[];
+}
+
+export const sideBarNav:SideBarConfig = {
   // -------------------------------------------------------
   // 🟢 ADMIN PATHS (start with /admin)
   // -------------------------------------------------------
   admin: [
     {
       label: "Dashboard",
-      href: "/admin", // 👈 Must match the folder name!
+      href: "/admin/dashboard", // 👈 Must match the folder name!
       icon: LayoutDashboard
     },
     {
@@ -52,6 +60,11 @@ export const sideBarNav = {
       icon: Truck
     },
     {
+      label: "Completed Orders",
+      href: "/admin/completed",
+      icon: PackageCheck
+    },
+    {
       label: "Users",
       href: "/admin/users",
       icon: UsersRound
@@ -59,7 +72,7 @@ export const sideBarNav = {
     {
       label: "Notifications",
       href: "/admin/notifications",
-      icon: BellDot
+      icon: BellDot 
     },
   ],
 
@@ -69,7 +82,7 @@ export const sideBarNav = {
   purchasing: [
     {
       label: "Dashboard",
-      href: "/purchasing",
+      href: "/purchasing/dashboard",
       icon: LayoutDashboard
     },
     {
@@ -100,14 +113,14 @@ export const sideBarNav = {
   finance: [
     {
       label: "Dashboard",
-      href: "/finance",
+      href: "/finance/dashboard",
       icon: LayoutDashboard
     },
     {
-      label: "Orders",
-      href: "/finance/orders",
-      icon: ShoppingBag
-    },
+      label: "Completed Orders",
+      href: "/finance/completed",
+      icon: PackageCheck
+    }
   ],
 
   // -------------------------------------------------------
@@ -116,7 +129,7 @@ export const sideBarNav = {
   warehouse: [
     {
       label: "Dashboard",
-      href: "/warehouse",
+      href: "/warehouse/dashboard",
       icon: LayoutDashboard
     },
     {

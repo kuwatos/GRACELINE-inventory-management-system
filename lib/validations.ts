@@ -52,3 +52,48 @@ export const newSupplierSchema = baseSupplierSchema;
 
 // Schema for Edit Supplier
 export const editSupplierSchema = baseSupplierSchema;
+
+//=============== USER =================
+
+// The base rules for a user
+export const baseUserSchema = z.object({
+  department: z.string().min(1, "Department is required"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+});
+
+// Schema for New User (Passwords are REQUIRED)
+export const newUserSchema = baseUserSchema.extend({
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string().min(6, "Please confirm password"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+// Schema for Edit User (Passwords are OPTIONAL)
+export const editUserSchema = baseUserSchema.extend({
+  password: z.string().optional(),
+  confirmPassword: z.string().optional(),
+}).refine((data) => !data.password || data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+//=============== ORDER =================
+
+// The rules for a single product line item
+const orderProductSchema = z.object({
+  productId: z.string().min(1, "Please select a product"),
+  qty: z.coerce.number().int().min(1, "Quantity must be at least 1"),
+});
+
+// The base rules for a Purchase Order
+export const baseOrderSchema = z.object({
+  supplier: z.string().min(1, "Supplier is required"),
+  expected: z.string().min(1, "Delivery date is required"),
+  products: z.array(orderProductSchema).min(1, "You must add at least one product"),
+});
+
+export const newOrderSchema = baseOrderSchema;
+export const editOrderSchema = baseOrderSchema;

@@ -1,10 +1,5 @@
-import { ActivityLogTable } from '@/components/features/activity/activity-log-table'
-import React from 'react'
+import { redirect } from "next/navigation";
 
-function page() {
-  return (
-    <></>
-  )
+export default function Home() {
+  redirect('/admin/dashboard');
 }
-
-export default page

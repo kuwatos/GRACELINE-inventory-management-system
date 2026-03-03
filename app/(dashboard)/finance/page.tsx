@@ -1,9 +1,5 @@
-import React from 'react'
+import { redirect } from "next/navigation";
 
-function page() {
-  return (
-    <div>Hi There!</div>
-  )
+export default function Home() {
+  redirect('/finance/dashboard');
 }
-
-export default page
