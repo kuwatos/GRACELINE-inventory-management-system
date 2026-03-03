@@ -2,18 +2,11 @@
 import { db } from "../../index";
 import { usersTable } from "../../db/schema";
 import { and, or, ilike, eq, lte } from "drizzle-orm";
-import { createLog } from "../log/log.repository";
-import { create } from "domain";
 
 //CREATE
 export async function createUser(data: { username: string; userType: string }) {
   // TODO: Add passsword
   const [newUser] = await db.insert(usersTable).values(data).returning();
-  await createLog({
-    actionId: 3,
-    targetId: newUser.userId,
-    newValue: newUser.username,
-  });
 }
 
 //READ
@@ -59,13 +52,6 @@ export async function updateUser(data: {
     .set(fields)
     .where(eq(usersTable.userId, data.id))
     .returning();
-
-  await createLog({
-    actionId: 5,
-    targetId: updatedUser.userId,
-    prevValue: data.username,
-    newValue: updatedUser.username,
-  });
 }
 
 //DELETE
@@ -74,15 +60,6 @@ export async function deleteUser(id: number) {
     .delete(usersTable)
     .where(eq(usersTable.userId, id))
     .returning();
-
-  if (deletedUser) {
-    await createLog({
-      actionId: 6,
-      targetId: deletedUser.userId,
-      prevValue: deletedUser.username,
-      newValue: "Deleted User",
-    });
-  }
 
   return deletedUser;
 }

@@ -21,7 +21,9 @@ export const usersTable = pgTable("user_tb", {
 export const passwordsTable = pgTable("password_tb", {
   userId: integer("user_id").references(() => usersTable.userId),
   password: text("password").notNull(),
-  lastChangedAt: timestamp("last_changed_at"),
+  lastChangedAt: timestamp("last_changed_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 //List of actions that can be logged in the system. Purpose niya lang is to be a list ng ilalagay sa logs tas nasa logs na yung

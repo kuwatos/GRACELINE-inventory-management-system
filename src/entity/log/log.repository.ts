@@ -2,15 +2,6 @@
 import { db } from "../../index";
 import { logsTable } from "../../db/schema";
 import { eq, ilike, or, and } from "drizzle-orm";
-import { createClient } from "@/utils/supabase/server";
-import { User } from "next-auth";
-
-const supabase = createClient();
-const {
-  data: { user },
-} = await supabase.auth.getUser();
-
-if (!user) throw new Error("Unauthorized");
 
 //CREATE
 export async function createLog(data: {
