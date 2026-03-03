@@ -95,7 +95,9 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
   ),
   productId: integer("product_id").references(() => itemsTable.productId),
   unitPrice: numeric("unit_price", { precision: 10, scale: 2 }),
-  lastUpdated: timestamp("last_updated").defaultNow(),
+  lastUpdated: timestamp("last_updated")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 // --- Orders ---
@@ -104,7 +106,7 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
 export const ordersTable = pgTable("order_tb", {
   orderId: serial("order_id").primaryKey(),
   orderStatus: text("order_status").notNull(),
-  orderDate: timestamp("order_date").notNull(),
+  orderDate: timestamp("order_date").notNull().defaultNow(),
   supplierId: integer("supplier_id").references(
     () => suppliersTable.supplierId,
   ),
