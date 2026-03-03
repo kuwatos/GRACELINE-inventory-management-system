@@ -1,5 +1,4 @@
 import { AppSidebar } from "@/components/app-sidebar";
-import Sidebar from "@/components/features/sidebar";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -10,6 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import DashboardHeader from "@/components/features/dashboard-header";
 
 
 export default function RootLayout({
@@ -17,13 +17,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-     <SidebarProvider>
+
+  
+return (
+     <SidebarProvider className="flex h-screen sm:rounded-3xl overflow-hidden">
       <AppSidebar />
-      <SidebarInset>
-        <main className="mx-auto max-w-screen-2xl flex-1 bg">
+      <SidebarInset className="flex-1 overflow-y-auto h-full">
+        <DashboardHeader />
+        <div className="p-5">
           {children}
-        </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

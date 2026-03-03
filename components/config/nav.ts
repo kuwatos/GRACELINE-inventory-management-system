@@ -43,7 +43,7 @@ export const sideBarNav = {
     },
     {
       label: "Activity Logs",
-      href: "/admin/activity-logs",
+      href: "/admin/activity",
       icon: History
     },
     {
