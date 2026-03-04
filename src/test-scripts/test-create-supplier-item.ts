@@ -1,39 +1,21 @@
-import "dotenv/config";
-import { createUser } from "../entity/user/user.repository";
-import {
-  createPassword,
-  updatePassword,
-} from "../entity/password/password.repository";
-async function main() {
-  //   const user = {
-  //     username: "Mark Lawrence",
-  //     userType: "Admin",
-  //   };
+import { createItemService } from "../entity/item/item.service";
 
-  //   try {
-  //     const inserted = await createUser(user);
-  //     console.log("Inserted:", inserted);
-  //   } catch (err) {
-  //     console.error("Error running test:", err);
-  //     process.exitCode = 1;
-  //   }
-
-  const pw = {
-    userId: 1, // Assuming the userId of the created user is 1
-    password: "pogi part 3",
-  };
+async function testCreateItem() {
   try {
-    // const inserted = await createPassword(pw);
-    const inserted = await updatePassword(pw);
-
-    console.log("Inserted:", inserted);
-  } catch (err) {
-    console.error("Error running test:", err);
-    process.exitCode = 1;
+    const result = await createItemService({
+      productName: "Hellooo",
+      productCategory1: "Screw",
+      productCategory2: "Gadgets",
+      supplierId: 2, // Make sure this supplier exists
+      unitPrice: "29.99",
+    });
+    console.log("✅ Item created successfully:", result);
+  } catch (error) {
+    console.error("❌ Error:", error);
   }
 }
 
-main();
+testCreateItem();
 
 //TO RUN:
 // npx tsx src/test-scripts/test-create-supplier-item.ts

@@ -1,6 +1,6 @@
 import { db } from "../../index";
 import { userNotificationsTable } from "../../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 //CREATE
 export async function createUserNotification(data: {
@@ -15,6 +15,19 @@ export async function createUserNotification(data: {
 //READ
 export async function readUserNotification() {
   return db.select().from(userNotificationsTable);
+}
+
+//READ UNSEEN NOTIFICATIONS OF A USER
+export async function readUnseenUserNotifications(userId: number) {
+  return db
+    .select()
+    .from(userNotificationsTable)
+    .where(
+      and(
+        eq(userNotificationsTable.userId, userId),
+        eq(userNotificationsTable.isRead, false),
+      ),
+    );
 }
 
 //UPDATE

@@ -13,7 +13,7 @@ export async function createItem(data: {
   productCategory5?: string;
   productDesc?: string;
   productQuantity?: number;
-  reorderLevel: number;
+  reorderLevel?: number;
 }) {
   return db.insert(itemsTable).values(data).returning();
 }
