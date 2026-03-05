@@ -6,7 +6,6 @@ import { eq, and } from "drizzle-orm";
 export async function createUserNotification(data: {
   notifId: number;
   userId: number;
-  isRead: boolean;
   //   createdAt: Date; //removed because it defaults to now() in the schema, so it can be optional in the input
 }) {
   return db.insert(userNotificationsTable).values(data).returning();

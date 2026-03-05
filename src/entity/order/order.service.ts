@@ -29,11 +29,13 @@ export async function createOrderService(data: {
 
   const orderId = order[0].orderId;
 
-  data.items.map(async (item) => {
-    await createOrderProducts({
-      orderId,
-      productId: item.productId,
-      orderProductQuantity: item.quantity,
-    });
-  });
+  await Promise.all(
+    data.items.map(async (item) => {
+      await createOrderProducts({
+        orderId,
+        productId: item.productId,
+        orderProductQuantity: item.quantity,
+      });
+    }),
+  );
 }
