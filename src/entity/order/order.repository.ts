@@ -78,7 +78,7 @@ export async function searchOrders(filters: {
 }
 
 //UPDATE
-export async function updateItem(data: {
+export async function updateOrder(data: {
   id: number;
   orderDate?: Date;
   expectedDeliveryDate?: Date;
