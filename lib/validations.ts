@@ -57,6 +57,7 @@ export const editSupplierSchema = baseSupplierSchema;
 
 // The base rules for a user
 export const baseUserSchema = z.object({
+  username: z.string().min(1, "Username is required"), // <-- ADD THIS LINE
   department: z.string().min(1, "Department is required"),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -85,7 +86,7 @@ export const editUserSchema = baseUserSchema.extend({
 // The rules for a single product line item
 const orderProductSchema = z.object({
   productId: z.string().min(1, "Please select a product"),
-  qty: z.coerce.number().int().min(1, "Quantity must be at least 1"),
+  qty: z.coerce.number<number>().int().min(1, "Quantity must be at least 1"),
 });
 
 // The base rules for a Purchase Order

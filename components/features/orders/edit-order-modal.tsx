@@ -7,7 +7,7 @@ import * as z from "zod";
 import { Plus, Trash2 } from "lucide-react";
 import { editOrderSchema } from "@/lib/validations";
 import { cn } from "@/lib/utils";
-import { Order } from "./order-history-table";
+import { OrderRecord } from "./order-history-table";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -19,10 +19,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface EditOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  orderData: Order | null;
+  order: OrderRecord | null; // FIXED: Changed from orderData to match the manager
 }
 
-export const EditOrderModal = ({ isOpen, onClose, orderData }: EditOrderModalProps) => {
+export const EditOrderModal = ({ isOpen, onClose, order }: EditOrderModalProps) => {
   const form = useForm<z.infer<typeof editOrderSchema>>({
     resolver: zodResolver(editOrderSchema),
     defaultValues: {
@@ -38,18 +38,20 @@ export const EditOrderModal = ({ isOpen, onClose, orderData }: EditOrderModalPro
   });
 
   // Load data into the form when the modal opens
+  // Load data into the form when the modal opens
   useEffect(() => {
-    if (isOpen && orderData) {
+    if (isOpen && order) {
       form.reset({
-        supplier: orderData.supplier,
-        expected: orderData.expected || "", 
-        // Read the real products, or provide a blank row if none exist
-        products: orderData.products && orderData.products.length > 0 
-          ? orderData.products.map(p => ({ productId: p.productId, qty: p.qty }))
+        supplier: order.supplierName || "", 
+        expected: order.expectedDelivery || "", 
+        
+        // Clean, type-safe data mapping!
+        products: order.products && order.products.length > 0 
+          ? order.products.map(p => ({ productId: p.productId, qty: p.qty }))
           : [{ productId: "", qty: 1 }],
       });
     }
-  }, [isOpen, orderData, form]);
+  }, [isOpen, order, form]);
 
   const handleClose = () => {
     form.reset();
@@ -66,7 +68,7 @@ export const EditOrderModal = ({ isOpen, onClose, orderData }: EditOrderModalPro
       <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden border-none shadow-2xl">
         <DialogHeader className="px-8 py-8 border-b border-gray-100 flex justify-center items-center">
           <DialogTitle className="text-2xl font-medium text-gray-900">
-            Edit Order: {orderData?.id}
+            Edit Order: {order?.id}
           </DialogTitle>
         </DialogHeader>
 
@@ -87,7 +89,8 @@ export const EditOrderModal = ({ isOpen, onClose, orderData }: EditOrderModalPro
                         <SelectContent>
                           <SelectItem value="Office Supplies Co.">Office Supplies Co.</SelectItem>
                           <SelectItem value="Furniture Plus">Furniture Plus</SelectItem>
-                          <SelectItem value="Industrial Supply Inc.">Industrial Supply Inc.</SelectItem>
+                          <SelectItem value="TechSupply Co.">TechSupply Co.</SelectItem>
+                          <SelectItem value="GlobalParts Ltd">GlobalParts Ltd</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage className="text-xs text-red-500 ml-1" />

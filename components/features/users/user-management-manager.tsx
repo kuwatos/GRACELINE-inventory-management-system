@@ -1,5 +1,6 @@
 "use client";
 
+import { deleteUserAction } from "@/lib/action/user.action"; // Make sure this path matches!
 import { useState } from "react";
 import { Search, ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,19 +16,28 @@ interface UserManagementManagerProps {
 
 export const UserManagementManager = ({ data = [] }: UserManagementManagerProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState(""); 
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  // Search filter logic mimicking the Inventory and Supplier tabs
+  // UPDATED: Search filter logic mimicking the Inventory and Supplier tabs
   const filteredData = data.filter((user) => {
     const searchLower = searchQuery.toLowerCase();
     const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
-    return (
+    
+    // 1. Check if the typed text matches Name, Username, ID, or Department
+    const matchesSearch = 
       fullName.includes(searchLower) ||
-      user.id.toLowerCase().includes(searchLower) ||
-      user.department.toLowerCase().includes(searchLower)
-    );
+      user.username.toLowerCase().includes(searchLower) ||
+      user.userId.toString().includes(searchLower) || // Changed from id to userId.toString()
+      user.department.toLowerCase().includes(searchLower);
+
+    // 2. Check if the dropdown matches the user's department
+    const matchesRole = roleFilter === "" || user.department === roleFilter;
+
+    // 3. Return true ONLY if both match!
+    return matchesSearch && matchesRole;
   });
 
   const handleEditClick = (user: User) => {
@@ -35,8 +45,23 @@ export const UserManagementManager = ({ data = [] }: UserManagementManagerProps)
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteClick = (user: User) => {
-    console.log("Delete user requested:", user.id);
+ const handleDeleteClick = async (user: User) => {
+    // 1. Ask for confirmation so they don't accidentally delete someone!
+    const isConfirmed = window.confirm(`Are you sure you want to deactivate ${user.firstName} ${user.lastName}?`);
+    
+    if (isConfirmed) {
+      try {
+        // 2. Send the ID across the bridge to your Robot Butler
+        const result = await deleteUserAction(user.userId);
+
+        if (!result.success) {
+          console.error("Failed to delete user:", result.error);
+          alert("Failed to delete user. Please try again.");
+        }
+      } catch (error) {
+        console.error("Server error during deletion:", error);
+      }
+    }
   };
 
   return (
@@ -51,14 +76,22 @@ export const UserManagementManager = ({ data = [] }: UserManagementManagerProps)
               <Input 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by Name, ID, or Dept..." 
+                placeholder="Search by Name, Username, ID..." // Updated placeholder
                 className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-green-500 focus-visible:ring-2"
               />
             </div>
             
             <div className="relative">
-              <select className="appearance-none h-11 px-5 bg-[#E5E7EB] rounded-xl text-sm font-medium pr-10 focus:outline-none cursor-pointer">
-                <option>Filter by Role</option>
+              <select 
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="appearance-none h-11 px-5 bg-[#E5E7EB] rounded-xl text-sm font-medium pr-10 focus:outline-none cursor-pointer"
+              >
+                <option value="">All Roles</option>
+                <option value="Admin">Admin</option>
+                <option value="Finance">Finance</option>
+                <option value="Purchasing">Purchasing</option> {/* Fixed Typo */}
+                <option value="Warehouse">Warehouse</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
             </div>

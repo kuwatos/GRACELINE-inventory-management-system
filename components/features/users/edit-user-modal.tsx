@@ -1,11 +1,12 @@
 "use client";
 
+import { updateUserAction } from "@/lib/action/user.action";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
-import { Eye, EyeOff } from "lucide-react"; // Import the icons!
+import { Eye, EyeOff } from "lucide-react"; 
 import { editUserSchema } from "@/lib/validations";
 import { User } from "./user-table";
 
@@ -23,13 +24,13 @@ interface EditUserModalProps {
 
 export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  // Add state for toggling visibility
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<z.infer<typeof editUserSchema>>({
     resolver: zodResolver(editUserSchema),
-    defaultValues: { department: "", firstName: "", lastName: "", password: "", confirmPassword: "" },
+    // 1. Added username here
+    defaultValues: { department: "", firstName: "", lastName: "", username: "", password: "", confirmPassword: "" },
   });
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
         department: user.department,
         firstName: user.firstName,
         lastName: user.lastName,
+        username: user.username, // 2. Pre-fill the username when opening!
         password: "",
         confirmPassword: "",
       });
@@ -51,13 +53,24 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
     onClose();
   };
 
-  function onSubmit(values: z.infer<typeof editUserSchema>) {
-    const payload = {
-      ...values,
-      ...(isChangingPassword ? {} : { password: undefined, confirmPassword: undefined })
-    };
-    console.log("Ready for Supabase Update:", payload);
-    handleClose();
+  async function onSubmit(values: z.infer<typeof editUserSchema>) {
+    // 1. Safety check: make sure we actually have a user selected!
+    if (!user) return; 
+
+    try {
+      // 2. Send the ID and the new form values across the bridge
+      const result = await updateUserAction(user.userId, values);
+
+      // 3. If the Robot Butler succeeds, close the modal
+      if (result?.success) {
+        handleClose();
+      } else {
+        console.error("Failed to update user:", result?.error);
+        alert("Failed to update user. Please try again.");
+      }
+    } catch (error) {
+      console.error("Server error:", error);
+    }
   }
 
   return (
@@ -65,7 +78,8 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl">
         <DialogHeader className="px-8 py-8 border-b border-gray-100 flex justify-center items-center">
           <DialogTitle className="text-2xl font-medium text-gray-900">
-            Edit User: {user?.id}
+            {/* 3. Changed from user?.id to user?.userId */}
+            Edit User: {user?.userId} 
           </DialogTitle>
         </DialogHeader>
 
@@ -109,6 +123,17 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Last Name</FormLabel>
                   <FormControl>
                     <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                  </FormControl>
+                  <FormMessage className="text-xs text-red-500 ml-1" />
+                </FormItem>
+              )} />
+
+              {/* 4. ADDED USERNAME FIELD HERE */}
+              <FormField control={form.control} name="username" render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Username</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="jdoe" className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>
@@ -160,8 +185,12 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
               <Button type="button" variant="outline" onClick={handleClose} className="px-8 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
                 Cancel
               </Button>
-              <Button type="submit" className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/70">
-                Save Changes
+              <Button 
+                type="submit" 
+                disabled={form.formState.isSubmitting} 
+                className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/70 disabled:opacity-50"
+              >
+                {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>

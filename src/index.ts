@@ -1,48 +1,16 @@
-import "dotenv/config";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { eq } from "drizzle-orm";
-import { usersTable } from "./db/schema";
-import { actionsTable } from "./db/schema";
-import { logsTable } from "./db/schema";
-import { suppliersTable } from "./db/schema";
-import { inventoryTable } from "./db/schema";
-import { itemsTable } from "./db/schema";
-import { ordersTable } from "./db/schema";
-import { orderProductsTable } from "./db/schema";
-import { notificationsTable } from "./db/schema";
-import { notificationsListTable } from "./db/schema";
-import { reportsTable } from "./db/schema";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import * as schema from "./db/schema";
+import "dotenv/config"; 
 
-const db = drizzle(process.env.DATABASE_URL!);
+const connectionString = process.env.DATABASE_URL;
 
-async function main() {
-  // 1. Setup the data to insert
-  const newUser: typeof usersTable.$inferInsert = {
-    userType: "Admin",
-    username: "Renzo",
-    password: "Pogi123",
-  };
-
-  // 2. INSERT
-  await db.insert(usersTable).values(newUser);
-  console.log("New user created!");
-
-  // 3. SELECT - This returns an ARRAY of objects
-  const allUsers = await db.select().from(usersTable);
-  console.log("Getting all users:", allUsers);
-
-  // 4. UPDATE - Use the TABLE (usersTable)
-  await db
-    .update(usersTable)
-    .set({
-      username: "RenzoUpdated",
-    })
-    .where(eq(usersTable.userType, "Admin"));
-  console.log("User info updated!");
-
-  // 5. DELETE - Use the TABLE (usersTable)
-  // await db.delete(usersTable).where(eq(usersTable.username, "RenzoUpdated"));
-  // console.log("User deleted!");
+if (!connectionString) {
+  throw new Error("DATABASE_URL is missing!");
 }
 
-main();
+// Disable prefetch for Supabase's Transaction pool mode
+const client = postgres(connectionString, { prepare: false });
+
+// Export the db so the rest of your Next.js app can use it!
+export const db = drizzle({ client, schema });

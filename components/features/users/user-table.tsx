@@ -12,11 +12,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+// 1. UPDATED INTERFACE to match the database exactly
 export interface User {
-  id: string;
+  userId: number; 
   firstName: string;
   lastName: string;
+  username: string;
   department: string;
+  status: string; // Kept for TypeScript, but we won't show it in the table
 }
 
 interface UserTableProps {
@@ -49,6 +52,8 @@ export const UserTable = ({ data = [], onEdit, onDelete }: UserTableProps) => {
           <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">User ID</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Name</TableHead>
+            {/* 2. ADDED USERNAME HEADER */}
+            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Username</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Department</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-right">Actions</TableHead>
           </TableRow>
@@ -56,14 +61,18 @@ export const UserTable = ({ data = [], onEdit, onDelete }: UserTableProps) => {
         <TableBody>
           {currentItems.map((user) => (
             <TableRow 
-              key={user.id} 
+              key={user.userId} // Changed from user.id
               className="group hover:bg-black transition-colors cursor-default border-b border-gray-50"
             >
               <TableCell className="px-6 py-5 font-mono text-xs text-gray-500 group-hover:text-zinc-400">
-                {user.id}
+                {`EMP-${String(user.userId).padStart(4, '0')}`}
               </TableCell>
               <TableCell className="px-6 py-5 font-medium text-gray-800 group-hover:text-white">
                 {user.firstName} {user.lastName}
+              </TableCell>
+              {/* 3. ADDED USERNAME CELL */}
+              <TableCell className="px-6 py-5 font-medium text-gray-600 group-hover:text-gray-300">
+                @{user.username}
               </TableCell>
               <TableCell className="px-6 py-5">
                 <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase group-hover:bg-white/10 group-hover:text-white">
@@ -71,8 +80,9 @@ export const UserTable = ({ data = [], onEdit, onDelete }: UserTableProps) => {
                 </span>
               </TableCell>
               <TableCell className="px-6 py-5 text-right">
-                <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => onEdit(user)} className="text-zinc-400 hover:text-white transition-colors">
+                {/* Removed opacity-0 and group-hover:opacity-100 */}
+                <div className="flex items-center justify-end gap-3 transition-opacity">
+                  <button onClick={() => onEdit(user)} className="text-zinc-400 hover:text-indigo-400 transition-colors">
                     <Edit3 className="w-4 h-4" />
                   </button>
                   <button onClick={() => onDelete(user)} className="text-zinc-400 hover:text-red-400 transition-colors">

@@ -1,10 +1,10 @@
 import { UserManagementManager } from '@/components/features/users/user-management-manager'
-import React from 'react'
+import { readUsers } from '@/src/entity/user/user.repository'
 
-function page() {
+export default async function page() {
+  const dbUsers = await readUsers();
   return (
-    <UserManagementManager/>
+    <UserManagementManager data={dbUsers}/>
   )
 }
 
-export default page

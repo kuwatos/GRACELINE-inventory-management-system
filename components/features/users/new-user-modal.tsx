@@ -1,13 +1,13 @@
 "use client";
 
+import { createUserAction } from "@/lib/action/user.action";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
-import { Eye, EyeOff } from "lucide-react"; // Import the icons!
+import { Eye, EyeOff } from "lucide-react"; 
 import { newUserSchema } from "@/lib/validations";
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -20,7 +20,6 @@ interface NewUserModalProps {
 }
 
 export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
-  // Add state for toggling visibility
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -30,6 +29,7 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
       department: "",
       firstName: "",
       lastName: "",
+      username: "", // 1. Added username here!
       password: "",
       confirmPassword: "",
     },
@@ -42,9 +42,22 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
     onClose();
   };
 
-  function onSubmit(values: z.infer<typeof newUserSchema>) {
-    console.log("Ready for Supabase Insert:", values);
-    handleClose();
+  async function onSubmit(values: z.infer<typeof newUserSchema>) {
+    try {
+      const result = await createUserAction(values);
+
+      if (result.success) {
+        handleClose();
+      } else {
+        // If it fails, attach the error message directly to the username field!
+        form.setError("username", {
+          type: "manual",
+          message: result.error, // This prints the friendly message we wrote in the action
+        });
+      }
+    } catch (error) {
+      console.error("Server error:", error);
+    }
   }
 
   return (
@@ -68,11 +81,10 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Warehouse">Warehouse</SelectItem>
-                      <SelectItem value="Sales">Sales</SelectItem>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="Purchasing">Purchasing</SelectItem>
                       <SelectItem value="Finance">Finance</SelectItem>
+                      <SelectItem value="Admin">Admin</SelectItem>
+                      <SelectItem value="Warehouse">Warehouse</SelectItem>
+                      <SelectItem value="Purchasing">Purchasing</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage className="text-xs text-red-500 ml-1" />
@@ -94,6 +106,17 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Last Name</FormLabel>
                   <FormControl>
                     <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                  </FormControl>
+                  <FormMessage className="text-xs text-red-500 ml-1" />
+                </FormItem>
+              )} />
+
+              {/* 2. ADDED THE USERNAME FIELD HERE */}
+              <FormField control={form.control} name="username" render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Username</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="jdoe" className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>
@@ -135,8 +158,11 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
               <Button type="button" variant="outline" onClick={handleClose} className="px-8 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
                 Cancel
               </Button>
-              <Button type="submit" className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/70">
-                Add User
+              <Button 
+                type="submit" 
+                disabled={form.formState.isSubmitting} //disables the button while loading
+                className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/70">
+                {form.formState.isSubmitting ? "Adding...":"Add User"}
               </Button>
             </DialogFooter>
           </form>
