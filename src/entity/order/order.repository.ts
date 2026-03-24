@@ -2,6 +2,7 @@
 import { db } from "../../index";
 import { ordersTable } from "../../db/schema";
 import { eq, count, and, or, ilike, isNotNull } from "drizzle-orm";
+import { createLog } from "../log/log.repository";
 
 //CREATE
 export async function createOrder(data: {
@@ -100,11 +101,21 @@ export async function changeOrderStatus(data: {
   id: number;
   orderStatus: string;
 }) {
-  return db
+  const [updatedOrder] = await db
     .update(ordersTable)
     .set({ orderStatus: data.orderStatus })
     .where(eq(ordersTable.orderId, data.id))
     .returning();
+
+  if (updatedOrder && data.orderStatus === "Delivered") { //TODO: Change status if needed
+    await createLog({
+      actionId: 19,
+      targetId: data.id,
+      remarks: "Received an Order",
+    });   
+  }
+
+  return updatedOrder;
 }
 
 //APPROVE ORDER
