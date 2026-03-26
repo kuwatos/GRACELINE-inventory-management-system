@@ -38,12 +38,19 @@ export async function createUser(data: { username: string; userType: string }) {
     const [newUser] = await tx.insert(usersTable).values(data).returning();
 
     if (newUser) {
-      await createLog({
-        actionId: 3,
-        targetId: newUser.userId,
-        newValue: newUser.username,
-        // Remarks: null (per instructions)
-      }, tx); // Passing tx for atomicity
+      for (const [key, val] of Object.entries(newUser)) {
+        // We only log if the value actually exists (not null/undefined)
+        if (val !== null && val !== undefined) {
+          await createLog({
+            actionId: 3,                    // Added a New Inventory Item
+            targetId: newUser.userId,
+            columnName: key,                // Dynamic: productName, productCategory1, etc.
+            prevValue: null,                // It's a creation, so previous is always null
+            newValue: val.toString(),
+            remarks: null
+          }, tx);
+        }
+      }
     }
 
     return newUser;
@@ -136,19 +143,22 @@ export async function updateUser(data: {
     for (const [key, val] of Object.entries(incomingFields)) {
       const oldValue = (existing as any)[key];
 
+      // Ensure we aren't comparing 'undefined' and that values actually differ
       if (val !== undefined && String(val) !== String(oldValue)) {
         updates[key] = val;
 
+        // DYNAMIC LOGGING
         await createLog({
-          actionId: 5, // Changed User Details
+          actionId: 5,                  // "Changed User Details"
           targetId: id,
+          columnName: key,             // DYNAMIC: This will be "username" or "userType"
           prevValue: oldValue?.toString() || null,
           newValue: val.toString(),
-          // Remarks: null (per instructions)
         }, tx);
       }
     }
 
+    // 3. Finalize update only if something actually changed
     if (Object.keys(updates).length === 0) return { message: "No changes" };
 
     const [updatedUser] = await tx
@@ -190,6 +200,7 @@ export async function deleteUser(id: number) {
       await createLog({
         actionId: 6,
         targetId: id,
+        columnName: "username",
         prevValue: existing.username,
         newValue: null,
       }, tx);

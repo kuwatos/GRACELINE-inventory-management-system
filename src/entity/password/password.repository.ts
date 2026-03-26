@@ -32,6 +32,7 @@ export async function updatePassword(data: {
       await createLog({
         actionId: 4, // Changed User Password
         targetId: userId,
+        columnName: "password",
       }, tx);
     }
 
