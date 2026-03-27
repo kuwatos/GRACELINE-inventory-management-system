@@ -16,5 +16,5 @@ export async function getUsersUnderDepartmentUsingNotifId(
       notificationDepartmentsTable,
       eq(usersTable.userType, notificationDepartmentsTable.department),
     )
-    .where(eq(notificationsTable.notifId, data.notificationId));
+    .where(eq(notificationDepartmentsTable.notifId, data.notificationId));
 }

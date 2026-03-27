@@ -3,6 +3,7 @@ import { db } from "../../index";
 import { suppliersTable } from "../../db/schema";
 import { eq, ilike, and } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
+import { createUserNotificationService } from "../user_notifications/user_notifications.service";
 
 // 1. CREATE WITH DYNAMIC LOGGING
 export async function createSupplier(data: {
@@ -30,6 +31,7 @@ export async function createSupplier(data: {
           }, tx);
         }
       }
+      await createUserNotificationService({ notifId: 3 }, tx);
     }
 
     return newSupplier;

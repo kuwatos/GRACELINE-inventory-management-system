@@ -1,6 +1,6 @@
 import { 
-  createReport
-} from "../entity/reports/reports.repository"; // Adjust path as needed
+  approveOrder,
+} from "../entity/order/order.repository"; // Adjust path as needed
 
 async function testOrderFlow() {
   console.log("📦 Starting Purchase Order Lifecycle Test...");
@@ -9,12 +9,10 @@ async function testOrderFlow() {
   try {
     // --- STEP 1: CREATE ---
     console.log("\n1️⃣ Step: Creating new Purchase Order...");
-    const newOrder = await   createReport
+    const newOrder = await  approveOrder
 ({
-      userId: 3,        // Your admin user ID
-      reportType: "Month-end",
-      dateStart: new Date(),
-      dateEnd: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      id: 3000001, // Replace with actual order ID to approve
+      approvedBy: 1 // Replace with actual user ID who approves
     });
     
 

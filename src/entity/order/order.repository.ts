@@ -3,6 +3,7 @@ import { db } from "../../index";
 import { ordersTable } from "../../db/schema";
 import { eq, count, and, or, ilike, isNotNull } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
+import { createUserNotificationService } from "../user_notifications/user_notifications.service";
 
 // CREATE
 export async function createOrder(data: {
@@ -196,6 +197,7 @@ export async function changeOrderStatus(data: {
           prevValue: existing.orderStatus,
           newValue: data.orderStatus
         }, tx);
+        await createUserNotificationService({ notifId: 6 }, tx);
       }
     }
 
@@ -228,6 +230,7 @@ export async function approveOrder(data: { id: number; approvedBy: number }) {
         prevValue: existing.approvedBy?.toString() ?? null,
         newValue: data.approvedBy.toString(),
       }, tx);
+      await createUserNotificationService({ notifId: 5 }, tx);
     }
 
     return updatedOrder;

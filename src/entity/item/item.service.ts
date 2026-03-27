@@ -26,7 +26,7 @@ export async function createItemService(data: {
     reorderLevel: data.reorderLevel,
   });
 
-  const itemId = item[0].productId;
+  const itemId = item.productId;
 
   await createSupplierItem({
     productId: itemId,

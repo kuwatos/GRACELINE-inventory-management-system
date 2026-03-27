@@ -3,6 +3,7 @@ import { db } from "../../index";
 import { reportsTable } from "../../db/schema";
 import { eq, count, ilike, or, and } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
+import { createUserNotificationService } from "../user_notifications/user_notifications.service";
 
 //CREATE
 export async function createReport(data: {
@@ -31,6 +32,7 @@ export async function createReport(data: {
             }, tx);
           }
         }
+        await createUserNotificationService({ notifId: 7 }, tx);
       }
   
       return newReport;

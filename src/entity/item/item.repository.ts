@@ -124,6 +124,13 @@ export async function updateItem(data: {
         // 3. Logic for specific Action IDs
         if (key === "productQuantity") {
           actionId = 10; // Edited an Item’s Quantity
+          const newQty = Number(val);
+          const reorderLevel = Number(existing.reorderLevel);
+
+          if (!isNaN(newQty) && !isNaN(reorderLevel) && newQty <= reorderLevel) {
+            // Trigger Low Stock Notification (notifId: 2)
+            await createUserNotificationService({ notifId: 2 }, tx);
+          }
         } else if (key === "reorderLevel") {
           actionId = 7; // Set the reorder level
         } else {
