@@ -1,7 +1,7 @@
 // CRUD lives here
 import { db } from "../../index";
 import { ordersTable } from "../../db/schema";
-import { eq, count, and, or, ilike, isNotNull } from "drizzle-orm";
+import { eq, count, and, or, ilike, isNotNull,sql } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { createUserNotificationService } from "../user_notifications/user_notifications.service";
 
@@ -234,5 +234,27 @@ export async function approveOrder(data: { id: number; approvedBy: number }) {
     }
 
     return updatedOrder;
+  });
+}
+
+export async function notifyArrivingOrders() {
+  return await db.transaction(async (tx) => {
+    // 1. Get Today's Date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+
+    // 2. Find orders where expected delivery is today
+    const orders = await tx
+      .select()
+      .from(ordersTable)
+      .where(sql`DATE(${ordersTable.expectedDeliveryDate}) = ${today}`);
+
+    // 3. Trigger notification for each order
+    for (const order of orders) {
+      await createUserNotificationService({ 
+        notifId: 4 // "Order Should Arrive Today"
+      }, tx);
+    }
+    
+    return { count: orders.length };
   });
 }
