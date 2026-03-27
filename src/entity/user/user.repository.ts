@@ -192,7 +192,8 @@ export async function deleteUser(id: number) {
     if (!existing) throw new Error("User not found");
 
     const [deletedUser] = await tx
-      .delete(usersTable)
+      .update(usersTable)
+      .set({ active: false })
       .where(eq(usersTable.userId, id))
       .returning();
 

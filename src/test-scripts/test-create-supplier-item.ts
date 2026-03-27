@@ -1,6 +1,6 @@
 import { 
-  approveOrder,
-} from "../entity/order/order.repository"; // Adjust path as needed
+  deleteUser,
+} from "../entity/user/user.repository"; // Adjust path as needed
 
 async function testOrderFlow() {
   console.log("📦 Starting Purchase Order Lifecycle Test...");
@@ -9,7 +9,7 @@ async function testOrderFlow() {
   try {
     // --- STEP 1: CREATE ---
     console.log("\n1️⃣ Step: Creating new Purchase Order...");
-    const newOrder = await  approveOrder
+    const newOrder = await  deleteUser
 ({
       id: 3000001, // Replace with actual order ID to approve
       approvedBy: 1 // Replace with actual user ID who approves

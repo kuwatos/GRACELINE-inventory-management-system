@@ -9,6 +9,7 @@ import {
   numeric,
   serial
 } from "drizzle-orm/pg-core";
+import { ar } from "zod/v4/locales";
 
 // --- User & Action Management ---
 
@@ -30,7 +31,6 @@ export const usersTable = pgTable("user_tb", {
     .primaryKey(),
   userType: text("user_type").notNull(),
   username: text("username").notNull(),
->>>>>>> ef4ca96 (Finished creating and testing log functions. Modified schema)
 });
 
 export const passwordsTable = pgTable("password_tb", {
@@ -83,6 +83,7 @@ export const projectsTable = pgTable("project_tb", {
     .generatedAlwaysAsIdentity({ startWith: 4000000 })
     .primaryKey(),
   projectName: text("project_name").notNull(),
+  archived: boolean("archived").default(false),
 });
 
 // --- Suppliers & Products ---
@@ -95,6 +96,7 @@ export const suppliersTable = pgTable("supplier_tb", {
   supplierLandline: text("supplier_landline"),
   supplierEmail: text("supplier_email"),
   supplierMobile: text("supplier_mobile"),
+  active: boolean("active").default(true),
 });
 
 // List of items in the inventory
@@ -125,6 +127,7 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
   lastUpdated: timestamp("last_updated")
     .defaultNow()
     .$onUpdate(() => new Date()),
+  archived: boolean("archived").default(false),
 });
 
 // --- Orders ---

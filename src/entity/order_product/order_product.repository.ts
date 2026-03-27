@@ -38,8 +38,9 @@ export async function updateOrderProducts(data: {
 
 //DELETE
 export async function deleteOrderProducts(id: number) {
-  return db
+  await db
     .delete(orderProductsTable)
     .where(eq(orderProductsTable.orderProductId, id))
     .returning();
+  return {success:true}
 }

@@ -31,8 +31,10 @@ export async function updateProject(id: number, name: string) {
 
 //DELETE
 export async function deleteProject(id: number) {
-  return db
-    .delete(projectsTable)
+  await db
+    .update(projectsTable)
+    .set({ archived: true })
     .where(eq(projectsTable.projectId, id))
     .returning();
+  return { success: true }
 }

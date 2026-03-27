@@ -121,7 +121,7 @@ export async function deleteSupplier(id: number) {
     if (!existing) throw new Error("Supplier not found");
 
     // Perform Delete
-    await tx.delete(suppliersTable).where(eq(suppliersTable.supplierId, id));
+    await tx.update(suppliersTable).set({ active: false }).where(eq(suppliersTable.supplierId, id)).returning();
 
     // Log the deletion (Action ID 14)
     await createLog({

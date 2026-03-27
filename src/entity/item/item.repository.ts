@@ -174,7 +174,7 @@ export async function deleteItem(id: number) {
     if (!item) throw new Error("Item not found");
 
     // Perform Delete
-    await tx.delete(itemsTable).where(eq(itemsTable.productId, id));
+    await tx.update(itemsTable).set({ archived: true }).where(eq(itemsTable.productId, id)).returning();
 
     // Log Deletion (Action ID 9)
     await createLog({

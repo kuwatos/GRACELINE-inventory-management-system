@@ -77,8 +77,9 @@ export async function searchReports(filters: {
 
 //DELETE
 export async function deleteReport(id: number) {
-  return db
+  await db
     .delete(reportsTable)
     .where(eq(reportsTable.reportId, id))
     .returning();
+  return { success: true };
 }
