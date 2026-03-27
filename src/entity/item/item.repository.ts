@@ -3,6 +3,7 @@ import { db } from "../../index";
 import { itemsTable } from "../../db/schema";
 import { eq, lte, ilike, or, and } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
+import {createUserNotificationService} from "../user_notifications/user_notifications.service";
 
 // CREATE
 export async function createItem(data: {
@@ -37,6 +38,7 @@ export async function createItem(data: {
       }
     }
 
+    await createUserNotificationService({ notifId: 1 }, tx); // Assuming notifId 1 is for new item notifications
     return newItem;
   });
 }

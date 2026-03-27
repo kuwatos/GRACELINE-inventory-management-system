@@ -156,8 +156,13 @@ export const orderProductsTable = pgTable("order_product_tb", {
 
 export const notificationsTable = pgTable("notification_tb", {
   notifId: serial("notif_id").primaryKey(),
-  department: text("department").notNull(),
   description: text("description").notNull(),
+});
+
+export const notificationDepartmentsTable = pgTable("notification_department_tb", {
+  id: serial("id").primaryKey(),
+  notifId: integer("notif_id").references(() => notificationsTable.notifId),
+  department: text("department").notNull(), // e.g., 'ADMIN', 'WAREHOUSE'
 });
 
 export const userNotificationsTable = pgTable("user_notification_tb", {
