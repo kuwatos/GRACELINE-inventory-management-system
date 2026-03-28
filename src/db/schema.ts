@@ -36,7 +36,7 @@ export const usersTable = pgTable("user_tb", {
 export const passwordsTable = pgTable("password_tb", {
   // Added PK to support the requested 9,000,000 starting value
   passwordId: integer("password_id")
-    .generatedAlwaysAsIdentity({ startWith: 9000000 })
+    .generatedAlwaysAsIdentity({ startWith: 9000001 })
     .primaryKey(),
   userId: integer("user_id").references(() => usersTable.userId),
   password: text("password").notNull(),
@@ -67,7 +67,7 @@ export const logsTable = pgTable("log_tb", {
 
 export const reportsTable = pgTable("report_tb", {
   reportId: integer("report_id")
-    .generatedAlwaysAsIdentity({ startWith: 5000000 })
+    .generatedAlwaysAsIdentity({ startWith: 5000001 })
     .primaryKey(),
   userId: integer("user_id").references(() => usersTable.userId),
   reportType: text("report_type").notNull(),
@@ -80,7 +80,7 @@ export const reportsTable = pgTable("report_tb", {
 
 export const projectsTable = pgTable("project_tb", {
   projectId: integer("project_id")
-    .generatedAlwaysAsIdentity({ startWith: 4000000 })
+    .generatedAlwaysAsIdentity({ startWith: 4000001 })
     .primaryKey(),
   projectName: text("project_name").notNull(),
   archived: boolean("archived").default(false),
@@ -90,7 +90,7 @@ export const projectsTable = pgTable("project_tb", {
 
 export const suppliersTable = pgTable("supplier_tb", {
   supplierId: integer("supplier_id")
-    .generatedAlwaysAsIdentity({ startWith: 7000000 })
+    .generatedAlwaysAsIdentity({ startWith: 7000001 })
     .primaryKey(),
   supplierName: text("supplier_name").notNull(),
   supplierLandline: text("supplier_landline"),
@@ -102,7 +102,7 @@ export const suppliersTable = pgTable("supplier_tb", {
 // List of items in the inventory
 export const itemsTable = pgTable("item_tb", {
   productId: integer("product_id")
-    .generatedAlwaysAsIdentity({ startWith: 8000000 })
+    .generatedAlwaysAsIdentity({ startWith: 8000001 })
     .primaryKey(),
   productName: text("product_name").notNull(),
   productCategory1: text("product_category1"),
@@ -119,7 +119,7 @@ export const itemsTable = pgTable("item_tb", {
 // List of suppliers and the products they supply
 export const supplierItemsTable = pgTable("supplier_item_tb", {
   supplierItemId: integer("supplier_item_id")
-    .generatedAlwaysAsIdentity({ startWith: 6000000 })
+    .generatedAlwaysAsIdentity({ startWith: 6000001 })
     .primaryKey(),
   supplierId: integer("supplier_id").references(() => suppliersTable.supplierId),
   productId: integer("product_id").references(() => itemsTable.productId),
@@ -134,7 +134,7 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
 
 export const ordersTable = pgTable("order_tb", {
   orderId: integer("order_id")
-    .generatedAlwaysAsIdentity({ startWith: 3000000 })
+    .generatedAlwaysAsIdentity({ startWith: 3000001 })
     .primaryKey(),
   orderStatus: text("order_status").notNull(),
   orderDate: timestamp("order_date").notNull().defaultNow(),
@@ -148,7 +148,7 @@ export const ordersTable = pgTable("order_tb", {
 
 export const orderProductsTable = pgTable("order_product_tb", {
   orderProductId: integer("order_product_id")
-    .generatedAlwaysAsIdentity({ startWith: 2000000 })
+    .generatedAlwaysAsIdentity({ startWith: 2000001 })
     .primaryKey(),
   orderId: integer("order_id").references(() => ordersTable.orderId),
   productId: integer("product_id").references(() => itemsTable.productId),
@@ -170,7 +170,7 @@ export const notificationDepartmentsTable = pgTable("notification_department_tb"
 
 export const userNotificationsTable = pgTable("user_notification_tb", {
   userNotifId: integer("user_notif_id")
-    .generatedAlwaysAsIdentity({ startWith: 1000000 })
+    .generatedAlwaysAsIdentity({ startWith: 1000001 })
     .primaryKey(),
   userId: integer("user_id").references(() => usersTable.userId),
   notifId: integer("notif_id").references(() => notificationsTable.notifId),
