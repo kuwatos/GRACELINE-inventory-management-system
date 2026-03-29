@@ -14,8 +14,12 @@ import { ar } from "zod/v4/locales";
 // --- User & Action Management ---
 
 export const usersTable = pgTable("user_tb", {
-<<<<<<< HEAD
-  userId: serial("user_id").primaryKey(),
+
+  userId: integer("user_id")
+    .generatedAlwaysAsIdentity({ startWith: 1 })
+    .primaryKey(),
+  userType: text("user_type").notNull(),
+  username: text("username").notNull(),
 
   // The new fields that match your UI exactly!
   firstName: text("first_name").notNull(),
@@ -23,14 +27,9 @@ export const usersTable = pgTable("user_tb", {
   department: text("department").notNull(),
   
   // Keep username for logging in, and keep our awesome status trick!
-  username: text("username").notNull().unique(), 
   status: text("user_status").default("active").notNull()
-=======
-  userId: integer("user_id")
-    .generatedAlwaysAsIdentity({ startWith: 1 })
-    .primaryKey(),
-  userType: text("user_type").notNull(),
-  username: text("username").notNull(),
+
+  
 });
 
 export const passwordsTable = pgTable("password_tb", {

@@ -26,8 +26,8 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
     resolver: zodResolver(editSupplierSchema),
     defaultValues: { 
       name: "", 
-      contact: "",
-      email: "" 
+      supplierLandline: "",
+      supplierEmail: "" 
     },
   });
 
@@ -35,20 +35,20 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
   useEffect(() => {
     if (isOpen && supplier) {
       form.reset({
-        name: supplier.name,
-        contact: supplier.contact,
-        email: supplier.email,
+        name: supplier.supplierName,
+        supplierLandline: supplier.supplierLandline || "",
+        supplierEmail: supplier.supplierEmail || "",
       });
     }
   }, [isOpen, supplier, form]);
 
   function onSubmit(values: z.infer<typeof editSupplierSchema>) {
-    console.log("Ready to update database for:", supplier?.id, values);
+    console.log("Ready to update database for:", supplier?.supplierId, values);
     onClose();
   }
 
   const handleFormSubmit = isViewOnly ? (e: React.FormEvent) => e.preventDefault() : form.handleSubmit(onSubmit);
-  const title = isViewOnly ? `View Supplier: ${supplier?.id}` : `Edit Supplier: ${supplier?.id}`;
+  const title = isViewOnly ? `View Supplier: ${supplier?.supplierId}` : `Edit Supplier: ${supplier?.supplierId}`;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -72,18 +72,18 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
               )} />
 
               <div className="grid grid-cols-2 gap-6">
-                <FormField control={form.control} name="contact" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Contact Person</FormLabel>
-                    <FormControl>
-                      <Input {...field} disabled={isViewOnly} className="h-12 rounded-xl border-gray-200 focus-visible:ring-black/5 disabled:bg-gray-50 disabled:text-gray-900" />
-                    </FormControl>
-                    <FormMessage className="text-xs text-red-500 ml-1" />
-                  </FormItem>
-                )} />
+              <FormField control={form.control} name="supplierLandline" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Landline</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled={isViewOnly} className="h-12 rounded-xl border-gray-200 focus-visible:ring-black/5 disabled:bg-gray-50 disabled:text-gray-900" />
+                  </FormControl>
+                  <FormMessage className="text-xs text-red-500 ml-1" />
+                </FormItem>
+              )} />
               </div>
 
-              <FormField control={form.control} name="email" render={({ field }) => (
+              <FormField control={form.control} name="supplierEmail" render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Email Address</FormLabel>
                   <FormControl>

@@ -20,8 +20,9 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
     resolver: zodResolver(newSupplierSchema),
     defaultValues: { 
       name: "", 
-      contact: "", 
-      email: "" },
+      supplierLandline: "", 
+      supplierEmail: "",
+      supplierMobile: "" },
   });
 
   function onSubmit(values: z.infer<typeof newSupplierSchema>) {
@@ -51,9 +52,9 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
                 </FormItem>
               )} />
 
-              <FormField control={form.control} name="contact" render={({ field }) => (
+              <FormField control={form.control} name="supplierLandline" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Contact Person</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Landline</FormLabel>
                   <FormControl>
                     <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
                   </FormControl>
@@ -61,11 +62,21 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
                 </FormItem>
               )} />
 
-              <FormField control={form.control} name="email" render={({ field }) => (
+              <FormField control={form.control} name="supplierEmail" render={({ field }) => (
                 <FormItem className="space-y-1.5">
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Email Address</FormLabel>
                   <FormControl>
                     <Input {...field} type="email" className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                  </FormControl>
+                  <FormMessage className="text-xs text-red-500 ml-1" />
+                </FormItem>
+              )} />
+
+              <FormField control={form.control} name="supplierMobile" render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Mobile Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>

@@ -29,8 +29,8 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
   const filteredData = data.filter((supplier) => {
     const searchLower = searchQuery.toLowerCase();
     return (
-      supplier.name.toLowerCase().includes(searchLower) ||
-      supplier.id.toLowerCase().includes(searchLower)
+      supplier.supplierName.toLowerCase().includes(searchLower) ||
+      supplier.supplierId.toString().includes(searchLower)
     );
   });
 
@@ -49,7 +49,7 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
 
   const handleDeleteClick = (supplier: Supplier) => {
     // We will wire this up to a database action later!
-    console.log("Request to delete:", supplier.id);
+    console.log("Request to delete:", supplier.supplierId);
   };
 
   return (

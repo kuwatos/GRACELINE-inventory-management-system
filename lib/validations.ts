@@ -43,12 +43,16 @@ const baseSupplierSchema = z.object({
   supplierLandline: z
     .string()
     .trim()
-    .min(8, "Landline must be valid"),
-  supplierEmail: z.string().trim().email("Please enter a valid email address"),
+    .optional(),
+  supplierEmail: z
+    .string()
+    .trim()
+    .email("Please enter a valid email address")
+    .optional(),
   supplierMobile: z
     .string()
     .trim()
-    .min(10, "Mobile number must be valid"),
+    .optional(),
 });
 
 // Schema for New Supplier
