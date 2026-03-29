@@ -1,32 +1,5 @@
 // CRUD lives here
 import { db } from "../../index";
-<<<<<<< HEAD
-import { usersTable, passwordsTable } from "../../db/schema";
-import { and, or, ilike, eq } from "drizzle-orm";
-
-// CREATE
-export async function createUser(data: { 
-  username: string; 
-  firstName: string; 
-  lastName: string; 
-  department: string; 
-  passwordStr: string; 
-}) {
-  return await db.transaction(async (tx) => {
-    const [newUser] = await tx.insert(usersTable).values({
-      username: data.username,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      department: data.department,
-    }).returning();
-
-    await tx.insert(passwordsTable).values({
-      userId: newUser.userId,
-      password: data.passwordStr, 
-    });
-
-    return newUser; 
-=======
 import { usersTable } from "../../db/schema";
 import { and, or, ilike, eq } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
@@ -54,7 +27,6 @@ export async function createUser(data: { username: string; userType: string }) {
     }
 
     return newUser;
->>>>>>> 590ef90 (Added log functions but still encounters errors with db connection. Will continue to debug and fix the issue.)
   });
 }
 
@@ -105,26 +77,6 @@ export async function updateUser(data: {
   department?: string;
   password?: string; // Notice this is optional (?)
 }) {
-<<<<<<< HEAD
-  const { id, password, ...fields } = data;
-
-  return await db.transaction(async (tx) => {
-    // 1. Update the profile info in the usersTable
-    const [updatedUser] = await tx
-      .update(usersTable)
-      .set(fields)
-      .where(eq(usersTable.userId, id))
-      .returning();
-
-    // 2. IF the admin typed a new password, update the passwordsTable!
-    if (password) {
-      await tx
-        .update(passwordsTable)
-        .set({ password: password }) // Remember: We will hash this later!
-        .where(eq(passwordsTable.userId, id));
-    }
-
-=======
   const { id, ...incomingFields } = data;
 
   return await db.transaction(async (tx) => {
@@ -167,27 +119,18 @@ export async function updateUser(data: {
       .where(eq(usersTable.userId, id))
       .returning();
 
->>>>>>> 590ef90 (Added log functions but still encounters errors with db connection. Will continue to debug and fix the issue.)
     return updatedUser;
   });
 }
 
 // DELETE (True Soft Delete - Enterprise Way)
 export async function deleteUser(id: number) {
-<<<<<<< HEAD
-  const [deletedUser] = await db
-    .update(usersTable)
-    .set({ status: "inactive" })
-    .where(eq(usersTable.userId, id))
-    .returning();
-=======
   return await db.transaction(async (tx) => {
     const [existing] = await tx
       .select()
       .from(usersTable)
       .where(eq(usersTable.userId, id))
       .limit(1);
->>>>>>> 590ef90 (Added log functions but still encounters errors with db connection. Will continue to debug and fix the issue.)
 
     if (!existing) throw new Error("User not found");
 

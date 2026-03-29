@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { createSupplierAction } from "@/lib/action/supplier.action";
 
 interface NewSupplierModalProps {
   isOpen: boolean;
@@ -25,10 +26,27 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
       supplierMobile: "" },
   });
 
-  function onSubmit(values: z.infer<typeof newSupplierSchema>) {
-    console.log("Ready to send to database:", values);
+  const handleClose = () => {
     form.reset();
     onClose();
+  };
+
+  async function onSubmit(values: z.infer<typeof newSupplierSchema>) {
+    try {
+      const result = await createSupplierAction(values);
+
+      if (result.success) {
+        handleClose();
+      } else {
+        // If it fails, attach the error message directly to the username field!
+        // form.setError("username", {
+        //   type: "manual",
+        //   message: result.error, // This prints the friendly message we wrote in the action
+        // });
+      }
+    } catch (error) {
+      console.error("Server error:", error);
+    }
   }
 
   return (
