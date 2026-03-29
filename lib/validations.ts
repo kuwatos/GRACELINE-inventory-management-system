@@ -40,19 +40,24 @@ export const editItemSchema = baseItemSchema
 // The base rules for a supplier
 const baseSupplierSchema = z.object({
   name: z.string().trim().min(2, "Supplier name must be at least 2 characters"),
-  contact: z
+  supplierLandline: z
     .string()
     .trim()
-    .min(2, "Contact person must be at least 2 characters"),
-  email: z.string().trim().email("Please enter a valid email address"),
+    .min(8, "Landline must be valid"),
+  supplierEmail: z.string().trim().email("Please enter a valid email address"),
+  supplierMobile: z
+    .string()
+    .trim()
+    .min(10, "Mobile number must be valid"),
 });
 
 // Schema for New Supplier
 export const newSupplierSchema = baseSupplierSchema;
 
 // Schema for Edit Supplier
-export const editSupplierSchema = baseSupplierSchema;
-
+export const editSupplierSchema = baseSupplierSchema.extend({
+  supplierId: z.number(), 
+});
 //=============== USER =================
 
 // The base rules for a user
