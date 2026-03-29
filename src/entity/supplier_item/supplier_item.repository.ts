@@ -47,8 +47,10 @@ export async function updateItem(data: {
 
 //DELETE
 export async function deleteItem(id: number) {
-  return db
-    .delete(supplierItemsTable)
-    .where(eq(supplierItemsTable.productId, id))
+  await db
+    .update(supplierItemsTable)
+    .set({ archived: true })
+    .where(eq(supplierItemsTable.supplierItemId, id))
     .returning();
+  return { success: true };
 }

@@ -1,5 +1,6 @@
 // CRUD lives here
 import { db } from "../../index";
+<<<<<<< HEAD
 import { usersTable, passwordsTable } from "../../db/schema";
 import { and, or, ilike, eq } from "drizzle-orm";
 
@@ -25,6 +26,35 @@ export async function createUser(data: {
     });
 
     return newUser; 
+=======
+import { usersTable } from "../../db/schema";
+import { and, or, ilike, eq } from "drizzle-orm";
+import { createLog } from "../log/log.repository";
+
+//CREATE
+export async function createUser(data: { username: string; userType: string }) {
+  // TODO: Add password
+  return await db.transaction(async (tx) => {
+    const [newUser] = await tx.insert(usersTable).values(data).returning();
+
+    if (newUser) {
+      for (const [key, val] of Object.entries(newUser)) {
+        // We only log if the value actually exists (not null/undefined)
+        if (val !== null && val !== undefined) {
+          await createLog({
+            actionId: 3,                    // Added a New Inventory Item
+            targetId: newUser.userId,
+            columnName: key,                // Dynamic: productName, productCategory1, etc.
+            prevValue: null,                // It's a creation, so previous is always null
+            newValue: val.toString(),
+            remarks: null
+          }, tx);
+        }
+      }
+    }
+
+    return newUser;
+>>>>>>> 590ef90 (Added log functions but still encounters errors with db connection. Will continue to debug and fix the issue.)
   });
 }
 
@@ -75,6 +105,7 @@ export async function updateUser(data: {
   department?: string;
   password?: string; // Notice this is optional (?)
 }) {
+<<<<<<< HEAD
   const { id, password, ...fields } = data;
 
   return await db.transaction(async (tx) => {
@@ -93,18 +124,90 @@ export async function updateUser(data: {
         .where(eq(passwordsTable.userId, id));
     }
 
+=======
+  const { id, ...incomingFields } = data;
+
+  return await db.transaction(async (tx) => {
+    // 1. Get current state to compare fields
+    const [existing] = await tx
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.userId, id))
+      .limit(1);
+
+    if (!existing) throw new Error("User not found");
+
+    const updates: Record<string, any> = {};
+
+    // 2. Loop and Log individual changes
+    for (const [key, val] of Object.entries(incomingFields)) {
+      const oldValue = (existing as any)[key];
+
+      // Ensure we aren't comparing 'undefined' and that values actually differ
+      if (val !== undefined && String(val) !== String(oldValue)) {
+        updates[key] = val;
+
+        // DYNAMIC LOGGING
+        await createLog({
+          actionId: 5,                  // "Changed User Details"
+          targetId: id,
+          columnName: key,             // DYNAMIC: This will be "username" or "userType"
+          prevValue: oldValue?.toString() || null,
+          newValue: val.toString(),
+        }, tx);
+      }
+    }
+
+    // 3. Finalize update only if something actually changed
+    if (Object.keys(updates).length === 0) return { message: "No changes" };
+
+    const [updatedUser] = await tx
+      .update(usersTable)
+      .set(updates)
+      .where(eq(usersTable.userId, id))
+      .returning();
+
+>>>>>>> 590ef90 (Added log functions but still encounters errors with db connection. Will continue to debug and fix the issue.)
     return updatedUser;
   });
 }
 
 // DELETE (True Soft Delete - Enterprise Way)
 export async function deleteUser(id: number) {
+<<<<<<< HEAD
   const [deletedUser] = await db
     .update(usersTable)
     .set({ status: "inactive" })
     .where(eq(usersTable.userId, id))
     .returning();
+=======
+  return await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.userId, id))
+      .limit(1);
+>>>>>>> 590ef90 (Added log functions but still encounters errors with db connection. Will continue to debug and fix the issue.)
 
-  return deletedUser;
+    if (!existing) throw new Error("User not found");
+
+    const [deletedUser] = await tx
+      .update(usersTable)
+      .set({ active: false })
+      .where(eq(usersTable.userId, id))
+      .returning();
+
+    if (deletedUser) {
+      await createLog({
+        actionId: 6,
+        targetId: id,
+        columnName: "username",
+        prevValue: existing.username,
+        newValue: null,
+      }, tx);
+    }
+
+    return deletedUser;
+  });
 }
 

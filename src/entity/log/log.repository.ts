@@ -4,15 +4,21 @@ import { logsTable } from "../../db/schema";
 import { eq, ilike, or, and } from "drizzle-orm";
 
 //CREATE
-export async function createLog(data: {
-  // userId: number;
-  actionId: number;
-  targetId: number;
-  prevValue?: string;
-  newValue: string;
-  remarks?: string;
-}) {
-  return db.insert(logsTable).values(data).returning();
+// logs.service.ts or similar
+export async function createLog(
+  data: {
+    actionId: number;
+    targetId: number;
+    columnName: string;
+    prevValue?: string | null;
+    newValue?: string | null;
+    remarks?: string | null;
+  },
+  tx?: any // Optional Transaction Client
+) {
+  // If 'tx' is provided, use it. Otherwise, use the standard 'db'.
+  const client = tx || db; 
+  return client.insert(logsTable).values(data);
 }
 
 //READ
