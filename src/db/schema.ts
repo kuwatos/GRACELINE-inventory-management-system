@@ -10,8 +10,69 @@ import {
   numeric,
 } from "drizzle-orm/pg-core";
 
+// --- BetterAuth required schema (do not modify!) ---
+
+export const usersTable = pgTable("user", {
+  id: text("id").primaryKey(),
+	name: text("name").notNull(),
+	email: varchar("email", { length: 255 }).notNull().unique(),
+	emailVerified: boolean("email_verified").notNull(),
+	image: text("image"),
+	createdAt: timestamp("created_at", { precision: 6, withTimezone: true }).notNull(),
+	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
+  
+  //for username login plug-in
+  username: varchar("username", { length: 255 }).unique(),
+	displayUsername: text("display_username"),
+
+
+  // custom fields for our app
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  department: text("department").notNull(),
+  status: text("user_status").default("active").notNull()
+});
+
+export const sessionsTable = pgTable("session", {
+	id: text("id").primaryKey(),
+	userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+	token: varchar("token", { length: 255 }).notNull().unique(),
+	expiresAt: timestamp("expires_at", { precision: 6, withTimezone: true }).notNull(),
+	ipAddress: text("ip_address"),
+	userAgent: text("user_agent"),
+	createdAt: timestamp("created_at", { precision: 6, withTimezone: true }).notNull(),
+	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
+});
+
+export const accountsTable = pgTable("account", {
+	id: text("id").primaryKey(),
+	userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+	accountId: text("account_id").notNull(),
+	providerId: text("provider_id").notNull(),
+	accessToken: text("access_token"),
+	refreshToken: text("refresh_token"),
+	accessTokenExpiresAt: timestamp("access_token_expires_at", { precision: 6, withTimezone: true }),
+	refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { precision: 6, withTimezone: true }),
+	scope: text("scope"),
+	idToken: text("id_token"),
+	password: text("password"),
+	createdAt: timestamp("created_at", { precision: 6, withTimezone: true }).notNull(),
+	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
+});
+
+
+export const verificationTable = pgTable("verification", {
+	id: text("id").primaryKey(),
+	identifier: text("identifier").notNull(),
+	value: text("value").notNull(),
+	expiresAt: timestamp("expires_at", { precision: 6, withTimezone: true }).notNull(),
+	createdAt: timestamp("created_at", { precision: 6, withTimezone: true }).notNull(),
+	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
+});
+
 // --- User & Action Management ---
 
+/*
 export const usersTable = pgTable("user_tb", {
   userId: serial("user_id").primaryKey(),
 
@@ -32,6 +93,9 @@ export const passwordsTable = pgTable("password_tb", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
+*/
+
+
 
 //List of actions that can be logged in the system. Purpose niya lang is to be a list ng ilalagay sa logs tas nasa logs na yung
 //may value and timestamp kung kelan ginawa yung action.
@@ -44,7 +108,7 @@ export const actionsTable = pgTable("action_tb", {
 //Logs of actions performed by users. May prevValue at newValue para makita yung changes na ginawa sa isang record, and remarks for any additional info.
 export const logsTable = pgTable("log_tb", {
   logId: serial("log_id").primaryKey(),
-  userId: integer("user_id").references(() => usersTable.userId),
+  userId: text("user_id").references(() => usersTable.id),
   actionId: integer("action_id").references(() => actionsTable.actionId),
   targetId: integer("target_id").notNull(),
   logDate: timestamp("log_date").defaultNow(),
@@ -55,7 +119,7 @@ export const logsTable = pgTable("log_tb", {
 
 export const reportsTable = pgTable("report_tb", {
   reportId: serial("report_id").primaryKey(),
-  userId: integer("user_id").references(() => usersTable.userId),
+  userId: text("user_id").references(() => usersTable.id),
   reportType: text("report_type").notNull(),
   dateCreated: timestamp("date_created").defaultNow(),
   dateStart: timestamp("date_start"),
@@ -120,11 +184,11 @@ export const ordersTable = pgTable("order_tb", {
   expectedDeliveryDate: timestamp("expected_delivery_date"),
   actualDeliveryDate: timestamp("actual_delivery_date"),
   projectId: integer("project_id").references(() => projectsTable.projectId),
-  createdBy: integer("created_by").references(() => usersTable.userId),
-  approvedBy: integer("approved_by").references(() => usersTable.userId),
+  createdBy: text("created_by").references(() => usersTable.id),
+  approvedBy: text("approved_by").references(() => usersTable.id),
 });
 
-//List of products in each order, with the quantity ordered for each product.
+//List of products in each order, with the quantity ordered for each produc
 //Eto yung naglilink sa orders at items table, kasi one order pwede may multiple products, and one product pwede maorder sa multiple orders.
 export const orderProductsTable = pgTable("order_product_tb", {
   orderProductId: serial("order_product_id").primaryKey(),
@@ -146,7 +210,7 @@ export const notificationsTable = pgTable("notification_tb", {
 //List of notifications sent to users, eto na yung lumalabas sa users
 export const userNotificationsTable = pgTable("user_notification_tb", {
   userNotifId: serial("user_notif_id").primaryKey(),
-  userId: integer("user_id").references(() => usersTable.userId),
+  userId: text("user_id").references(() => usersTable.id),
   notifId: integer("notif_id").references(() => notificationsTable.notifId),
   isRead: boolean("is_read").default(false),
   createdAt: date("created_at").defaultNow(),
