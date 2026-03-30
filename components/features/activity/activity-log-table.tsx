@@ -15,8 +15,8 @@ export interface Log {
   id: number;
   timestamp: string | Date | null; 
   user: string | null;
-  dept: string;
-  action: string;
+  dept: string | null;
+  action: string | null;
   target: number;
   prev: string | null;
   next: string | null;
