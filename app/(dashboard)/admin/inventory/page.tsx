@@ -1,9 +1,12 @@
 import { InventoryManager } from '@/components/features/inventory/inventory-manager'
 import React from 'react'
+import { readItems } from '@/src/entity/item/item.query'
 
-function page() {
+async function page() {
+  const items = await readItems();
+
   return (
-    <InventoryManager/>
+    <InventoryManager data={items}/>
   )
 }
 

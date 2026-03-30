@@ -32,13 +32,20 @@ interface NewItemModalProps {
 }
 
 export const NewItemModal = ({ isOpen, onClose }: NewItemModalProps) => {
-  const form = useForm<z.infer<typeof newItemSchema>>({
+  const form = useForm<z.input<typeof newItemSchema>>({
     resolver: zodResolver(newItemSchema),
     defaultValues: {
-      supplierId: "",
-      category: "",
       productName: "",
-      reorderLevel: 0,
+      category1: "",
+      category2: "",
+      category3: "",
+      category4: "",
+      category5: "",
+      productDesc: "",
+      productQuantity: 0,
+      reorderLevel: 1,
+      supplierId: 1,
+      unitPrice: "1.00",
     },
   });
 
@@ -65,7 +72,7 @@ export const NewItemModal = ({ isOpen, onClose }: NewItemModalProps) => {
               <FormField control={form.control} name="supplierId" render={({ field }) => (
                 <FormItem className="space-y-1.5">
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value as string}>
                     <FormControl>
                       <SelectTrigger className={cn("h-11 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0", !field.value && "text-gray-400")}>
                         <SelectValue placeholder="Select a supplier" />
@@ -80,10 +87,10 @@ export const NewItemModal = ({ isOpen, onClose }: NewItemModalProps) => {
                 </FormItem>
               )} />
 
-              <FormField control={form.control} name="category" render={({ field }) => (
+              <FormField control={form.control} name="category1" render={({ field }) => (
                 <FormItem className="space-y-1.5">
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value as string}>
                     <FormControl>
                       <SelectTrigger className={cn("h-11 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0", !field.value && "text-gray-400")}>
                         <SelectValue placeholder="Select category" />

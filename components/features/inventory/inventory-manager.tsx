@@ -22,8 +22,8 @@ export const InventoryManager = ({ data = [] }: InventoryManagerProps) => {
   const filteredData = data.filter((item) => {
     const searchLower = searchQuery.toLowerCase();
     return (
-      item.name.toLowerCase().includes(searchLower) ||
-      item.code.toLowerCase().includes(searchLower)
+      item.productName.toLowerCase().includes(searchLower) 
+      // || item.code.toLowerCase().includes(searchLower)
     );
   });
 

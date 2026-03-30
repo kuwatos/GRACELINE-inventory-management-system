@@ -4,18 +4,51 @@ import * as z from "zod";
 //=============== ITEM =================
 // 1. The Shared Base Schema (The strict rules for a Product)
 export const baseItemSchema = z.object({
-  supplierId: z.string().trim().min(1, "Please select a supplier"),
-  category: z
+  // Foreign Key to Supplier
+  supplierId: z.coerce
+    .number()
+    .int()
+    .min(1, "Please select a supplier"),
+
+  // Main Category (Required)
+  category1: z
     .string()
     .trim()
     .min(1, "Invalid category")
     .max(25, "Invalid category"),
+
+  // Sub-Categories (Optional, but validated if provided)
+  // We use z.union with an empty string so the form can submit "nothing" successfully.
+  category2: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
+  category3: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
+  category4: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
+  category5: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
+
   productName: z
     .string()
     .min(3, "Product name must be at least 3 characters")
     .max(100, "Product name must be at most 100 characters"),
+
+  productDesc: z
+    .string()
+    .trim()
+    .max(500, "Description is too long")
+    .optional(),
+
+  productQuantity: z.coerce
+    .number()
+    .int("Quantity must be a whole number")
+    .min(0, "Quantity cannot be negative")
+    .default(0),
+
+  // Price Logic: Coerce to number for validation, then back to string for the Service
+  unitPrice: z.coerce
+    .number()
+    .positive("Price must be greater than 0")
+    .transform((val) => val.toFixed(2)),
+
   reorderLevel: z.coerce
-    .number<number>()
+    .number()
     .int("Reorder level must be a whole number")
     .min(1, "Level must at least be 1")
     .max(1000, "You exceeded the maximum level"),

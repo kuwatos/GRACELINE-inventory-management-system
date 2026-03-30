@@ -13,12 +13,16 @@ import { Button } from "@/components/ui/button";
 
 // 1. Define exactly what a row of data looks like
 export interface InventoryItem {
-  id: string;
-  code: string;
-  name: string;
-  category: string;
-  quantity: number;
-  reorderLevel: number;
+  productId: number;
+  productName: string;
+  productCategory1: string | null;
+  productCategory2: string | null;
+  productCategory3: string | null;
+  productCategory4: string | null;
+  productCategory5: string | null;
+  productDesc: string | null;
+  productQuantity: number | null;
+  reorderLevel: number | null;
 }
 
 // 2. Add 'data' to your props so the parent can pass it down
@@ -58,7 +62,22 @@ export const InventoryTable = ({ data, onEdit }: InventoryTableProps) => {
               Item Name
             </TableHead>
             <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
-              Category
+              Category 1
+            </TableHead>
+            <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
+              Category 2
+            </TableHead>
+            <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
+              Category 3
+            </TableHead>
+            <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
+              Category 4
+            </TableHead>
+            <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
+              Category 5
+            </TableHead>
+            <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
+              Description
             </TableHead>
             <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
               Current Quantity
@@ -66,27 +85,40 @@ export const InventoryTable = ({ data, onEdit }: InventoryTableProps) => {
             <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
               Reorder Level
             </TableHead>
-            <TableHead className="px-4 py-3 text-right text-gray-400 font-medium uppercase text-[10px] tracking-widest">
-              Action
-            </TableHead>
+            
           </TableRow>
         </TableHeader>
         <TableBody>
           {currentItems.map((item) => {
-            const isLowStock = item.quantity <= item.reorderLevel;
+            const isLowStock = item.productQuantity <= item.reorderLevel;
             return (
               <TableRow 
-                key={item.id} 
+                key={item.productId} 
                 className="group transition-colors hover:bg-black cursor-default border-b border-gray-50"
               >
-                <TableCell className="px-4 py-4 font-mono text-xs text-gray-500 group-hover:text-zinc-400">
-                  {item.code}
+                <TableCell className="px-4 py-4 font-medium text-gray-800 group-hover:text-white">
+                  {item.productId}
                 </TableCell>
                 <TableCell className="px-4 py-4 font-medium text-gray-800 group-hover:text-white">
-                  {item.name}
+                  {item.productName}
                 </TableCell>
                 <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
-                  {item.category}
+                  {item.productCategory1}
+                </TableCell>
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
+                  {item.productCategory2}
+                </TableCell>
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
+                  {item.productCategory3}
+                </TableCell>
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
+                  {item.productCategory4}
+                </TableCell>
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
+                  {item.productCategory5}
+                </TableCell>
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
+                  {item.productDesc}
                 </TableCell>
                 <TableCell className="px-4 py-4">
                   <span className={`flex items-center gap-1 ${
@@ -94,7 +126,7 @@ export const InventoryTable = ({ data, onEdit }: InventoryTableProps) => {
                       ? "text-red-600 font-semibold group-hover:text-red-400" 
                       : "text-gray-700 group-hover:text-white"
                   }`}>
-                    {item.quantity} {isLowStock && <span className="text-[10px] font-normal uppercase">(low)</span>}
+                    {item.productQuantity} {isLowStock && <span className="text-[10px] font-normal uppercase">(low)</span>}
                   </span>
                 </TableCell>
                 <TableCell className="px-4 py-4 text-gray-500 group-hover:text-zinc-400">
