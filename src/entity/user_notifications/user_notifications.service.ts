@@ -7,7 +7,7 @@ export async function createUserNotificationService(data: { notifId: number }, t
   }, tx);
 
   interface AffectedUser {
-    id: number;
+    id: string;
   }
 
   await Promise.all(

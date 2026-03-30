@@ -1,6 +1,7 @@
+import "dotenv/config"; // 👈 Add this at line 1
 import { 
-  deleteUser,
-} from "../entity/user/user.repository"; // Adjust path as needed
+  createSupplier,
+} from "../entity/supplier/supplier.repository"; // Adjust path as needed
 
 async function testOrderFlow() {
   console.log("📦 Starting Purchase Order Lifecycle Test...");
@@ -9,11 +10,14 @@ async function testOrderFlow() {
   try {
     // --- STEP 1: CREATE ---
     console.log("\n1️⃣ Step: Creating new Purchase Order...");
-    const newOrder = await  deleteUser
-({
-      id: 3000001, // Replace with actual order ID to approve
-      approvedBy: 1 // Replace with actual user ID who approves
+    const newOrder = await  createSupplier
+    ({
+      supplierName: "Renz",
+      supplierMobile: "09123456789", // Replace with actual supplier mobile number
+      supplierLandline: "8888-8888", // These might be required by your schema!
+      supplierEmail: "renz@example.com"
     });
+    return newOrder;
     
 
   } catch (error) {
@@ -26,3 +30,5 @@ async function testOrderFlow() {
 }
 
 testOrderFlow();
+
+// npx tsx src/test-scripts/test-create-supplier-item.ts

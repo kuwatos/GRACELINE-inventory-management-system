@@ -12,14 +12,16 @@ import {
 import { Button } from "@/components/ui/button";
 
 export interface Log {
-  id: string;
-  timestamp: string;
-  user: string;
+  id: number;
+  timestamp: string | Date | null; 
+  user: string | null;
   dept: string;
   action: string;
-  target: string;
-  prev: string;
-  next: string;
+  target: number;
+  prev: string | null;
+  next: string | null;
+  remarks: string | null;
+  column: string | null;
 }
 
 interface ActivityLogTableProps {
@@ -52,9 +54,11 @@ export const ActivityLogTable = ({ data = [] }: ActivityLogTableProps) => {
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">User Account</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Department</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Action</TableHead>
+            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Column</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Target ID</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-center">Prev</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-center">New</TableHead>
+            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-center">Remarks</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -64,7 +68,9 @@ export const ActivityLogTable = ({ data = [] }: ActivityLogTableProps) => {
               className="group hover:bg-black transition-colors cursor-default border-b border-gray-50"
             >
               <TableCell className="px-6 py-4 text-xs font-mono text-gray-500 group-hover:text-zinc-400 whitespace-nowrap">
-                {log.timestamp}
+                {log.timestamp instanceof Date 
+                  ? log.timestamp.toLocaleString() 
+                  : (log.timestamp || "N/A")}
               </TableCell>
               <TableCell className="px-6 py-4 font-medium text-gray-800 group-hover:text-white">
                 {log.user}
@@ -78,13 +84,19 @@ export const ActivityLogTable = ({ data = [] }: ActivityLogTableProps) => {
                 {log.action}
               </TableCell>
               <TableCell className="px-6 py-4 font-mono text-xs text-gray-500 group-hover:text-zinc-400">
+                {log.column}
+              </TableCell>
+              <TableCell className="px-6 py-4 font-mono text-xs text-gray-500 group-hover:text-zinc-400">
                 {log.target}
               </TableCell>
-              <TableCell className="px-6 py-4 text-center text-gray-400 group-hover:text-zinc-500">
+              <TableCell className="px-6 py-4 font-medium text-gray-700 group-hover:text-zinc-200">
                 {log.prev}
               </TableCell>
-              <TableCell className="px-6 py-4 text-center font-bold text-gray-800 group-hover:text-white">
+              <TableCell className="px-6 py-4 font-medium text-gray-700 group-hover:text-zinc-200">
                 {log.next}
+              </TableCell>
+              <TableCell className="px-6 py-4 font-medium text-gray-700 group-hover:text-zinc-200">
+                {log.remarks}
               </TableCell>
             </TableRow>
           ))}

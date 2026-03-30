@@ -10,11 +10,11 @@ export async function getUsersUnderDepartmentUsingNotifId(
 ) {
   const client = tx || db; // 👈 CRITICAL: This picks the right "channel"
   return client
-    .select({ id: usersTable.userId })
+    .select({ id: usersTable.id })
     .from(usersTable)
     .innerJoin(
       notificationDepartmentsTable,
-      eq(usersTable.userType, notificationDepartmentsTable.department),
+      eq(usersTable.department, notificationDepartmentsTable.department),
     )
     .where(eq(notificationDepartmentsTable.notifId, data.notificationId));
 }

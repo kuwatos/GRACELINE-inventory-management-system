@@ -17,10 +17,10 @@ export const ActivityLogManager = ({ data = [] }: ActivityLogManagerProps) => {
   const filteredData = data.filter((log) => {
     const searchLower = searchQuery.toLowerCase();
     return (
-      log.user.toLowerCase().includes(searchLower) ||
+      // log.user.toLowerCase().includes(searchLower) ||
       log.action.toLowerCase().includes(searchLower) ||
       log.dept.toLowerCase().includes(searchLower) ||
-      log.target.toLowerCase().includes(searchLower)
+      log.target.toString().toLowerCase().includes(searchLower)
     );
   });
 

@@ -5,7 +5,7 @@ import { eq, and } from "drizzle-orm";
 //CREATE
 export async function createUserNotification(data: {
   notifId: number;
-  userId: number;
+  userId: string;
   //   createdAt: Date; //removed because it defaults to now() in the schema, so it can be optional in the input
 }, tx?: any) {
   const client = tx || db; 
@@ -18,7 +18,7 @@ export async function readUserNotification() {
 }
 
 //READ UNSEEN NOTIFICATIONS OF A USER
-export async function readUnseenUserNotifications(userId: number) {
+export async function readUnseenUserNotifications(userId: string) {
   return db
     .select()
     .from(userNotificationsTable)

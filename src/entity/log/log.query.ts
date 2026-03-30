@@ -5,16 +5,18 @@ import { eq } from "drizzle-orm";
 export async function readLogsWithUser() {
   return await db
     .select({
-      date: logsTable.logDate,
-      username: usersTable.username,
-      departmemt: usersTable.userType,
-      actionPerformed: actionsTable.actionDesc,
-      targetId: logsTable.targetId,
-      previousValue: logsTable.prevValue,
-      newValue: logsTable.newValue,
+      id: logsTable.logId,
+      timestamp: logsTable.logDate,
+      user: usersTable.username,
+      dept: usersTable.department,
+      action: actionsTable.actionDesc,
+      target: logsTable.targetId,
+      prev: logsTable.prevValue,
+      next: logsTable.newValue,
       remarks: logsTable.remarks,
+      column: logsTable.columnName,
     })
     .from(logsTable)
-    .innerJoin(usersTable, eq(logsTable.userId, usersTable.userId))
-    .innerJoin(actionsTable, eq(logsTable.actionId, actionsTable.actionId));
+    .leftJoin(usersTable, eq(logsTable.userId, usersTable.id)) // 👈 Change to leftJoin
+    .leftJoin(actionsTable, eq(logsTable.actionId, actionsTable.actionId));
 }
