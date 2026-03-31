@@ -7,6 +7,7 @@ import * as z from "zod";
 import { cn } from "@/lib/utils";
 import { editSupplierSchema } from "@/lib/validations";
 import { Supplier } from "./supplier-table"; // Import the type from your table file
+import { updateSupplierAction } from "@/lib/action/supplier.action";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -27,7 +28,9 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
     defaultValues: { 
       name: "", 
       supplierLandline: "",
-      supplierEmail: "" 
+      supplierEmail: "" ,
+      supplierMobile: "" ,
+      
     },
   });
 
@@ -38,14 +41,30 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
         name: supplier.supplierName,
         supplierLandline: supplier.supplierLandline || "",
         supplierEmail: supplier.supplierEmail || "",
+        supplierMobile: supplier.supplierMobile || "",
       });
     }
   }, [isOpen, supplier, form]);
 
-  function onSubmit(values: z.infer<typeof editSupplierSchema>) {
-    console.log("Ready to update database for:", supplier?.supplierId, values);
-    onClose();
-  }
+  async function onSubmit(values: z.infer<typeof editSupplierSchema>) {
+      // 1. Safety check: make sure we actually have a supplier selected!
+      if (!supplier) return; 
+  
+      try {
+        // 2. Send the ID and the new form values across the bridge
+        const result = await updateSupplierAction(supplier.supplierId, values);
+  
+        // 3. If the Robot Butler succeeds, close the modal
+        if (result?.success) {
+          onClose();
+        } else {
+          console.error("Failed to update supplier:", result?.error);
+          alert("Failed to update supplier. Please try again.");
+        }
+      } catch (error) {
+        console.error("Server error:", error);
+      }
+    }
 
   const handleFormSubmit = isViewOnly ? (e: React.FormEvent) => e.preventDefault() : form.handleSubmit(onSubmit);
   const title = isViewOnly ? `View Supplier: ${supplier?.supplierId}` : `Edit Supplier: ${supplier?.supplierId}`;

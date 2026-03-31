@@ -92,9 +92,7 @@ const baseSupplierSchema = z.object({
 export const newSupplierSchema = baseSupplierSchema;
 
 // Schema for Edit Supplier
-export const editSupplierSchema = baseSupplierSchema.extend({
-  supplierId: z.number(), 
-});
+export const editSupplierSchema = baseSupplierSchema;
 //=============== USER =================
 
 // The base rules for a user

@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { SupplierTable, Supplier } from "./supplier-table";
 import { NewSupplierModal } from "./new-supplier-modal";
 import { EditSupplierModal } from "./edit-supplier-modal";
+import { deleteSupplierAction } from "@/lib/action/supplier.action";
 
 interface SuppliersManagerProps {
   data: Supplier[];
@@ -48,8 +49,9 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
   };
 
   const handleDeleteClick = (supplier: Supplier) => {
-    // We will wire this up to a database action later!
-    console.log("Request to delete:", supplier.supplierId);
+    setSelectedSupplier(supplier);
+    
+    const result=deleteSupplierAction(supplier.supplierId);
   };
 
   return (
