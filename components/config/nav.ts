@@ -7,14 +7,15 @@ import {
   UsersRound,
   BellDot,
   Truck,
-  PackageCheck
+  PackageCheck,
+  FolderDot, // Added for Projects
+  LucideIcon // Better type safety than 'unknown'
 } from 'lucide-react'
 
-// Define the type so TypeScript knows what "icon" is
 export type NavItem = {
   label: string;
   href: string;
-  icon: unknown;
+  icon: LucideIcon; 
 };
 
 interface SideBarConfig {
@@ -24,15 +25,20 @@ interface SideBarConfig {
   warehouse: NavItem[];
 }
 
-export const sideBarNav:SideBarConfig = {
+export const sideBarNav: SideBarConfig = {
   // -------------------------------------------------------
   // 🟢 ADMIN PATHS (start with /admin)
   // -------------------------------------------------------
   admin: [
     {
       label: "Dashboard",
-      href: "/admin/dashboard", // 👈 Must match the folder name!
+      href: "/admin/dashboard",
       icon: LayoutDashboard
+    },
+    {
+      label: "Projects", // 👈 Added Projects here
+      href: "/admin/projects",
+      icon: FolderDot
     },
     {
       label: "Inventory",
@@ -77,7 +83,7 @@ export const sideBarNav:SideBarConfig = {
   ],
 
   // -------------------------------------------------------
-  // 🟡 PURCHASING PATHS (start with /purchasing)
+  // 🟡 PURCHASING PATHS
   // -------------------------------------------------------
   purchasing: [
     {
@@ -108,7 +114,7 @@ export const sideBarNav:SideBarConfig = {
   ],
 
   // -------------------------------------------------------
-  // 🔵 FINANCE PATHS (start with /finance)
+  // 🔵 FINANCE PATHS
   // -------------------------------------------------------
   finance: [
     {
@@ -124,13 +130,18 @@ export const sideBarNav:SideBarConfig = {
   ],
 
   // -------------------------------------------------------
-  // 🟠 WAREHOUSE PATHS (start with /warehouse)
+  // 🟠 WAREHOUSE PATHS
   // -------------------------------------------------------
   warehouse: [
     {
       label: "Dashboard",
       href: "/warehouse/dashboard",
       icon: LayoutDashboard
+    },
+    {
+      label: "Projects", // 👈 Added to Warehouse
+      href: "/warehouse/projects",
+      icon: FolderDot
     },
     {
       label: "Inventory",
