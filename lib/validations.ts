@@ -138,3 +138,9 @@ export const baseOrderSchema = z.object({
 
 export const newOrderSchema = baseOrderSchema;
 export const editOrderSchema = baseOrderSchema;
+
+export const baseReportSchema = z.object({
+  reportType: z.string().min(1, "Please select a report type"),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date(),
+});

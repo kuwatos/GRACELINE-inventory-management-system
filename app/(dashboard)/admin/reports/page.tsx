@@ -1,9 +1,11 @@
 import { ReportsManager } from '@/components/features/reports/reports-manager'
 import React from 'react'
-
-function page() {
+import { readReportHistory } from '@/src/entity/reports/reports.query';
+  
+async function page() {
+  const reportHistory = await readReportHistory();
   return (
-    <ReportsManager/>
+    <ReportsManager data={reportHistory} />
   )
 }
 

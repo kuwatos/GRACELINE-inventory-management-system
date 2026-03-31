@@ -8,7 +8,7 @@ import { createUserNotificationService } from "../user_notifications/user_notifi
 //CREATE
 export async function createReport(data: {
   userId: string;
-  reportType: string;
+  reportType: string; 
   //   dateCreated: Date; //removed because it defaults to now() in the schema, so it can be optional in the input
   dateStart: Date;
   dateEnd: Date;

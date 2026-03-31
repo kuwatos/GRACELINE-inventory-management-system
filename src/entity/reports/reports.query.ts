@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 export async function readReportHistory() {
   return await db
     .select({
+      reportId: reportsTable.reportId,
       reportType: reportsTable.reportType,
       dateGenerated: reportsTable.dateCreated,
       generatedBy: usersTable.username, // Joined from User table
@@ -12,5 +13,5 @@ export async function readReportHistory() {
       endDate: reportsTable.dateEnd,
     })
     .from(reportsTable)
-    .innerJoin(usersTable, eq(reportsTable.userId, usersTable.userId));
+    .leftJoin(usersTable, eq(reportsTable.userId, usersTable.id));
 }

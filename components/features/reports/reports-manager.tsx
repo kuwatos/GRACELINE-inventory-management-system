@@ -11,16 +11,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ReportsHistoryTable, ReportRecord } from "./reports-history-table";
 import { ReportViewerModal } from "./report-viewer-modal";
 import { PrintableReport } from "./printable-report";
+import { deleteReportAction, generateReportAction } from "@/lib/action/report.action";
 
 // 1. Safe empty array to prevent React infinite loops (just like Notifications!)
 const EMPTY_REPORTS: ReportRecord[] = [];
 
 // 2. Database-ready interface
 interface ReportsManagerProps {
-  data?: ReportRecord[];
+  data: ReportRecord[];
   isLoading?: boolean;
   onGenerateReport?: (params: { type: string; startDate: string; endDate: string }) => Promise<void>;
-  onDeleteReport?: (id: string) => Promise<void>;
+  onDeleteReport?: (id: number) => Promise<void>;
 }
 
 export const ReportsManager = ({ 
@@ -45,12 +46,12 @@ export const ReportsManager = ({
   const printRef = useRef<HTMLDivElement>(null);
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: selectedReport ? `${selectedReport.type}-Report` : "GraceLine-Report",
+    documentTitle: selectedReport ? `${selectedReport.reportType}-Report` : "GraceLine-Report",
   });
 
   const filteredData = data.filter((report) => 
-    report.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    report.generatedBy.toLowerCase().includes(searchQuery.toLowerCase())
+    report.reportType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    report.generatedBy?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleView = (report: ReportRecord) => {
@@ -70,23 +71,45 @@ export const ReportsManager = ({
     if (!reportType || !startDate || !endDate || !onGenerateReport) return;
     
     setIsGenerating(true);
+
     try {
-      await onGenerateReport({ type: reportType, startDate, endDate });
-      // Clear form on success
-      setReportType("");
-      setStartDate("");
-      setEndDate("");
+      // 3. Call the Server Action
+      // Note: We use 'reportType' to match your baseReportSchema keys
+      const result = await generateReportAction({ 
+        reportType: reportType, 
+        startDate: startDate, 
+        endDate: endDate 
+      });
+
+      if (result.success) {
+        // 4. Reset the form on success
+        setReportType("");
+        setStartDate("");
+        setEndDate("");
+        // Optional: toast.success("Report generated!")
+      } else {
+        // 5. Handle potential business logic errors
+        alert(result.error || "Failed to generate report. Please try again.");
+      }
     } catch (error) {
-      console.error("Failed to generate report:", error);
+      // 6. Handle network or unexpected errors
+      console.error("Critical error in report generation:", error);
     } finally {
+      // 7. Always turn off the loader
       setIsGenerating(false);
     }
+
   };
 
   // 4. The actual Async Delete Handler
-  const handleDeleteClick = async (id: string) => {
-    if (onDeleteReport) {
-      await onDeleteReport(id);
+  const handleDeleteClick = async (id: number) => {
+    try {
+      const result = await deleteReportAction(id);
+      if (!result.success) {
+        alert(result.error);
+      }
+    } catch (error) {
+      console.error("Delete failed:", error);
     }
   };
 
