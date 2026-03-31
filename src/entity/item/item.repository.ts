@@ -38,7 +38,7 @@ export async function createItem(data: {
       }
     }
 
-    await createUserNotificationService({ notifId: 1 }, tx); // Assuming notifId 1 is for new item notifications
+    await createUserNotificationService({ notifId: 1, targetId: newItem.productId }, tx); // Assuming notifId 1 is for new item notifications
     return newItem;
   });
 }
@@ -129,7 +129,7 @@ export async function updateItem(data: {
 
           if (!isNaN(newQty) && !isNaN(reorderLevel) && newQty <= reorderLevel) {
             // Trigger Low Stock Notification (notifId: 2)
-            await createUserNotificationService({ notifId: 2 }, tx);
+            await createUserNotificationService({ notifId: 2, targetId: id }, tx);
           }
         } else if (key === "reorderLevel") {
           actionId = 7; // Set the reorder level

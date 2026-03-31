@@ -7,7 +7,7 @@ import { createUserNotificationService } from "../user_notifications/user_notifi
 
 //CREATE
 export async function createReport(data: {
-  userId: number;
+  userId: string;
   reportType: string;
   //   dateCreated: Date; //removed because it defaults to now() in the schema, so it can be optional in the input
   dateStart: Date;
@@ -32,7 +32,7 @@ export async function createReport(data: {
             }, tx);
           }
         }
-        await createUserNotificationService({ notifId: 7 }, tx);
+        await createUserNotificationService({ notifId: 7, targetId: newReport.reportId }, tx);
       }
   
       return newReport;

@@ -2,6 +2,7 @@ import "dotenv/config"; // 👈 Add this at line 1
 import { 
   createSupplier,
 } from "../entity/supplier/supplier.repository"; // Adjust path as needed
+import { createItem } from "../entity/item/item.repository";
 
 async function testOrderFlow() {
   console.log("📦 Starting Purchase Order Lifecycle Test...");
@@ -10,12 +11,11 @@ async function testOrderFlow() {
   try {
     // --- STEP 1: CREATE ---
     console.log("\n1️⃣ Step: Creating new Purchase Order...");
-    const newOrder = await  createSupplier
+    const newOrder = await  createItem
     ({
-      supplierName: "Renz",
-      supplierMobile: "09123456789", // Replace with actual supplier mobile number
-      supplierLandline: "8888-8888", // These might be required by your schema!
-      supplierEmail: "renz@example.com"
+      productName: "Test Product",
+      productCategory1: "Test Category",
+      productDesc: "This is a test product",
     });
     return newOrder;
     

@@ -13,8 +13,8 @@ export async function createOrder(data: {
   expectedDeliveryDate: Date;
   actualDeliveryDate?: Date;
   projectId: number;
-  createdBy: number;
-  approvedBy?: number;
+  createdBy: string;
+  approvedBy?: string;
 }) {
   return await db.transaction(async (tx) => {
     // 1. Insert the new order
@@ -197,7 +197,7 @@ export async function changeOrderStatus(data: {
           prevValue: existing.orderStatus,
           newValue: data.orderStatus
         }, tx);
-        await createUserNotificationService({ notifId: 6 }, tx);
+        await createUserNotificationService({ notifId: 6, targetId: data.id }, tx);
       }
     }
 
@@ -206,7 +206,7 @@ export async function changeOrderStatus(data: {
 }
 
 // APPROVE ORDER
-export async function approveOrder(data: { id: number; approvedBy: number }) {
+export async function approveOrder(data: { id: number; approvedBy: string }) {
   return await db.transaction(async (tx) => {
     const [existing] = await tx
       .select()
@@ -230,7 +230,7 @@ export async function approveOrder(data: { id: number; approvedBy: number }) {
         prevValue: existing.approvedBy?.toString() ?? null,
         newValue: data.approvedBy.toString(),
       }, tx);
-      await createUserNotificationService({ notifId: 5 }, tx);
+      await createUserNotificationService({ notifId: 5, targetId: data.id }, tx);
     }
 
     return updatedOrder;
@@ -251,7 +251,8 @@ export async function notifyArrivingOrders() {
     // 3. Trigger notification for each order
     for (const order of orders) {
       await createUserNotificationService({ 
-        notifId: 4 // "Order Should Arrive Today"
+        notifId: 4, // "Order Should Arrive Today"
+        targetId: order.orderId
       }, tx);
     }
     

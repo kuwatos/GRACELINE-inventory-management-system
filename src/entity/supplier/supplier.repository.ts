@@ -31,7 +31,7 @@ export async function createSupplier(data: {
           }, tx);
         }
       }
-      await createUserNotificationService({ notifId: 3 }, tx);
+      await createUserNotificationService({ notifId: 3, targetId: newSupplier.supplierId }, tx);
     }
 
     return newSupplier;

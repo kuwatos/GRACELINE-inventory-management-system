@@ -208,7 +208,9 @@ export const userNotificationsTable = pgTable("user_notification_tb", {
     .generatedAlwaysAsIdentity({ startWith: 1000001 })
     .primaryKey(),
   userId: text("user_id").references(() => usersTable.id),
+  targetId: integer("target_id"), // e.g., supplierId, orderId, etc. depending on the notification
   notifId: integer("notif_id").references(() => notificationsTable.notifId),
   isRead: boolean("is_read").default(false),
   createdAt: date("created_at").defaultNow(),
 });
+
