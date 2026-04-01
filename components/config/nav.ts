@@ -36,7 +36,7 @@ export const sideBarNav: SideBarConfig = {
       icon: LayoutDashboard
     },
     {
-      label: "Projects", // 👈 Added Projects here
+      label: "Projects", 
       href: "/admin/projects",
       icon: FolderDot
     },

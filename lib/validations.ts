@@ -98,3 +98,10 @@ export const baseOrderSchema = z.object({
 
 export const newOrderSchema = baseOrderSchema;
 export const editOrderSchema = baseOrderSchema;
+
+//Project Form Validation
+export const projectFormSchema = z.object({
+  name: z.string().min(3, "Project name must be at least 3 characters"),
+});
+
+export type ProjectFormValues = z.infer<typeof projectFormSchema>;
