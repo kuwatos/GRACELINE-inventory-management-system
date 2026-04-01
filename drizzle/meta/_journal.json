@@ -43,6 +43,27 @@
       "when": 1774682567344,
       "tag": "0005_graceful_unicorn",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774936670083,
+      "tag": "0006_neat_exodus",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1774936835417,
+      "tag": "0007_watery_sage",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1775055668784,
+      "tag": "0008_colossal_alice",
+      "breakpoints": true
     }
   ]
 }

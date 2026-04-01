@@ -10,8 +10,9 @@ import {
   numeric,
 } from "drizzle-orm/pg-core";
 
-// --- BetterAuth required schema (do not modify!) ---
+// --- BetterAuth required schema for auth and session (do not modify!) ---
 
+  // --- BetterAuth core user table (id = user_id from original schema)
 export const usersTable = pgTable("user", {
   id: text("id").primaryKey(),
 	name: text("name").notNull(),
@@ -21,16 +22,22 @@ export const usersTable = pgTable("user", {
 	createdAt: timestamp("created_at", { precision: 6, withTimezone: true }).notNull(),
 	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
   
-  //for username login plug-in
+  // required fields for username login plug-in
   username: varchar("username", { length: 255 }).unique(),
 	displayUsername: text("display_username"),
 
+  // required fields for admin plug-in
+  role: text("role"),
+	banned: boolean("banned"),
+	banReason: text("ban_reason"),
+	banExpires: timestamp("ban_expires", { precision: 6, withTimezone: true }),
+
 
   // custom fields for our app
-  firstName: text("first_name").notNull(),
+  first_name: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   department: text("department").notNull(),
-  status: text("user_status").default("active").notNull()
+  active: boolean("active").default(true),
 });
 
 export const sessionsTable = pgTable("session", {
@@ -42,6 +49,9 @@ export const sessionsTable = pgTable("session", {
 	userAgent: text("user_agent"),
 	createdAt: timestamp("created_at", { precision: 6, withTimezone: true }).notNull(),
 	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
+
+  // required field for admin plug-in
+  impersonatedBy: text("impersonated_by"),
 });
 
 export const accountsTable = pgTable("account", {
@@ -70,32 +80,6 @@ export const verificationTable = pgTable("verification", {
 	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
 });
 
-// --- User & Action Management ---
-
-/*
-export const usersTable = pgTable("user_tb", {
-  userId: serial("user_id").primaryKey(),
-
-  // The new fields that match your UI exactly!
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
-  department: text("department").notNull(),
-  
-  // Keep username for logging in, and keep our awesome status trick!
-  username: text("username").notNull().unique(), 
-  status: text("user_status").default("active").notNull()
-});
-
-export const passwordsTable = pgTable("password_tb", {
-  userId: integer("user_id").references(() => usersTable.userId),
-  password: text("password").notNull(),
-  lastChangedAt: timestamp("last_changed_at")
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
-*/
-
-
 
 //List of actions that can be logged in the system. Purpose niya lang is to be a list ng ilalagay sa logs tas nasa logs na yung
 //may value and timestamp kung kelan ginawa yung action.
@@ -112,13 +96,16 @@ export const logsTable = pgTable("log_tb", {
   actionId: integer("action_id").references(() => actionsTable.actionId),
   targetId: integer("target_id").notNull(),
   logDate: timestamp("log_date").defaultNow(),
+  columnName: varchar("column_name", { length: 50 }),
   prevValue: varchar("prev_value", { length: 255 }),
   newValue: varchar("new_value", { length: 255 }),
   remarks: varchar("remarks", { length: 255 }),
 });
 
 export const reportsTable = pgTable("report_tb", {
-  reportId: serial("report_id").primaryKey(),
+  reportId: integer("report_id")
+    .generatedAlwaysAsIdentity({ startWith: 5000001 })
+    .primaryKey(),
   userId: text("user_id").references(() => usersTable.id),
   reportType: text("report_type").notNull(),
   dateCreated: timestamp("date_created").defaultNow(),
@@ -129,23 +116,32 @@ export const reportsTable = pgTable("report_tb", {
 // --- Projects ---
 
 export const projectsTable = pgTable("project_tb", {
-  projectId: serial("project_id").primaryKey(),
+  projectId: integer("project_id")
+    .generatedAlwaysAsIdentity({ startWith: 4000001 })
+    .primaryKey(),
   projectName: text("project_name").notNull(),
+  archived: boolean("archived").default(false),
 });
 
 // --- Suppliers & Products ---
 
 export const suppliersTable = pgTable("supplier_tb", {
-  supplierId: serial("supplier_id").primaryKey(),
+  supplierId: integer("supplier_id")
+    .generatedAlwaysAsIdentity({ startWith: 7000001 })
+    .primaryKey(),
   supplierName: text("supplier_name").notNull(),
   supplierLandline: text("supplier_landline"),
   supplierEmail: text("supplier_email"),
   supplierMobile: text("supplier_mobile"),
+  active: boolean("active").default(true),
 });
+
 
 //List of items in the inventory, with their details and quantity on hand. Eto na yung naging bagong inventory
 export const itemsTable = pgTable("item_tb", {
-  productId: serial("product_id").primaryKey(),
+  productId: integer("product_id")
+    .generatedAlwaysAsIdentity({ startWith: 8000001 })
+    .primaryKey(),
   productName: text("product_name").notNull(),
   productCategory1: text("product_category1"),
   productCategory2: text("product_category2"),
@@ -160,27 +156,28 @@ export const itemsTable = pgTable("item_tb", {
 
 //List of suppliers and the products they supply, with the unit price and last updated date for each supplier-product combination.
 export const supplierItemsTable = pgTable("supplier_item_tb", {
-  supplierItemId: serial("supplier_item_id").primaryKey(),
-  supplierId: integer("supplier_id").references(
-    () => suppliersTable.supplierId,
-  ),
+  supplierItemId: integer("supplier_item_id")
+    .generatedAlwaysAsIdentity({ startWith: 6000001 })
+    .primaryKey(),
+  supplierId: integer("supplier_id").references(() => suppliersTable.supplierId),
   productId: integer("product_id").references(() => itemsTable.productId),
   unitPrice: numeric("unit_price", { precision: 10, scale: 2 }),
   lastUpdated: timestamp("last_updated")
     .defaultNow()
     .$onUpdate(() => new Date()),
+  archived: boolean("archived").default(false),
 });
 
 // --- Orders ---
 
 //List of orders
 export const ordersTable = pgTable("order_tb", {
-  orderId: serial("order_id").primaryKey(),
+  orderId: integer("order_id")
+    .generatedAlwaysAsIdentity({ startWith: 3000001 })
+    .primaryKey(),
   orderStatus: text("order_status").notNull(),
   orderDate: timestamp("order_date").notNull().defaultNow(),
-  supplierId: integer("supplier_id").references(
-    () => suppliersTable.supplierId,
-  ),
+  supplierId: integer("supplier_id").references(() => suppliersTable.supplierId),
   expectedDeliveryDate: timestamp("expected_delivery_date"),
   actualDeliveryDate: timestamp("actual_delivery_date"),
   projectId: integer("project_id").references(() => projectsTable.projectId),
@@ -191,7 +188,9 @@ export const ordersTable = pgTable("order_tb", {
 //List of products in each order, with the quantity ordered for each produc
 //Eto yung naglilink sa orders at items table, kasi one order pwede may multiple products, and one product pwede maorder sa multiple orders.
 export const orderProductsTable = pgTable("order_product_tb", {
-  orderProductId: serial("order_product_id").primaryKey(),
+  orderProductId: integer("order_product_id")
+    .generatedAlwaysAsIdentity({ startWith: 2000001 })
+    .primaryKey(),
   orderId: integer("order_id").references(() => ordersTable.orderId),
   productId: integer("product_id").references(() => itemsTable.productId),
   orderProductQuantity: integer("order_product_quantity").notNull(),
@@ -203,13 +202,20 @@ export const orderProductsTable = pgTable("order_product_tb", {
 //Same logic lang with the actions table na list lang sial pareho and cant really be updated
 export const notificationsTable = pgTable("notification_tb", {
   notifId: serial("notif_id").primaryKey(),
-  department: text("department").notNull(),
   description: text("description").notNull(),
+});
+
+export const notificationDepartmentsTable = pgTable("notification_department_tb", {
+  id: serial("id").primaryKey(),
+  notifId: integer("notif_id").references(() => notificationsTable.notifId),
+  department: text("department").notNull(), // e.g., 'ADMIN', 'WAREHOUSE'
 });
 
 //List of notifications sent to users, eto na yung lumalabas sa users
 export const userNotificationsTable = pgTable("user_notification_tb", {
-  userNotifId: serial("user_notif_id").primaryKey(),
+  userNotifId: integer("user_notif_id")
+    .generatedAlwaysAsIdentity({ startWith: 1000001 })
+    .primaryKey(),
   userId: text("user_id").references(() => usersTable.id),
   notifId: integer("notif_id").references(() => notificationsTable.notifId),
   isRead: boolean("is_read").default(false),
