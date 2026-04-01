@@ -1,33 +1,23 @@
 import { de } from "date-fns/locale";
 import * as z from "zod";
 
-//=============== ITEM =================
-// 1. The Shared Base Schema (The strict rules for a Product)
+// 1. THE ESSENTIALS (Physical Product Details)
 export const baseItemSchema = z.object({
-  // Foreign Key to Supplier
-  supplierId: z.coerce
-    .number()
-    .int()
-    .min(1, "Please select a supplier"),
+  productName: z
+    .string()
+    .min(3, "Product name must be at least 3 characters")
+    .max(100, "Product name must be at most 100 characters"),
 
-  // Main Category (Required)
   category1: z
     .string()
     .trim()
     .min(1, "Invalid category")
     .max(25, "Invalid category"),
 
-  // Sub-Categories (Optional, but validated if provided)
-  // We use z.union with an empty string so the form can submit "nothing" successfully.
   category2: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
   category3: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
   category4: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
   category5: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
-
-  productName: z
-    .string()
-    .min(3, "Product name must be at least 3 characters")
-    .max(100, "Product name must be at most 100 characters"),
 
   productDesc: z
     .string()
@@ -41,12 +31,6 @@ export const baseItemSchema = z.object({
     .min(0, "Quantity cannot be negative")
     .default(0),
 
-  // Price Logic: Coerce to number for validation, then back to string for the Service
-  unitPrice: z.coerce
-    .number()
-    .positive("Price must be greater than 0")
-    .transform((val) => val.toFixed(2)),
-
   reorderLevel: z.coerce
     .number()
     .int("Reorder level must be a whole number")
@@ -54,20 +38,31 @@ export const baseItemSchema = z.object({
     .max(1000, "You exceeded the maximum level"),
 });
 
-// 2. The New Item Schema (Just the base rules)
-export const newItemSchema = baseItemSchema;
+// 2. NEW ITEM (Essentials + Sourcing)
+export const newItemSchema = baseItemSchema.extend({
+  supplierId: z.coerce
+    .number()
+    .int()
+    .min(1, "Please select a supplier"),
 
-// 3. The Edit Item Schema (Base rules + Quantity & Reason)
+  unitPrice: z.coerce
+    .number()
+    .positive("Price must be greater than 0")
+    .transform((val) => val.toFixed(2)),
+});
+
+// 3. EDIT ITEM (Essentials + Identity + Adjustments)
 export const editItemSchema = baseItemSchema
   .extend({
+    
     newQuantity: z.coerce
-      .number<number>()
+      .number()
       .int()
       .min(0, "Quantity cannot be negative")
       .optional(),
+      
     reason: z.string().trim().optional(),
-  })
-  .partial();
+  });
 
 //=============== SUPPLIER =================
 // The base rules for a supplier

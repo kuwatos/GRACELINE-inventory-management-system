@@ -50,7 +50,6 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
 
   const handleDeleteClick = (supplier: Supplier) => {
     setSelectedSupplier(supplier);
-    
     const result=deleteSupplierAction(supplier.supplierId);
   };
 

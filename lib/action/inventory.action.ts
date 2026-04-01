@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { updateItem, deleteItem } from "@/src/entity/item/item.repository";
 import { createItemService } from "@/src/entity/item/item.service";
-import { editItemSchema, newSupplierSchema } from "@/lib/validations";
-import { newItemSchema } from "@/lib/validations";
+import { newItemSchema, editItemSchema } from "@/lib/validations";
 import * as z from "zod";
 
 export async function createItemAction(values: z.infer<typeof newItemSchema>) {
@@ -54,20 +53,26 @@ export async function createItemAction(values: z.infer<typeof newItemSchema>) {
 }
 
 // --- UPDATE SUPPLIER ACTION ---
-export async function updateSupplierAction(supplierId: number, values: z.infer<typeof editItemSchema>) {
+export async function updateItemAction(itemId: number, values: z.infer<typeof editItemSchema>) {
   try {
-    const validData = editSupplierSchema.parse(values);
+    const validData = editItemSchema.parse(values);
 
     // Hand the updated data to the Robot Butler
-    await updateSupplier({
-        id:supplierId ,
-      supplierName: validData.name,
-      supplierLandline: validData.supplierLandline,
-      supplierEmail: validData.supplierEmail,
-      supplierMobile: validData.supplierMobile,
+    await updateItem({
+        id: itemId,
+      productName: validData.productName,
+      productCategory1: validData.category1,
+      productCategory2: validData.category2,
+      productCategory3: validData.category3,
+      productCategory4: validData.category4,
+      productCategory5: validData.category5,
+      productDesc: validData.productDesc,
+      productQuantity: validData.productQuantity,
+      reorderLevel: validData.reorderLevel,
+      remarks: validData.reason,
     });
 
-    revalidatePath("/suppliers"); 
+    revalidatePath("/inventory"); 
     return { success: true };
     
   } catch (error: unknown) {
@@ -82,7 +87,7 @@ export async function updateSupplierAction(supplierId: number, values: z.infer<t
       String(cause?.message).includes('unique constraint');
 
     if (isDuplicate) {
-      return { success: false, error: "Try a different supplier name." }; 
+      return { success: false, error: "Try a different item name." }; 
     }
     
     console.error("System crash:", error);
@@ -91,17 +96,17 @@ export async function updateSupplierAction(supplierId: number, values: z.infer<t
 }
 
 // --- DELETE USER ACTION ---
-export async function deleteSupplierAction(supplierId: number) {
+export async function deleteItemAction(itemId: number) {
   try {
     // Tell the Robot Butler to deactivate this user
-    await deleteSupplier(supplierId);
+    await deleteItem(itemId);
 
     // Refresh the page so they disappear from the table instantly
-    revalidatePath("/suppliers");
+    revalidatePath("/inventory");
     
     return { success: true };
   } catch (error) {
-    console.error("Failed to delete supplier:", error);
+    console.error("Failed to delete item:", error);
     return { success: false, error: "Something went wrong" };
   }
 }

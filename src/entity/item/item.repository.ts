@@ -95,70 +95,70 @@ export async function updateItem(data: {
   productCategory5?: string;
   productDesc?: string;
   productQuantity?: number;
+  newQuantity?: number; // 👈 UI might send this
   reorderLevel?: number;
+  remarks?: string;      // 👈 Extract this for logging
 }) {
-  const { id, ...incomingFields } = data;
+  const { id, remarks: globalRemarks, ...rest } = data;
 
   return await db.transaction(async (tx) => {
-    // 1. Get current state for comparison
     const [existing] = await tx
       .select()
       .from(itemsTable)
       .where(eq(itemsTable.productId, id))
       .limit(1);
 
-    if (!existing) throw new Error("Item not found");
+  if (!existing) throw new Error("Item not found");
 
-    const updates: Record<string, any> = {};
+  // 1. Prepare the final fields for comparison
+  const incomingFields: Record<string, any> = { ...rest };
+  
 
-    // 2. Iterate and Log individual changes
-    for (const [key, val] of Object.entries(incomingFields)) {
-      const oldValue = (existing as any)[key];
+  const updates: Record<string, any> = {};
 
-      if (val !== undefined && String(val) !== String(oldValue)) {
-        updates[key] = val;
+  // 3. Iterate and Log
+  for (const [key, val] of Object.entries(incomingFields)) {
+    // Only process fields that actually exist in your itemsTable schema
+    const oldValue = (existing as any)[key];
 
-        let actionId: number;
-        let remarks: string | null = null;
+    if (val !== undefined && String(val) !== String(oldValue)) {
+      updates[key] = val;
 
-        // 3. Logic for specific Action IDs
-        if (key === "productQuantity") {
-          actionId = 10; // Edited an Item’s Quantity
-          const newQty = Number(val);
-          const reorderLevel = Number(existing.reorderLevel);
+      let actionId: number;
 
-          if (!isNaN(newQty) && !isNaN(reorderLevel) && newQty <= reorderLevel) {
-            // Trigger Low Stock Notification (notifId: 2)
-            await createUserNotificationService({ notifId: 2, targetId: id }, tx);
-          }
-        } else if (key === "reorderLevel") {
-          actionId = 7; // Set the reorder level
-        } else {
-          actionId = 11; // Edited an Item (General)
+      if (key === "productQuantity") {
+        actionId = 10;
+        const reorderLevel = Number(existing.reorderLevel);
+        if (!isNaN(val) && !isNaN(reorderLevel) && val <= reorderLevel) {
+          await createUserNotificationService({ notifId: 2, targetId: id }, tx);
         }
-
-        // 4. Use the createLog helper with columnName
-        await createLog({
-          actionId: actionId,
-          targetId: id,
-          columnName: key, // DYNAMIC: e.g., "productName", "productCategory1", etc.
-          prevValue: oldValue?.toString() || null,
-          newValue: val.toString(),
-          remarks: remarks,
-        }, tx);
+      } else if (key === "reorderLevel") {
+        actionId = 7;
+      } else {
+        actionId = 11;
       }
+
+      await createLog({
+        actionId,
+        targetId: id,
+        columnName: key,
+        prevValue: oldValue?.toString() || null,
+        newValue: val.toString(),
+        remarks: globalRemarks || null, // 👈 Use the passed-in reason here!
+      }, tx);
     }
+  }
 
-    if (Object.keys(updates).length === 0) return { message: "No changes" };
+  if (Object.keys(updates).length === 0) return { message: "No changes" };
 
-    // 5. Finalize update
-    const [updatedItem] = await tx
-      .update(itemsTable)
-      .set(updates)
-      .where(eq(itemsTable.productId, id))
-      .returning();
+  // 4. Finalize update (Drizzle will only see valid columns now)
+  const [updatedItem] = await tx
+    .update(itemsTable)
+    .set(updates)
+    .where(eq(itemsTable.productId, id))
+    .returning();
 
-    return updatedItem;
+  return updatedItem;
   });
 }
 

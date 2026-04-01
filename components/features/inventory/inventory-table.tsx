@@ -10,6 +10,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Edit3,Trash2 } from "lucide-react";
+
 
 // 1. Define exactly what a row of data looks like
 export interface InventoryItem {
@@ -29,9 +31,11 @@ export interface InventoryItem {
 interface InventoryTableProps {
   data: InventoryItem[]; 
   onEdit: (item: InventoryItem) => void; // Removed the 'any' type!
+  onDelete: (item: InventoryItem) => void; // Removed the 'any' type!
+
 }
 
-export const InventoryTable = ({ data, onEdit }: InventoryTableProps) => {
+export const InventoryTable = ({ data, onEdit, onDelete }: InventoryTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
   
@@ -90,7 +94,7 @@ export const InventoryTable = ({ data, onEdit }: InventoryTableProps) => {
         </TableHeader>
         <TableBody>
           {currentItems.map((item) => {
-            const isLowStock = item.productQuantity <= item.reorderLevel;
+            const isLowStock = item.productQuantity && item.reorderLevel ? item.productQuantity <= item.reorderLevel : false;
             return (
               <TableRow 
                 key={item.productId} 
@@ -132,16 +136,12 @@ export const InventoryTable = ({ data, onEdit }: InventoryTableProps) => {
                 <TableCell className="px-4 py-4 text-gray-500 group-hover:text-zinc-400">
                   {item.reorderLevel}
                 </TableCell>
-                <TableCell className="px-4 py-4 text-right">
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(item)}
-                    className="h-7 px-4 text-[10px] font-bold uppercase bg-white text-black border-gray-200 opacity-0 group-hover:opacity-100 transition-all hover:bg-gray-100"
-                  >
-                    Edit
-                  </Button>
-                </TableCell>
+                <TableCell className="px-6 py-6 text-right">
+                <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => onEdit(item)} className="text-zinc-400 hover:text-white transition-colors"><Edit3 className="w-4 h-4" /></button>
+                  <button onClick={() => onDelete(item)} className="text-zinc-400 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                </div>
+              </TableCell>
               </TableRow>
             );
           })}
