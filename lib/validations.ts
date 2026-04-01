@@ -141,7 +141,7 @@ export const baseReportSchema = z.object({
 });
 //Project Form Validation
 export const projectFormSchema = z.object({
-  name: z.string().min(3, "Project name must be at least 3 characters"),
+  projectName: z.string().min(3, "Project name must be at least 3 characters"),
 });
 
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;

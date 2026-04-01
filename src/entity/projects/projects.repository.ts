@@ -10,7 +10,7 @@ export async function createProject(data: { projectName: string }) {
 
 //READ
 export async function readProjects() {
-  return db.select().from(projectsTable);
+  return db.select().from(projectsTable).where(eq(projectsTable.archived, false));
 }
 
 //SEARCH

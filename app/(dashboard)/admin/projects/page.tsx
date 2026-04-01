@@ -1,5 +1,10 @@
 import { ProjectManager} from "@/components/features/projects/project-manager";
+import { readProjects } from '@/src/entity/projects/projects.repository'
 
-export default function ProjectsPage() {
-  return <ProjectManager />;
+async function page() {
+  const projects = await readProjects();
+  return (
+    <ProjectManager data={projects}/>  )
 }
+
+export default page
