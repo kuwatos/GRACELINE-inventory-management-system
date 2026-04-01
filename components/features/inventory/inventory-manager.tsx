@@ -11,9 +11,12 @@ import { EditItemModal } from "./edit-item-modal";
 
 interface InventoryManagerProps {
   data?: InventoryItem[];
+  suppliers?: { id: number; name: string }[]; // Add suppliers to props
+  categories?: { name: string }[]; // Add categories to props
+  
 }
 
-export const InventoryManager = ({ data = [] }: InventoryManagerProps) => {
+export const InventoryManager = ({ data = [], suppliers = [], categories = [] }: InventoryManagerProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -76,6 +79,8 @@ export const InventoryManager = ({ data = [] }: InventoryManagerProps) => {
       <NewItemModal 
         isOpen={isNewModalOpen} 
         onClose={() => setIsNewModalOpen(false)} 
+        suppliers={suppliers} // Pass suppliers to the modal
+        categories={categories} // Pass categories if needed in the future
       />
 
       <EditItemModal 
@@ -85,6 +90,7 @@ export const InventoryManager = ({ data = [] }: InventoryManagerProps) => {
           setSelectedItem(null);
         }} 
         item={selectedItem}
+        suppliers={suppliers} // Pass suppliers to the modal
       />
     </div>
   );

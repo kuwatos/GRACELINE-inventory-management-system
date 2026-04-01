@@ -1,7 +1,7 @@
 // CRUD lives here
 import { db } from "../../index";
 import { itemsTable } from "../../db/schema";
-import { eq, lte, ilike, or, and } from "drizzle-orm";
+import { eq, lte, ilike, or, and, isNotNull } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import {createUserNotificationService} from "../user_notifications/user_notifications.service";
 
@@ -187,4 +187,16 @@ export async function deleteItem(id: number) {
 
     return { success: true };
   });
+}
+
+export async function findCategories() {
+  return await db
+    .select({ 
+      name: itemsTable.productCategory1 
+    })
+    .from(itemsTable)
+    .where(isNotNull(itemsTable.productCategory1)) // 👈 Hide empty categories
+    .groupBy(itemsTable.productCategory1);
+
+  
 }
