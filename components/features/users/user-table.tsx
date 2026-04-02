@@ -14,7 +14,7 @@ import {
 
 // 1. UPDATED INTERFACE to match the database exactly
 export interface User {
-  userId: string; 
+  userId: number; 
   firstName: string;
   lastName: string;
   username: string;
