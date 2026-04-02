@@ -16,6 +16,7 @@ export const authClient =  createAuthClient({
     plugins: [
         customSessionClient<typeof auth>(), // Client-side plugin for custom session handling
         adminClient(),
+        inferAdditionalFields<typeof auth>(), // Client-side plugin to infer additional fields in the session
         usernameClient(), // Client-side plugin for username login
     ],
 });

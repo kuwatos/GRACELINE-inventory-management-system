@@ -7,13 +7,13 @@ import {
 import { betterAuth, BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "../src/index"; // drizzle instance
-import { role, username } from "better-auth/plugins" // Plugin for username login
+import { username } from "better-auth/plugins" // Plugin for username login
 import { nextCookies } from "better-auth/next-js"; // Plugin for Next.js cookie handling
 import { createAuthMiddleware, APIError, isAPIError } from "better-auth/api";
 import { admin } from "better-auth/plugins"
 import { customSession } from "better-auth/plugins";
 import { createLog } from "@/src/entity/log/log.repository";
-import * as schema from "@/src/db/schema";
+import { openAPI } from "better-auth/plugins"
 
 
 
@@ -26,10 +26,10 @@ const options = {
     database: drizzleAdapter(db, {
         provider: "pg",
         schema: {
-      user: schema.usersTable,
-      session: schema.sessionsTable,
-      account: schema.accountsTable,
-      verification: schema.verificationTable,
+      user: usersTable,
+      session: sessionsTable,
+      account: accountsTable,
+      verification: verificationTable,
         },
     }),
 
@@ -38,7 +38,6 @@ const options = {
         additionalFields: {
             firstName: { 
                 type: "string", 
-                fieldName: "first_name" // This is where the DB mapping happens!
             },
             lastName: { 
                 type: "string",  
@@ -59,12 +58,13 @@ const options = {
             },
             displayUsername: {
                 type: "string", 
-                fieldName: "display_username" // for username login plugin
             },
 
             role: {
                 type: "string",
-            },
+            }
+
+            // required fields for admin plug-in, temporarily disabled
             // required fields for admin plug-in are also included in the schema, but no need to define them here unless you want to set defaults or validations
 
         },
@@ -85,67 +85,36 @@ const options = {
 
     // authentication methods configuration
     emailAndPassword: { 
-        enabled: true, 
+        enabled: true,
+        autoSignIn: false, 
     }, 
 
     // custom middleware to check 'active' status before allowing sign-in
-    hooks: {
-        before: createAuthMiddleware(async (ctx) => {
-            // Target the username sign-in endpoint specifically
-            if (ctx.path === "/sign-in/username") {
-                const { username } = ctx.body;
-
-                // 1. Fetch user using the internal adapter
-                const user = await ctx.context.adapter.findOne({
-                    model: "user",
-                    where: [{ field: "username", value: username }]
-                }) as unknown as User; // Type assertion to include our custom 'active' field
-
-                // 2. Check the 'active' boolean field
-                // Note: Better Auth adapters usually return custom fields 
-                // if they are defined in your 'user.additionalFields'
-                if (user && user.active === false) {
-                    throw new APIError("UNAUTHORIZED", {
-                        message: "Your account is inactive. Please contact your administrator.",
+   databaseHooks: {
+        session: {
+            create: {
+                before: async (session, ctx) => {
+                    // 1. Fetch the user associated with this new session
+                    // We use the adapter directly for the most efficient query
+                    const user = await ctx?.context?.adapter.findOne({
+                        model: "user",
+                        where: [{ field: "id", value: session.userId }]
                     });
-                }
-            }
-        }),
 
-        after: createAuthMiddleware(async (ctx) => {
-            // 1. Check if the current action is the Admin creating a user
-            if (ctx.path === "/admin/create-user" && ctx.method === "POST") {
-                
-                // 2. Get the performing user (the Admin) from the session
-                const adminSession = ctx.context.session; 
-                // Note: The response body contains the newly created user
-                const result= ctx.context.returned 
-
-                if(isAPIError(result)) {
-                    console.error("Error creating user:", result);
-                    return; // Exit if there was an error creating the user
-                }
-                const newUser = result as unknown as User; // Type assertion to access custom fields
-                if (newUser && adminSession) {
-                    for (const [key, val] of Object.entries(newUser)) {
-                        if (val !== null && val !== undefined) {
-                            await createLog({
-                                userId: adminSession.user.id, // Log the admin's user ID
-                                actionId: 3,
-                                targetId: newUser.id,
-                                columnName: key,
-                                prevValue: null,
-                                newValue: String(val),
-                                // 3. Now you can record WHO did it!
-                                remarks: `Created by Admin: ${adminSession.user.email}`
-                            });
-                        }
+                    // 2. Check if the user is active
+                    // Better Auth uses 'user' as the base type, 
+                    // but your schema includes 'active'
+                    if (user && (user as User).active === false) {
+                        throw new APIError("UNAUTHORIZED", {
+                            message: "Your account is inactive. Please contact your administrator.",
+                        });
                     }
-                }
-            }
-        })
+                    // Return the session data to continue
+                    return { data: session };
+                },
+            },
+        },
     },
-
     
     // disable default username availability check route for security, still available in server actions
     disabledPaths: ["/is-username-available"], 
@@ -153,6 +122,7 @@ const options = {
     // plugins configuration
     plugins: [ 
         username(),
+        ...(process.env.NODE_ENV !== "production" ? [openAPI()] : []),
         admin(), // Admin plugin for user management through admin only routes
         nextCookies() // make sure this is the last plugin in the array
     ]
@@ -169,6 +139,7 @@ export const auth = betterAuth({
                 user: {
                     id: user.id,
                     username: user.username,
+                    name: user.name,
                     firstName: user.firstName,
                     department: user.department,
                     active: user.active,

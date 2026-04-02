@@ -8,33 +8,61 @@ import { auth, type User} from "@/lib/auth";
 import { headers } from "next/headers";
 
 
-export async function createUser(data: { firstName: string; lastName: string; userType: string; department: string; passwordStr: string }) {
+export async function createUser(data: { 
+  firstName: string; 
+  username: string;
+  lastName: string; 
+  userType: string; 
+  department: string; 
+  passwordStr: string 
+}) {
   const session = await auth.api.getSession({ headers: await headers() });
   const name = data.firstName + " " + data.lastName;
-  const username = data.firstName.toLowerCase() + "." + data.lastName.toLowerCase(); // simple username generation, you can customize this
-  const email = username + "@internal.local"; // placeholder only, not used for login
+  const email = data.username + "@internal.local"; // placeholder only, not used for login
+  const role = data.userType === "admin" ? "admin" : "user"; // Basic role assignment based on userType
 
   // 1. Security Check: Only admins can do this
-  
+  if (session?.user.department!== "admin") {
+        throw new Error("Unauthorized");
+    }
 
   // 2. Create the user via the API
   try {
-      const newUser = await auth.api.createUser({
-          body: {
-              name,
-              email,
-              password: data.passwordStr,
-              role: "user",
-              data: {
-                  username,
-                  firstName: data.firstName,
-                  lastName: data.lastName,
-                  department: data.department,
-                  status: "active", // Default status
-                  }
-          }
-      });
-      return { success: true, user: newUser};
+    const newUser = await auth.api.createUser({
+        body: {
+            name,
+            email,
+            password: data.passwordStr,
+            role,
+            data: {
+              username: data.username,
+              displayUsername: name,
+              firstName: data.firstName,
+              lastName: data.lastName,
+              department: data.department,
+              active: true, // Default status
+            }
+        },
+        headers: await headers()
+    });
+
+    if (newUser.user) {
+      for (const [key, val] of Object.entries(newUser.user)) {
+        // We only log if the value actually exists (not null/undefined)
+        if (val !== null && val !== undefined) {
+          await createLog({
+            userId: session?.user.id || "unknown", // Who performed the action
+            actionId: 3,                    // Added a New Inventory Item
+            targetId: newUser.user.id,
+            columnName: key,                // Dynamic: productName, productCategory1, etc.
+            prevValue: null,                // It's a creation, so previous is always null
+            newValue: val.toString(),
+            remarks: null
+          });
+        }
+      }
+    }
+    return { success: true, user: newUser};
   }catch (error: any) {
       console.error("Admin Create User Error:", error);
       return { success: false, message: error.message || "Failed to create user." };
@@ -59,7 +87,7 @@ export async function searchUsers(filters: {
   if (filters.keyword) {
     const keywordCondition = or(
       ilike(usersTable.username, `%${filters.keyword}%`),
-      ilike(usersTable.first_name, `%${filters.keyword}%`),
+      ilike(usersTable.firstName, `%${filters.keyword}%`),
       ilike(usersTable.lastName, `%${filters.keyword}%`)
     );
     if (keywordCondition) {
@@ -88,36 +116,168 @@ export async function updateUser(data: {
   department?: string;
   password?: string; // Notice this is optional (?)
 }) {
-  const { id, password, ...fields } = data;
+    const { id, password, ...fields } = data;
+    const oldUser = await auth.api.getUser({
+      query: { id },
+      headers: await headers(),
+    }) as unknown as User; // Type assertion to include our custom fields
+    const session = await auth.api.getSession({ headers: await headers() });
 
-  return await db.transaction(async (tx) => {
-    // 1. Update the profile info in the usersTable
-    const [updatedUser] = await tx
-      .update(usersTable)
-      .set(fields)
-      .where(eq(usersTable.id, id))
-      .returning();
+    // 1. Security Check: Only admins can do this
+    if (session?.user.department!== "admin") {
+          throw new Error("Unauthorized");
+      }
+    
+    // 2. Update the user via the API
+    try {
+      await auth.api.adminUpdateUser({
+          body: { 
+            userId: id,
+            data: {
+              ...fields,
+              }
+            },
+          headers: await headers(),
+      }) as unknown as User; // Type assertion to include our custom fields
+      // 2.1 IF the admin typed a new password, update the password as well (separate API call since it's a different endpoint)
+      if (password) {
+        await auth.api.setUserPassword({
+          body: {
+              newPassword: password, // required
+              userId: id, // required
+          },
+        headers: await headers(),
+        })
+      }
+      // 3. Fetch the updated user to get new values for logging
+      const updatedUser = await auth.api.getUser({
+        query: { id },
+        headers: await headers(),
+      }) as unknown as User; // Type assertion to include our custom fields
 
-    // 2. IF the admin typed a new password, update the passwordsTable!
-    /*if (password) {
-      await tx
-        .update(passwordsTable)
-        .set({ password: password }) // Remember: We will hash this later!
-        .where(eq(passwordsTable.userId, id));
-    } */
+      // 3. Log the changes (only log fields that were actually updated)
+      if (oldUser && updatedUser) {
+        for (const [key, val] of Object.entries(updatedUser)) {
+          // 1. Grab the previous value from the oldUser object
+          const prevVal = (oldUser as Record<string, any>)[key];
 
-    return updatedUser;
-  });
+          // 2. Only log if the value has actually changed AND it's not the 'id' field
+          // We use != instead of !== if you want to ignore type differences (like "1" vs 1)
+          if (val !== prevVal && key !== 'id') {
+            await createLog({
+              userId: session?.user.id || "unknown",
+              actionId: 5,
+              targetId: updatedUser.id,
+              columnName: key,
+              // 3. Convert prevValue to string safely (handle null/undefined)
+              prevValue: prevVal != null ? prevVal.toString() : null,
+              // 4. Convert newValue to string safely
+              newValue: val != null ? val.toString() : null,
+              remarks: null
+            });
+          }
+        }
+      }
+
+    if (password && oldUser && updatedUser) {
+      await createLog({
+        userId: session?.user.id || "unknown", // Who performed the action
+        actionId: 4,                    // Changed User password
+        targetId: updatedUser.id,
+        columnName: "password",                // Dynamic: productName, productCategory1, etc.
+        prevValue: null,                // from oldUser
+        newValue: null,
+        remarks: "password changed, cannot expose prevValue and newValue in logs for security reasons"
+      });
+    }
+
+    return { success: true, user: updatedUser};
+  }catch (error: any) {
+      console.error("Admin Update User Error:", error);
+      return { success: false, message: error.message || "Failed to update user details." };
+  }
 }
 
 // DELETE (True Soft Delete - Enterprise Way)
 export async function deleteUser(id: string) {
-  const [deletedUser] = await db
-    .update(usersTable)
-    .set({ active: false })
-    .where(eq(usersTable.id, id))
-    .returning();
+  const session = await auth.api.getSession({ headers: await headers() });
+  // 1. Security Check: Only admins can do this
+  if (session?.user.department!== "admin") {
+        throw new Error("Unauthorized");
+    }
+  try {
+    const deletedUser = await auth.api.adminUpdateUser({
+      body: {
+        userId: id,
+        data: {
+          active: false
+        }
+      },
+      headers: await headers(),
+    }) as unknown as User; // Type assertion to include our custom fields
 
-  return deletedUser;
+    // 2. Log the deletion action (we log the 'active' field change from true to false)
+    if (deletedUser) {
+      await createLog({
+        userId: session?.user.id || "unknown",
+        actionId: 6,
+        targetId: deletedUser.id,
+        columnName: "active",
+        prevValue: "true",
+        newValue: deletedUser.active.toString(),
+        remarks: null
+      });
+    }
+    return deletedUser;
+  }catch (error: any) {
+      console.error("Admin Delete User Error:", error);
+      return { success: false, message: error.message || "Failed to delete user." };
+  }
 }
 
+export async function signInAction(data: { username: string; password: string }) {
+  try {  
+    const signInResult =await auth.api.signInUsername({
+          body: {
+              username: data.username,
+              password: data.password,
+          },
+    });
+    if (signInResult.user) {
+      await createLog({
+        userId: signInResult.user.id || "unknown",
+        actionId: 1, // User Sign In
+        targetId: signInResult.user.id || "unknown",
+        columnName: "none",
+        prevValue: null,
+        newValue: null,
+        remarks: null
+      });
+    }
+    return { success: true };
+  }catch (error: any) {
+      console.error("User Sign In Error:", error);
+      return { success: false, message: error.message || "Failed to sign in user." };
+  }
+}
+
+export async function signOutAction() {
+  const session = await auth.api.getSession({ headers: await headers() });
+    try {
+      await auth.api.signOut();
+      await createLog({
+        userId: session?.user.id || "unknown",
+        actionId: 2, // User Sign Out
+        targetId: session?.user.id || "unknown",
+        columnName: "none",
+        prevValue: null,
+        newValue: null,
+        remarks: null
+      });
+      return { success: true };
+    }catch (error: any) {
+      console.error("User Sign Out Error:", error);
+      return { success: false, message: error.message || "Failed to sign out user." };
+  }
+
+}

@@ -11,12 +11,12 @@ export async function adminCreateUser(formData: FormData) {
     const name = firstName + " " + lastName;
     const username = firstName.toLowerCase() + "." + lastName.toLowerCase(); // simple username generation, you can customize this
     const email = username + "@internal.local"; // placeholder only, not used for login
-
+    
     // 1. Security Check: Only admins can do this
-    if (session?.user.role!== "admin") {
+    if (session?.user.department!== "admin") {
         throw new Error("Unauthorized");
     }
-    
+
     // 2. Create the user via the API
     try {
         const newUser = await auth.api.createUser({
@@ -48,7 +48,7 @@ export async function adminChangePassword(formData: FormData) {
     const newPassword = formData.get("newPassword") as string;
 
     // 1. Security Check: Only admins can do this
-    if (session?.user.role!== "admin") {
+    if (session?.user.department!== "admin") {
         throw new Error("Unauthorized");
     }
 
@@ -76,7 +76,7 @@ export async function adminUpdateUserDetails(formData: FormData) {
     const newLastname = formData.get("newLastName") as string;
 
     // 1. Security Check: Only admins can do this
-    if (session?.user.role!== "admin") {
+    if (session?.user.department!== "admin") {
         throw new Error("Unauthorized");
     }
     
@@ -104,7 +104,7 @@ export async function adminToggleUserActiveStatus(id: string) {
     const session = await auth.api.getSession({ headers: await headers() });
 
     // 1. Security Check: Only admins can do this
-    if (session?.user.role!== "admin") {
+    if (session?.user.department!== "admin") {
         throw new Error("Unauthorized");
     }
 

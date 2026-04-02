@@ -27,14 +27,14 @@ export const usersTable = pgTable("user", {
 	displayUsername: text("display_username"),
 
   // required fields for admin plug-in
+  
   role: text("role"),
 	banned: boolean("banned"),
 	banReason: text("ban_reason"),
 	banExpires: timestamp("ban_expires", { precision: 6, withTimezone: true }),
 
-
   // custom fields for our app
-  first_name: text("first_name").notNull(),
+  firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   department: text("department").notNull(),
   active: boolean("active").default(true),
@@ -94,7 +94,7 @@ export const logsTable = pgTable("log_tb", {
   logId: serial("log_id").primaryKey(),
   userId: text("user_id").references(() => usersTable.id),
   actionId: integer("action_id").references(() => actionsTable.actionId),
-  targetId: integer("target_id").notNull(),
+  targetId: text("target_id").notNull(),
   logDate: timestamp("log_date").defaultNow(),
   columnName: varchar("column_name", { length: 50 }),
   prevValue: varchar("prev_value", { length: 255 }),
