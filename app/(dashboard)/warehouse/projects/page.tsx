@@ -1,7 +1,7 @@
 "use client";
 
-import { ProjectsContainer } from "@/components/features/projects/project-manager";
+import { ProjectManager} from "@/components/features/projects/project-manager";
 
 export default function ProjectsPage() {
-  return <ProjectsContainer />;
+  return <ProjectManager />;
 }
