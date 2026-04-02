@@ -95,7 +95,7 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
                 <FormItem>
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Landline</FormLabel>
                   <FormControl>
-                    <Input {...field} disabled={isViewOnly} className="h-12 rounded-xl border-gray-200 focus-visible:ring-black/5 disabled:bg-gray-50 disabled:text-gray-900" />
+                    <Input {...field} disabled={isViewOnly} className="h-12 rounded-xl border-gray-200 focus-vis`ible:ring-black/5 disabled:bg-gray-50 disabled:text-gray-900" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>

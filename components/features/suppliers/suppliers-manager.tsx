@@ -35,7 +35,7 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
     );
   });
 
-  // Action Handlers
+  // Action Handlers - Exactly as your original
   const handleViewClick = (supplier: Supplier) => {
     setSelectedSupplier(supplier);
     setIsViewOnly(true);
@@ -55,9 +55,9 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-sm border-gray-200 p-8">
+      <Card className="shadow-sm border-gray-200 p-8 rounded-3xl bg-white">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <h2 className="text-xl font-bold text-gray-800">Supplier Directory</h2>
+          <h2 className="text-xl font-bold text-gray-800 tracking-tight">Supplier Directory</h2>
           
           <div className="flex items-center gap-3 w-full md:w-auto">
             <div className="relative flex-1 md:w-80">
@@ -66,7 +66,7 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by supplier name or ID..." 
-                className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-green-500 focus-visible:ring-2"
+                className="pl-9 h-11 border-gray-100 rounded-xl focus-visible:ring-black focus-visible:ring-2"
               />
             </div>
             
@@ -79,7 +79,7 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
 
             <Button 
               onClick={() => setIsNewModalOpen(true)}
-             className="bg-[#0f172a] text-white hover:bg-[#0f172a]/70 h-11 px-6 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-black/10 gap-2"
+              className="bg-[#0f172a] text-white hover:bg-zinc-800 h-11 px-6 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-black/10 gap-2"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add New Supplier
