@@ -17,6 +17,7 @@ export async function createUserAction(values: z.infer<typeof newUserSchema>) {
       lastName: validData.lastName,
       department: validData.department,
       passwordStr: validData.password, 
+      
     });
 
     revalidatePath("/users"); 
@@ -47,7 +48,7 @@ export async function createUserAction(values: z.infer<typeof newUserSchema>) {
 }
 
 // --- UPDATE USER ACTION ---
-export async function updateUserAction(userId: number, values: z.infer<typeof editUserSchema>) {
+export async function updateUserAction(userId: string, values: z.infer<typeof editUserSchema>) {
   try {
     const validData = editUserSchema.parse(values);
 
@@ -85,7 +86,7 @@ export async function updateUserAction(userId: number, values: z.infer<typeof ed
 }
 
 // --- DELETE USER ACTION ---
-export async function deleteUserAction(userId: number) {
+export async function deleteUserAction(userId: string) {
   try {
     // Tell the Robot Butler to deactivate this user
     await deleteUser(userId);

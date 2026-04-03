@@ -20,6 +20,3 @@ export const authClient =  createAuthClient({
         usernameClient(), // Client-side plugin for username login
     ],
 });
-
-const { data } = authClient.useSession();
-const { data: sessionData } = await authClient.getSession();

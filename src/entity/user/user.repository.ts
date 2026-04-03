@@ -12,14 +12,14 @@ export async function createUser(data: {
   firstName: string; 
   username: string;
   lastName: string; 
-  userType: string; 
   department: string; 
   passwordStr: string 
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const name = data.firstName + " " + data.lastName;
+  const department = data.department.toLowerCase();
   const email = data.username + "@internal.local"; // placeholder only, not used for login
-  const role = data.userType === "admin" ? "admin" : "user"; // Basic role assignment based on userType
+  const role = data.department === "admin" ? "admin" : "user"; // Basic role assignment based on department
 
   // 1. Security Check: Only admins can do this
   if (session?.user.department!== "admin") {
@@ -39,7 +39,7 @@ export async function createUser(data: {
               displayUsername: name,
               firstName: data.firstName,
               lastName: data.lastName,
-              department: data.department,
+              department,
               active: true, // Default status
             }
         },
@@ -187,7 +187,7 @@ export async function updateUser(data: {
         columnName: "password",                // Dynamic: productName, productCategory1, etc.
         prevValue: null,                // from oldUser
         newValue: null,
-        remarks: "password changed, cannot expose prevValue and newValue in logs for security reasons"
+        remarks: null
       });
     }
 
@@ -282,7 +282,7 @@ export async function signOutAction() {
 
 }
 
-export async function validateUser(requiredRole?: string) {
+export async function validateUserSession(requiredRole?: string) {
     const session = await auth.api.getSession({headers: await headers()}); // Better Auth session fetch
 
     if (!session || !session.user.active) {
@@ -292,6 +292,6 @@ export async function validateUser(requiredRole?: string) {
     if (requiredRole && session.user.department !== requiredRole) {
         throw new Error("Forbidden: Insufficient permissions");
     }
-
+    console.log("Session valid for user:", session.user.username);
     return session.user;
 }

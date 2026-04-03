@@ -17,7 +17,7 @@ export interface Log {
   user: string | null;
   dept: string | null;
   action: string | null;
-  target: number;
+  target: string;
   prev: string | null;
   next: string | null;
   remarks: string | null;

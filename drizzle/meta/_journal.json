@@ -26,13 +26,8 @@
     {
       "idx": 3,
       "version": "7",
-<<<<<<< HEAD
       "when": 1772827570826,
       "tag": "0003_dusty_wallow",
-=======
-      "when": 1774408749767,
-      "tag": "0003_rapid_doctor_doom",
->>>>>>> 5d85c03 (Di ko na alam!! Ayaw gumana ng supabase)
       "breakpoints": true
     },
     {
@@ -96,6 +91,13 @@
       "version": "7",
       "when": 1775158750121,
       "tag": "0011_magical_ares",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1775207716232,
+      "tag": "0012_luxuriant_betty_brant",
       "breakpoints": true
     }
   ]

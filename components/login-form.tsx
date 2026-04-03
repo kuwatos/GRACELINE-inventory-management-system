@@ -18,6 +18,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { signInAction, validateUserSession } from "@/src/entity/user/user.repository"; // Import the server action for signing in
+import { authClient } from "@/lib/auth-client"
+import { redirect } from "next/navigation"
+
 
 const formSchema = z.object({
   username: z
@@ -43,9 +47,37 @@ export function LoginForm({
     },
   })
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log("Login Success! Data:", data)
-    // You will add your authentication logic here
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    const result = await signInAction(data);
+    if (result.success) {
+      // Redirect to dashboard or home
+      const { data: session } = await authClient.getSession();
+      console.log("Login successful, session data:", session);
+
+      if (session) {
+        console.log("User session after login:", session);
+        console.log("User department:", session.user.department);
+        switch (session.user.department) {
+          case "admin":
+            console.log("Redirecting to admin dashboard...");
+            redirect("/admin/dashboard");
+          case "purchasing":
+            console.log("Redirecting to purchasing dashboard...");
+            redirect("/purchasing/dashboard");
+          case "warehouse":
+            console.log("Redirecting to warehouse dashboard...");
+            redirect("/warehouse/dashboard");
+          case "finance":
+            redirect("/finance/dashboard");
+        }
+      }
+
+    } else {
+      // Set a manual error on the password field or a global toast
+      form.setError("root", { 
+        message: result.message 
+      });
+    }
   }
 
   const company = "Graceline";
@@ -102,8 +134,20 @@ export function LoginForm({
                   </FormItem>
                 )}
               />
+              
+              {form.formState.errors.root && (
+                <p className="text-sm font-medium text-destructive text-center">
+                  {form.formState.errors.root.message}
+                </p>
+              )}
 
-              <Button type="submit" className="w-full mt-2">Login</Button>
+              <Button 
+                type="submit" 
+                className="w-full mt-2" 
+                disabled={form.formState.isSubmitting}
+              >
+                {form.formState.isSubmitting ? "Logging in..." : "Login"}
+              </Button>
               
               <div className="text-center text-sm text-muted-foreground mt-4">
                 Don&apos;t have an account? <a href="#" className="underline underline-offset-4 hover:text-black">Contact Admin</a>

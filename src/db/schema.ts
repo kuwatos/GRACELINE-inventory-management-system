@@ -182,7 +182,7 @@ export const ordersTable = pgTable("order_tb", {
   expectedDeliveryDate: timestamp("expected_delivery_date"),
   actualDeliveryDate: timestamp("actual_delivery_date"),
   projectId: integer("project_id").references(() => projectsTable.projectId),
-  createdBy: text("created_by").references(() => usersTable.id),
+  createdBy: text("created_by").references(() => usersTable.id).notNull(),
   approvedBy: text("approved_by").references(() => usersTable.id),
 });
 

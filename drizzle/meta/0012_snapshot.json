@@ -1,6 +1,6 @@
 {
-  "id": "d75448ef-a679-45a1-afcb-7ce9e235d062",
-  "prevId": "32f90fd9-b6f1-4c1c-b5f9-ef456a652cd1",
+  "id": "0740564b-66ca-4f74-aaca-4938c9bcb88a",
+  "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -171,7 +171,7 @@
           "name": "product_category1",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "product_category2": {
           "name": "product_category2",
@@ -256,7 +256,7 @@
         },
         "target_id": {
           "name": "target_id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -534,7 +534,7 @@
           "name": "created_by",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "approved_by": {
           "name": "approved_by",
@@ -773,6 +773,12 @@
           "type": "timestamp (6) with time zone",
           "primaryKey": false,
           "notNull": true
+        },
+        "impersonated_by": {
+          "name": "impersonated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -982,6 +988,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "target_id": {
+          "name": "target_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "notif_id": {
           "name": "notif_id",
           "type": "integer",
@@ -1093,6 +1105,30 @@
         "display_username": {
           "name": "display_username",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "banned": {
+          "name": "banned",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ban_reason": {
+          "name": "ban_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ban_expires": {
+          "name": "ban_expires",
+          "type": "timestamp (6) with time zone",
           "primaryKey": false,
           "notNull": false
         },

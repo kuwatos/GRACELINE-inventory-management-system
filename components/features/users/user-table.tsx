@@ -14,12 +14,12 @@ import {
 
 // 1. UPDATED INTERFACE to match the database exactly
 export interface User {
-  userId: number; 
+  userId: string; 
   firstName: string;
   lastName: string;
   username: string;
   department: string;
-  status: string; // Kept for TypeScript, but we won't show it in the table
+  active: boolean; // Kept for TypeScript, but we won't show it in the table
 }
 
 interface UserTableProps {
