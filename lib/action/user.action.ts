@@ -1,11 +1,13 @@
 "use server"; // This magic word tells Next.js to run this strictly on the backend!
 
 import { revalidatePath } from "next/cache";
-import { createUser } from "@/src/entity/user/user.repository"; // Update this path to wherever your CRUD file is!
+import { createUser, signIn, validateSessionUser } from "@/src/entity/user/user.repository"; // Update this path to wherever your CRUD file is!
 import { updateUser, deleteUser } from "@/src/entity/user/user.repository"; 
 import { editUserSchema } from "@/lib/validations";
 import { newUserSchema } from "@/lib/validations";
 import * as z from "zod";
+import { authClient } from "../auth-client";
+import { redirect } from "next/dist/client/components/navigation";
 
 export async function createUserAction(values: z.infer<typeof newUserSchema>) {
   try {
@@ -98,5 +100,53 @@ export async function deleteUserAction(userId: string) {
   } catch (error) {
     console.error("Failed to delete user:", error);
     return { success: false, error: "Something went wrong" };
+  }
+}
+
+export async function redirectToDashboard(department: string) {
+  let targetPath = "";
+
+  // Normalize to lowercase to prevent "Admin" vs "admin" mismatches
+  switch (department.toLowerCase()) {
+    case "admin":
+      targetPath = "/admin/dashboard";
+      break;
+    case "purchasing":
+      targetPath = "/purchasing/dashboard";
+      break;
+    case "warehouse":
+      targetPath = "/warehouse/dashboard";
+      break;
+    case "finance":
+      targetPath = "/finance/dashboard";
+      break;
+    default:
+      targetPath = "/login"; 
+  }
+  // Always call redirect OUTSIDE of any try/catch blocks
+  redirect(targetPath);
+}
+
+export async function signOutAction() {
+}
+
+export async function checkLoginStatus() {
+  let userToRedirect = null;
+  try {
+    // 1. Try to get the user. 
+    // If they aren't logged in, validateSessionUser throws an error.
+    const user = await validateSessionUser();
+    userToRedirect = user;
+  } catch (error) {
+    // 2. We catch the error here. 
+    // If they aren't logged in, we do NOTHING. 
+    // This allows the code to finish and the Login Page to render normally.
+    console.log("No active session found. Allowing access to login page.");
+    return; 
+  }
+  // 3. If we found a user, redirect them.
+  // This is OUTSIDE the try/catch, so Next.js can handle the redirect properly.
+  if (userToRedirect) {
+    await redirectToDashboard(userToRedirect.department);
   }
 }

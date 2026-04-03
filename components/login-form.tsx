@@ -18,9 +18,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { signInAction, validateUserSession } from "@/src/entity/user/user.repository"; // Import the server action for signing in
-import { authClient } from "@/lib/auth-client"
-import { redirect } from "next/navigation"
+import { signIn} from "@/src/entity/user/user.repository"; // Import the server action for signing in
+import { checkLoginStatus } from "@/lib/action/user.action"
 
 
 const formSchema = z.object({
@@ -38,7 +37,7 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -48,38 +47,18 @@ export function LoginForm({
   })
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
-    const result = await signInAction(data);
+    const result = await signIn(data);
     if (result.success) {
-      // Redirect to dashboard or home
-      const { data: session } = await authClient.getSession();
-      console.log("Login successful, session data:", session);
-
-      if (session) {
-        console.log("User session after login:", session);
-        console.log("User department:", session.user.department);
-        switch (session.user.department) {
-          case "admin":
-            console.log("Redirecting to admin dashboard...");
-            redirect("/admin/dashboard");
-          case "purchasing":
-            console.log("Redirecting to purchasing dashboard...");
-            redirect("/purchasing/dashboard");
-          case "warehouse":
-            console.log("Redirecting to warehouse dashboard...");
-            redirect("/warehouse/dashboard");
-          case "finance":
-            redirect("/finance/dashboard");
-        }
-      }
-
-    } else {
+      checkLoginStatus(); // Call the server action to handle post-login logic and redirection
+    }
+    else {
       // Set a manual error on the password field or a global toast
       form.setError("root", { 
         message: result.message 
       });
     }
+    
   }
-
   const company = "Graceline";
 
   return (

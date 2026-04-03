@@ -10,8 +10,8 @@ import { headers } from "next/headers";
 
 export async function createUser(data: { 
   firstName: string; 
-  username: string;
   lastName: string; 
+  username: string;
   department: string; 
   passwordStr: string 
 }) {
@@ -235,7 +235,7 @@ export async function deleteUser(id: string) {
   }
 }
 
-export async function signInAction(data: { username: string; password: string }) {
+export async function signIn(data: { username: string; password: string }) {
   try {  
     const signInResult =await auth.api.signInUsername({
           body: {
@@ -261,7 +261,7 @@ export async function signInAction(data: { username: string; password: string })
   }
 }
 
-export async function signOutAction() {
+export async function signOut() {
   const session = await auth.api.getSession({ headers: await headers() });
     try {
       await auth.api.signOut();
@@ -282,7 +282,7 @@ export async function signOutAction() {
 
 }
 
-export async function validateUserSession(requiredRole?: string) {
+export async function validateSessionUser(requiredRole?: string) {
     const session = await auth.api.getSession({headers: await headers()}); // Better Auth session fetch
 
     if (!session || !session.user.active) {
