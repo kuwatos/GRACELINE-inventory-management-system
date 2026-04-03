@@ -1,50 +1,86 @@
 import { de } from "date-fns/locale";
 import * as z from "zod";
 
-//=============== ITEM =================
-// 1. The Shared Base Schema (The strict rules for a Product)
+// 1. THE ESSENTIALS (Physical Product Details)
 export const baseItemSchema = z.object({
-  supplierId: z.string().trim().min(1, "Please select a supplier"),
-  category: z
-    .string()
-    .trim()
-    .min(1, "Invalid category")
-    .max(25, "Invalid category"),
   productName: z
     .string()
     .min(3, "Product name must be at least 3 characters")
     .max(100, "Product name must be at most 100 characters"),
+
+  category1: z
+    .string()
+    .trim()
+    .min(1, "Invalid category")
+    .max(25, "Invalid category"),
+
+  category2: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
+  category3: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
+  category4: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
+  category5: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
+
+  productDesc: z
+    .string()
+    .trim()
+    .max(500, "Description is too long")
+    .optional(),
+
+  productQuantity: z.coerce
+    .number()
+    .int("Quantity must be a whole number")
+    .min(0, "Quantity cannot be negative")
+    .default(0),
+
   reorderLevel: z.coerce
-    .number<number>()
+    .number()
     .int("Reorder level must be a whole number")
     .min(1, "Level must at least be 1")
     .max(1000, "You exceeded the maximum level"),
 });
 
-// 2. The New Item Schema (Just the base rules)
-export const newItemSchema = baseItemSchema;
+// 2. NEW ITEM (Essentials + Sourcing)
+export const newItemSchema = baseItemSchema.extend({
+  supplierId: z.coerce
+    .number()
+    .int()
+    .min(1, "Please select a supplier"),
 
-// 3. The Edit Item Schema (Base rules + Quantity & Reason)
+  unitPrice: z.coerce
+    .number()
+    .positive("Price must be greater than 0")
+    .transform((val) => val.toFixed(2)),
+});
+
+// 3. EDIT ITEM (Essentials + Identity + Adjustments)
 export const editItemSchema = baseItemSchema
   .extend({
+    
     newQuantity: z.coerce
-      .number<number>()
+      .number()
       .int()
       .min(0, "Quantity cannot be negative")
       .optional(),
+      
     reason: z.string().trim().optional(),
-  })
-  .partial();
+  });
 
 //=============== SUPPLIER =================
 // The base rules for a supplier
 const baseSupplierSchema = z.object({
   name: z.string().trim().min(2, "Supplier name must be at least 2 characters"),
-  contact: z
+  supplierLandline: z
     .string()
     .trim()
-    .min(2, "Contact person must be at least 2 characters"),
-  email: z.string().trim().email("Please enter a valid email address"),
+    .optional(),
+  supplierEmail: z
+    .string()
+    .trim()
+    .email("Please enter a valid email address")
+    .optional(),
+  supplierMobile: z
+    .string()
+    .trim()
+    .optional(),
 });
 
 // Schema for New Supplier
@@ -52,7 +88,6 @@ export const newSupplierSchema = baseSupplierSchema;
 
 // Schema for Edit Supplier
 export const editSupplierSchema = baseSupplierSchema;
-
 //=============== USER =================
 
 // The base rules for a user
@@ -98,3 +133,15 @@ export const baseOrderSchema = z.object({
 
 export const newOrderSchema = baseOrderSchema;
 export const editOrderSchema = baseOrderSchema;
+
+export const baseReportSchema = z.object({
+  reportType: z.string().min(1, "Please select a report type"),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date(),
+});
+//Project Form Validation
+export const projectFormSchema = z.object({
+  projectName: z.string().min(3, "Project name must be at least 3 characters"),
+});
+
+export type ProjectFormValues = z.infer<typeof projectFormSchema>;

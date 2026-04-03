@@ -81,6 +81,7 @@ export const verificationTable = pgTable("verification", {
 });
 
 
+
 //List of actions that can be logged in the system. Purpose niya lang is to be a list ng ilalagay sa logs tas nasa logs na yung
 //may value and timestamp kung kelan ginawa yung action.
 export const actionsTable = pgTable("action_tb", {
@@ -143,7 +144,7 @@ export const itemsTable = pgTable("item_tb", {
     .generatedAlwaysAsIdentity({ startWith: 8000001 })
     .primaryKey(),
   productName: text("product_name").notNull(),
-  productCategory1: text("product_category1"),
+  productCategory1: text("product_category1").notNull(),
   productCategory2: text("product_category2"),
   productCategory3: text("product_category3"),
   productCategory4: text("product_category4"),
@@ -217,6 +218,7 @@ export const userNotificationsTable = pgTable("user_notification_tb", {
     .generatedAlwaysAsIdentity({ startWith: 1000001 })
     .primaryKey(),
   userId: text("user_id").references(() => usersTable.id),
+  targetId: integer("target_id"), // e.g., supplierId, orderId, etc. depending on the notification
   notifId: integer("notif_id").references(() => notificationsTable.notifId),
   isRead: boolean("is_read").default(false),
   createdAt: date("created_at").defaultNow(),

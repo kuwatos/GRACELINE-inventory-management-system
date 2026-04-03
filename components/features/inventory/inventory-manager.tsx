@@ -8,28 +8,49 @@ import { Card } from "@/components/ui/card";
 import { InventoryTable, InventoryItem } from "./inventory-table"; 
 import { NewItemModal } from "./new-item-modal";
 import { EditItemModal } from "./edit-item-modal";
+import { deleteItem } from "@/src/entity/item/item.repository";
+import { deleteItemAction } from "@/lib/action/inventory.action";
 
 interface InventoryManagerProps {
   data?: InventoryItem[];
+  suppliers?: { id: number; name: string }[]; // Add suppliers to props
+  categories?: { name: string }[]; // Add categories to props
+  
 }
 
-export const InventoryManager = ({ data = [] }: InventoryManagerProps) => {
+export const InventoryManager = ({ data = [], suppliers = [], categories = [] }: InventoryManagerProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"all" | "low-stock">("all");
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [isViewOnly, setIsViewOnly] = useState(false);
 
   const filteredData = data.filter((item) => {
     const searchLower = searchQuery.toLowerCase();
-    return (
-      item.name.toLowerCase().includes(searchLower) ||
-      item.code.toLowerCase().includes(searchLower)
+    const words= (
+      item.productName.toLowerCase().includes(searchLower) 
+      || item.productCategory1?.toLowerCase().includes(searchLower)
+      || item.productCategory2?.toLowerCase().includes(searchLower)
+      || item.productCategory3?.toLowerCase().includes(searchLower)
+      || item.productCategory4?.toLowerCase().includes(searchLower) 
+      || item.productCategory5?.toLowerCase().includes(searchLower)
+      || item.productId.toString().includes(searchLower)
     );
+    const isLowStock = (item.productQuantity ?? 0) <= (item.reorderLevel ?? 0);
+    const matchesStatus = filterStatus === "low-stock" ? isLowStock : true;
+    return words && matchesStatus;
   });
 
   const handleEditClick = (item: InventoryItem) => {
     setSelectedItem(item);
+    setIsViewOnly(false);
     setIsEditModalOpen(true);
+  };
+
+  const handleDeleteClick = (item: InventoryItem) => {
+    setSelectedItem(item);
+    const result = deleteItemAction(item.productId);
   };
 
   return (
@@ -37,7 +58,7 @@ export const InventoryManager = ({ data = [] }: InventoryManagerProps) => {
       <Card className="shadow-sm border-gray-200 p-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <h2 className="text-xl font-bold text-gray-800">
-            Current Stock Levels
+            {filterStatus === "low-stock" ? "🚨 Low Stock Warning" : "Current Stock Levels"}
           </h2>
           
           <div className="flex items-center gap-3 w-full md:w-auto">
@@ -53,8 +74,13 @@ export const InventoryManager = ({ data = [] }: InventoryManagerProps) => {
             </div>
 
             <div className="relative">
-              <select className="appearance-none h-11 px-5 bg-[#E5E7EB] rounded-xl text-sm font-medium pr-10 focus:outline-none cursor-pointer">
-                <option>Search Filters</option>
+              <select 
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as "all" | "low-stock")}
+                className="appearance-none h-11 px-5 bg-[#E5E7EB] rounded-xl text-sm font-medium pr-10 focus:outline-none cursor-pointer"
+              >
+                <option value="all">All Items</option>
+                <option value="low-stock">Low Stock</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
             </div>
@@ -70,12 +96,14 @@ export const InventoryManager = ({ data = [] }: InventoryManagerProps) => {
           </div>
         </div>
 
-        <InventoryTable data={filteredData} onEdit={handleEditClick} />
+        <InventoryTable data={filteredData} onEdit={handleEditClick} onDelete={handleDeleteClick} />
       </Card>
 
       <NewItemModal 
         isOpen={isNewModalOpen} 
         onClose={() => setIsNewModalOpen(false)} 
+        suppliers={suppliers} // Pass suppliers to the modal
+        categories={categories} // Pass categories if needed in the future
       />
 
       <EditItemModal 
@@ -85,6 +113,8 @@ export const InventoryManager = ({ data = [] }: InventoryManagerProps) => {
           setSelectedItem(null);
         }} 
         item={selectedItem}
+        isViewOnly={isViewOnly}
+        categories={categories}
       />
     </div>
   );

@@ -1,20 +1,34 @@
 import { db } from "../../index";
 import { userNotificationsTable } from "../../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 //CREATE
 export async function createUserNotification(data: {
   notifId: number;
-  userId: number;
-  isRead: boolean;
+  userId: string;
+  targetId: number;
   //   createdAt: Date; //removed because it defaults to now() in the schema, so it can be optional in the input
-}) {
-  return db.insert(userNotificationsTable).values(data).returning();
+}, tx?: any) {
+  const client = tx || db; 
+  return client.insert(userNotificationsTable).values(data);
 }
 
 //READ
 export async function readUserNotification() {
   return db.select().from(userNotificationsTable);
+}
+
+//READ UNSEEN NOTIFICATIONS OF A USER
+export async function readUnseenUserNotifications(userId: string) {
+  return db
+    .select()
+    .from(userNotificationsTable)
+    .where(
+      and(
+        eq(userNotificationsTable.userId, userId),
+        eq(userNotificationsTable.isRead, false),
+      ),
+    );
 }
 
 //UPDATE

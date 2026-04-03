@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { createSupplierAction } from "@/lib/action/supplier.action";
 
 interface NewSupplierModalProps {
   isOpen: boolean;
@@ -20,14 +21,32 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
     resolver: zodResolver(newSupplierSchema),
     defaultValues: { 
       name: "", 
-      contact: "", 
-      email: "" },
+      supplierLandline: "", 
+      supplierEmail: "",
+      supplierMobile: "" },
   });
 
-  function onSubmit(values: z.infer<typeof newSupplierSchema>) {
-    console.log("Ready to send to database:", values);
+  const handleClose = () => {
     form.reset();
     onClose();
+  };
+
+  async function onSubmit(values: z.infer<typeof newSupplierSchema>) {
+    try {
+      const result = await createSupplierAction(values);
+
+      if (result.success) {
+        handleClose();
+      } else {
+        // If it fails, attach the error message directly to the username field!
+        // form.setError("username", {
+        //   type: "manual",
+        //   message: result.error, // This prints the friendly message we wrote in the action
+        // });
+      }
+    } catch (error) {
+      console.error("Server error:", error);
+    }
   }
 
   return (
@@ -51,9 +70,9 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
                 </FormItem>
               )} />
 
-              <FormField control={form.control} name="contact" render={({ field }) => (
+              <FormField control={form.control} name="supplierLandline" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Contact Person</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Landline</FormLabel>
                   <FormControl>
                     <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
                   </FormControl>
@@ -61,11 +80,21 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
                 </FormItem>
               )} />
 
-              <FormField control={form.control} name="email" render={({ field }) => (
+              <FormField control={form.control} name="supplierEmail" render={({ field }) => (
                 <FormItem className="space-y-1.5">
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Email Address</FormLabel>
                   <FormControl>
                     <Input {...field} type="email" className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                  </FormControl>
+                  <FormMessage className="text-xs text-red-500 ml-1" />
+                </FormItem>
+              )} />
+
+              <FormField control={form.control} name="supplierMobile" render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Mobile Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>

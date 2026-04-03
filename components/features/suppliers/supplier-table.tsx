@@ -12,12 +12,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+// ALIGN THIS WITH YOUR schema.ts
 export interface Supplier {
-  id: string;
-  name: string;
+  supplierId: number;   // Changed from id to supplierId
+  supplierName: string; // Changed from name to supplierName
   contact: string;
   email: string;
-  // category removed from here!
 }
 
 interface SupplierTableProps {
@@ -51,16 +51,18 @@ export const SupplierTable = ({ data = [], onView, onEdit, onDelete }: SupplierT
           <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Supplier ID</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Supplier Name</TableHead>
-            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Contact Person</TableHead>
+            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Mobile</TableHead>
+            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Landline</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Email</TableHead>
-            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-right">Actions</TableHead>
+            
           </TableRow>
         </TableHeader>
         <TableBody>
           {currentItems.map((sup) => (
-            <TableRow key={sup.id} className="group hover:bg-black transition-colors cursor-default border-b border-gray-50">
-              <TableCell className="px-6 py-6 font-mono text-xs text-gray-500 group-hover:text-zinc-400">{sup.id}</TableCell>
-              <TableCell className="px-6 py-6 font-medium text-gray-800 group-hover:text-white">{sup.name}</TableCell>
+            // Use sup.supplierId instead of sup.id
+            <TableRow key={sup.supplierId} className="group hover:bg-black transition-colors cursor-default border-b border-gray-50">
+              <TableCell className="px-6 py-6 font-mono text-xs text-gray-500 group-hover:text-zinc-400">{sup.supplierId}</TableCell>
+              <TableCell className="px-6 py-6 font-medium text-gray-800 group-hover:text-white">{sup.supplierName}</TableCell>
               <TableCell className="px-6 py-6 text-gray-600 group-hover:text-zinc-300">{sup.contact}</TableCell>
               <TableCell className="px-6 py-6 text-gray-600 group-hover:text-zinc-300">{sup.email}</TableCell>
               <TableCell className="px-6 py-6 text-right">

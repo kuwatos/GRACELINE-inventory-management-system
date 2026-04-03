@@ -2,6 +2,8 @@
 import { db } from "../../index";
 import { supplierItemsTable } from "../../db/schema";
 import { eq, lte, ilike, or } from "drizzle-orm";
+import { createUserNotificationService } from "../user_notifications/user_notifications.service";
+import { createLog } from "../log/log.repository";
 
 //CREATE
 export async function createSupplierItem(data: {
@@ -30,25 +32,66 @@ export async function readSupplierItemByItem() {
 }
 
 //UPDATE
-export async function updateItem(data: {
-  id: number;
+export async function updateSupplierItem(data: {
+  id: number; // 👈 This is the supplierItemId
   supplierId?: number;
-  productId?: number;
   unitPrice?: string;
 }) {
-  const { id, ...fields } = data;
+  const { id, ...incomingFields } = data;
 
-  return db
-    .update(supplierItemsTable)
-    .set({ ...fields })
-    .where(eq(supplierItemsTable.supplierItemId, data.id))
-    .returning();
+  return await db.transaction(async (tx) => {
+    // 1. Get the current link state
+    const [existing] = await tx
+      .select()
+      .from(supplierItemsTable)
+      .where(eq(supplierItemsTable.supplierItemId, id))
+      .limit(1);
+
+    if (!existing) throw new Error("Specific supplier link not found");
+
+    const updates: Record<string, any> = {};
+
+    // 2. Comparison and Logging
+    for (const [key, val] of Object.entries(incomingFields)) {
+      const oldValue = (existing as any)[key];
+
+      if (val !== undefined && String(val) !== String(oldValue)) {
+        updates[key] = val;
+
+        await createLog({
+          actionId: 12, 
+          targetId: id, // The ID of the specific supplier-item link
+          columnName: key,
+          prevValue: oldValue?.toString() || null,
+          newValue: val.toString(),
+        }, tx);
+      }
+    }
+
+    if (Object.keys(updates).length === 0) return { message: "No changes" };
+
+    // 3. Update the specific link
+    const [updated] = await tx
+      .update(supplierItemsTable)
+      .set(updates)
+      .where(eq(supplierItemsTable.supplierItemId, id))
+      .returning();
+
+    // 4. Notify about the specific product's price change
+    if (existing.productId !== null) {
+      await createUserNotificationService({ notifId: 8, targetId: existing.productId }, tx);
+    }
+
+    return updated;
+  });
 }
 
 //DELETE
 export async function deleteItem(id: number) {
-  return db
-    .delete(supplierItemsTable)
-    .where(eq(supplierItemsTable.productId, id))
+  await db
+    .update(supplierItemsTable)
+    .set({ archived: true })
+    .where(eq(supplierItemsTable.supplierItemId, id))
     .returning();
+  return { success: true };
 }

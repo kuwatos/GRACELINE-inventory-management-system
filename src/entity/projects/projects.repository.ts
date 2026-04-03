@@ -10,7 +10,7 @@ export async function createProject(data: { projectName: string }) {
 
 //READ
 export async function readProjects() {
-  return db.select().from(projectsTable);
+  return db.select().from(projectsTable).where(eq(projectsTable.archived, false));
 }
 
 //SEARCH
@@ -31,8 +31,10 @@ export async function updateProject(id: number, name: string) {
 
 //DELETE
 export async function deleteProject(id: number) {
-  return db
-    .delete(projectsTable)
+  await db
+    .update(projectsTable)
+    .set({ archived: true })
     .where(eq(projectsTable.projectId, id))
     .returning();
+  return { success: true }
 }

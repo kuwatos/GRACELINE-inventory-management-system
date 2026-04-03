@@ -2,6 +2,7 @@
 "use server";
 import { db } from "../../index";
 import { usersTable } from "../../db/schema";
+import { usersTable } from "../../db/schema";
 import { and, or, ilike, eq } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { auth, type User} from "@/lib/auth";
@@ -72,6 +73,7 @@ export async function createUser(data: {
 // READ
 export async function readUsers() {
   return db.select().from(usersTable).where(eq(usersTable.active, true));
+  return db.select().from(usersTable).where(eq(usersTable.active, true));
 }
 
 // SEARCH
@@ -81,6 +83,7 @@ export async function searchUsers(filters: {
 }) {
   // FIX 1 & 2: Start with the active rule so we NEVER show deleted ghosts, 
   // and the conditions array is never completely empty!
+  const conditions = [eq(usersTable.active, true)];
   const conditions = [eq(usersTable.active, true)];
 
   // Add keyword if it exists (now searches username, first name, OR last name)

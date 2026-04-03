@@ -1,6 +1,6 @@
 // CRUD lives here
 import { db } from "../../index";
-import { orderProductsTable } from "../../db/schema";
+import { orderProductsTable, ordersTable } from "../../db/schema";
 import { eq, ilike, and } from "drizzle-orm";
 
 //CREATE
@@ -14,16 +14,16 @@ export async function createOrderProducts(data: {
 
 //READ
 // This read function is grouped by orderId
-export async function readorderProducts() {
+export async function readOrderProducts(data: { id: number }) {
   return db
     .select()
     .from(orderProductsTable)
-    .where(eq(orderProductsTable.orderId, orderProductsTable.orderId));
+    .where(eq(orderProductsTable.orderId, data.id));
 }
 
 //UPDATE
 // You can only change the quantity of the order product, so the only updatable field is orderProductQuantity
-export async function updateorderProducts(data: {
+export async function updateOrderProducts(data: {
   id: number;
   productId: number;
   orderProductQuantity: number;
@@ -37,9 +37,10 @@ export async function updateorderProducts(data: {
 }
 
 //DELETE
-export async function deleteorderProducts(id: number) {
-  return db
+export async function deleteOrderProducts(id: number) {
+  await db
     .delete(orderProductsTable)
     .where(eq(orderProductsTable.orderProductId, id))
     .returning();
+  return {success:true}
 }
