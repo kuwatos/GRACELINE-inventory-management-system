@@ -281,3 +281,17 @@ export async function signOutAction() {
   }
 
 }
+
+export async function validateUser(requiredRole?: string) {
+    const session = await auth.api.getSession({headers: await headers()}); // Better Auth session fetch
+
+    if (!session || !session.user.active) {
+        throw new Error("Unauthorized: Account inactive or session expired");
+    }
+
+    if (requiredRole && session.user.department !== requiredRole) {
+        throw new Error("Forbidden: Insufficient permissions");
+    }
+
+    return session.user;
+}
