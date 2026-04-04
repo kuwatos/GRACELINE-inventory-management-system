@@ -1,12 +1,11 @@
 "use server"; // This magic word tells Next.js to run this strictly on the backend!
 
 import { revalidatePath } from "next/cache";
-import { createUser, signIn, validateSessionUser } from "@/src/entity/user/user.repository"; // Update this path to wherever your CRUD file is!
+import { createUser, validateSessionUser } from "@/src/entity/user/user.repository"; // Update this path to wherever your CRUD file is!
 import { updateUser, deleteUser } from "@/src/entity/user/user.repository"; 
 import { editUserSchema } from "@/lib/validations";
 import { newUserSchema } from "@/lib/validations";
 import * as z from "zod";
-import { authClient } from "../auth-client";
 import { redirect } from "next/dist/client/components/navigation";
 
 export async function createUserAction(values: z.infer<typeof newUserSchema>) {
@@ -132,21 +131,40 @@ export async function signOutAction() {
 
 export async function checkLoginStatus() {
   let userToRedirect = null;
+
   try {
     // 1. Try to get the user. 
     // If they aren't logged in, validateSessionUser throws an error.
     const user = await validateSessionUser();
     userToRedirect = user;
-  } catch (error) {
+  } catch (error: any) {
     // 2. We catch the error here. 
     // If they aren't logged in, we do NOTHING. 
     // This allows the code to finish and the Login Page to render normally.
     console.log("No active session found. Allowing access to login page.");
     return; 
   }
+
   // 3. If we found a user, redirect them.
   // This is OUTSIDE the try/catch, so Next.js can handle the redirect properly.
   if (userToRedirect) {
     await redirectToDashboard(userToRedirect.department);
   }
+}
+
+export async function checkAccess(requiredRole: string) {
+  let user = null;
+  try {
+    user = await validateSessionUser();
+  } catch (error:any)
+  {
+    redirect("/login")
+  }
+
+  if (user.department !== requiredRole) {
+          
+          throw new Error("Forbidden: Insufficient permissions");
+      }
+
+
 }

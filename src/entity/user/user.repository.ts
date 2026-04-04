@@ -6,6 +6,7 @@ import { and, or, ilike, eq } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { auth, type User} from "@/lib/auth";
 import { headers } from "next/headers";
+import { redirect } from "next/dist/server/api-utils";
 
 
 export async function createUser(data: { 
@@ -282,16 +283,13 @@ export async function signOut() {
 
 }
 
-export async function validateSessionUser(requiredRole?: string) {
+export async function validateSessionUser() {
     const session = await auth.api.getSession({headers: await headers()}); // Better Auth session fetch
 
     if (!session || !session.user.active) {
         throw new Error("Unauthorized: Account inactive or session expired");
     }
 
-    if (requiredRole && session.user.department !== requiredRole) {
-        throw new Error("Forbidden: Insufficient permissions");
-    }
     console.log("Session valid for user:", session.user.username);
     return session.user;
 }
