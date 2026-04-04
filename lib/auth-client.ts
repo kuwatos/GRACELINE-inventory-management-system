@@ -7,7 +7,9 @@ import { customSessionClient } from "better-auth/client/plugins" // Client-side 
 
 export const authClient =  createAuthClient({
     //you can pass client configuration here
-    
+    fetchOptions: {
+        credentials: "include", // Essential for cross-origin or complex session handling
+    },
     // disable default username availability check route for security, still available in server actions
     disabledPaths: ["/is-username-available"], // Disable the default username availability check route for security, still available in server actions
     

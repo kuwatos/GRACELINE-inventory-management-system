@@ -10,15 +10,12 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import DashboardHeader from "@/components/dashboard-header";
-import { validateSessionUser } from "@/src/entity/user/user.repository"; 
-import { redirect } from "next/navigation";
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   
   
 return (

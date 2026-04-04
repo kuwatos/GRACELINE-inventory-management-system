@@ -18,8 +18,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { signIn} from "@/src/entity/user/user.repository"; // Import the server action for signing in
-import { checkLoginStatus } from "@/lib/action/user.action"
+import { signIn, validateSessionUser} from "@/src/entity/user/user.repository"; // Import the server action for signing in
+import { redirectToDashboard } from "@/lib/action/user.action"
+import { executeAction } from "@/lib/error.handler"
+import { useRouter } from "next/navigation"
 
 
 const formSchema = z.object({
@@ -37,7 +39,7 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-
+  const router = useRouter()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -47,17 +49,22 @@ export function LoginForm({
   })
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
-    const result = await signIn(data);
-    if (result.success) {
-      checkLoginStatus(); // Call the server action to handle post-login logic and redirection
-    }
-    else {
-      // Set a manual error on the password field or a global toast
-      form.setError("root", { 
-        message: result.message 
-      });
-    }
-    
+    await executeAction(
+      async () => {
+        // 1. Perform the action
+      const result = await signIn(data);
+
+      // 2. Handle the specific "Expected" Login Logic
+      if (result.success) {
+        const user = await validateSessionUser()
+        const path = await redirectToDashboard(user.department);
+        window.location.href = path
+      } else {
+        // If it's a known validation error, we still set it on the form
+        form.setError("root", { message: result.message });
+        }
+      },
+    );
   }
   const company = "Graceline";
 

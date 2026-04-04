@@ -14,7 +14,7 @@ import {
 
 // 1. UPDATED INTERFACE to match the database exactly
 export interface User {
-  userId: string; 
+  id: string; 
   firstName: string;
   lastName: string;
   username: string;
@@ -61,11 +61,11 @@ export const UserTable = ({ data = [], onEdit, onDelete }: UserTableProps) => {
         <TableBody>
           {currentItems.map((user) => (
             <TableRow 
-              key={user.userId} // Changed from user.id
+              key={user.id} // Changed to user.id
               className="group hover:bg-black transition-colors cursor-default border-b border-gray-50"
             >
               <TableCell className="px-6 py-5 font-mono text-xs text-gray-500 group-hover:text-zinc-400">
-                {`EMP-${String(user.userId).padStart(4, '0')}`}
+                {`EMP-${String(user.id).padStart(4, '0')}`}
               </TableCell>
               <TableCell className="px-6 py-5 font-medium text-gray-800 group-hover:text-white">
                 {user.firstName} {user.lastName}

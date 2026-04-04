@@ -113,7 +113,66 @@ const options = {
                     return { data: session };
                 },
             },
+
+            delete: {
+                after: async (session, ctx) => {
+                    try {
+                        // 1. Fetch the user associated with the session being deleted
+                        const user = await ctx?.context?.adapter.findOne({
+                            model: "user",
+                            where: [{ field: "id", value: session.userId }]
+                        }) as unknown as User;
+
+                        if (user) {
+                            console.log(`Audit: User ${user.name} logged out (Session Deleted).`);
+                            
+                            // 2. Create the log entry
+                            await createLog({
+                                userId: user.id || "unknown",
+                                actionId: 2, // User Sign Out
+                                targetId: user.id || "unknown",
+                                columnName: "none",
+                                prevValue: null,
+                                newValue: null,
+                                remarks: null
+                            });
+                        }
+                    } catch (error: any) {
+                        // We log the error but don't throw, as the session is already deleted
+                        console.error("User Sign Out Audit Error:", error);
+                    }
+                }
+            }
         },
+    },
+    hooks: {
+        after: createAuthMiddleware( async (ctx) => {
+            if (ctx.path.startsWith("/sign-out")) {
+                console.log("signed out")
+                // At this point, the session is being terminated.
+                // You can access the user performing the action from the context.
+                const user = ctx.context.session?.user;
+                if (user) {
+                    console.log(`Audit: User ${user.name} (${user.email}) logged out.`);
+                    try {
+                        await createLog({
+                            userId: user.id || "unknown",
+                            actionId: 2, // User Sign Out
+                            targetId: user.id || "unknown",
+                            columnName: "none",
+                            prevValue: null,
+                            newValue: null,
+                            remarks: null
+                        });
+                        return { success: true };
+                        }catch (error: any) {
+                        console.error("User Sign Out Error:", error);
+                        return { success: false, message: error.message || "Failed to sign out user." };
+                    }
+                }
+            }
+        }),
+           
     },
     
     // disable default username availability check route for security, still available in server actions
@@ -141,6 +200,7 @@ export const auth = betterAuth({
                     username: user.username,
                     name: user.name,
                     firstName: user.firstName,
+                    lastName: user.lastName,
                     department: user.department,
                     active: user.active,
                     role: user.role,

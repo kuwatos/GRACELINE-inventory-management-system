@@ -1,5 +1,6 @@
 // lib/error-handler.ts
 import { toast } from "sonner";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 /**
  * A centralized error handler for try/catch blocks.
@@ -7,6 +8,14 @@ import { toast } from "sonner";
  * @param fallbackMessage A generic message if the error is unreadable
  */
 export function handleError(error: unknown, fallbackMessage = "Something went wrong. Please try again.") {
+  // for redirection handling
+  if (isRedirectError(error)) {
+    throw error; // Re-throw so the browser actually redirects but does not toast
+  }
+
+  // Always log to console for developer sanity
+  console.error("DEBUG [Error Handler]:", error);
+
   // 1. If it's a standard JavaScript Error (e.g., throw new Error("Item out of stock"))
   if (error instanceof Error) {
     toast.error(error.message);
@@ -46,3 +55,21 @@ export function handleError(error: unknown, fallbackMessage = "Something went wr
       }
   };
 */
+
+
+//A wrapper function to save you typing
+export async function executeAction(
+  action: () => Promise<any>, 
+  successMessage?: string
+) {
+  try {
+    const result = await action();
+    if (successMessage) toast.success(successMessage);
+    return result;
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+// Usage in your component:
+//const onSubmit = () => executeAction(() => createItem(data), "Saved!");

@@ -6,8 +6,6 @@ import { and, or, ilike, eq } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { auth, type User} from "@/lib/auth";
 import { headers } from "next/headers";
-import { redirect } from "next/dist/server/api-utils";
-
 
 export async function createUser(data: { 
   firstName: string; 
@@ -23,7 +21,7 @@ export async function createUser(data: {
   const role = data.department === "admin" ? "admin" : "user"; // Basic role assignment based on department
 
   // 1. Security Check: Only admins can do this
-  if (session?.user.department!== "admin") {
+  if (session?.user.department.toLowerCase() !== "admin") {
         throw new Error("Unauthorized");
     }
 
@@ -111,13 +109,14 @@ export async function searchUsers(filters: {
 // UPDATE
 export async function updateUser(data: {
   id: string;
-  username?: string;
-  firstName?: string;
-  lastName?: string;
-  department?: string;
-  password?: string; // Notice this is optional (?)
+  username: string;
+  firstName: string;
+  lastName: string;
+  department: string;
+  password?: string | undefined; // Notice this is optional (?)
 }) {
-    const { id, password, ...fields } = data;
+    const { id, password, username, firstName, lastName, department } = data;
+    console.log("checking")
     const oldUser = await auth.api.getUser({
       query: { id },
       headers: await headers(),
@@ -128,20 +127,28 @@ export async function updateUser(data: {
     if (session?.user.department!== "admin") {
           throw new Error("Unauthorized");
       }
-    
+    console.log(id)
+    console.log(username)
+    console.log(password)
+    console.log(firstName)
+    console.log(lastName)
+    console.log(department)
     // 2. Update the user via the API
     try {
       await auth.api.adminUpdateUser({
           body: { 
             userId: id,
             data: {
-              ...fields,
+              username,
+              firstName,
+              lastName,
+              department
               }
             },
           headers: await headers(),
       }) as unknown as User; // Type assertion to include our custom fields
       // 2.1 IF the admin typed a new password, update the password as well (separate API call since it's a different endpoint)
-      if (password) {
+      if (password && password !=null) {
         await auth.api.setUserPassword({
           body: {
               newPassword: password, // required
@@ -191,7 +198,6 @@ export async function updateUser(data: {
         remarks: null
       });
     }
-
     return { success: true, user: updatedUser};
   }catch (error: any) {
       console.error("Admin Update User Error:", error);
@@ -217,19 +223,20 @@ export async function deleteUser(id: string) {
       headers: await headers(),
     }) as unknown as User; // Type assertion to include our custom fields
 
-    // 2. Log the deletion action (we log the 'active' field change from true to false)
-    if (deletedUser) {
-      await createLog({
-        userId: session?.user.id || "unknown",
-        actionId: 6,
-        targetId: deletedUser.id,
-        columnName: "active",
-        prevValue: "true",
-        newValue: deletedUser.active.toString(),
-        remarks: null
-      });
-    }
-    return deletedUser;
+      try {
+        await createLog({
+          userId: session?.user.id || "unknown",
+          actionId: 6,
+          targetId: deletedUser.id,
+          columnName: "active",
+          prevValue: "true",
+          newValue:  deletedUser?.active != null ? deletedUser.active.toString() : null,
+          remarks: null
+        });
+      } catch (logError) {
+        console.error("LOG ERROR:", logError);
+      }
+    return{success: true, deletedUser};
   }catch (error: any) {
       console.error("Admin Delete User Error:", error);
       return { success: false, message: error.message || "Failed to delete user." };

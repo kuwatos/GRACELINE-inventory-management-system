@@ -8,6 +8,7 @@ import { newUserSchema } from "@/lib/validations";
 import * as z from "zod";
 import { redirect } from "next/dist/client/components/navigation";
 
+
 export async function createUserAction(values: z.infer<typeof newUserSchema>) {
   try {
     const validData = newUserSchema.parse(values);
@@ -122,35 +123,14 @@ export async function redirectToDashboard(department: string) {
     default:
       targetPath = "/login"; 
   }
+
+  // 1. Tell Next.js to clear the cache for the layout 
+  // This is what forces the Sidebar to see the new session
+  revalidatePath("/", "layout");
   // Always call redirect OUTSIDE of any try/catch blocks
-  redirect(targetPath);
+  return targetPath;
 }
 
-export async function signOutAction() {
-}
-
-export async function checkLoginStatus() {
-  let userToRedirect = null;
-
-  try {
-    // 1. Try to get the user. 
-    // If they aren't logged in, validateSessionUser throws an error.
-    const user = await validateSessionUser();
-    userToRedirect = user;
-  } catch (error: any) {
-    // 2. We catch the error here. 
-    // If they aren't logged in, we do NOTHING. 
-    // This allows the code to finish and the Login Page to render normally.
-    console.log("No active session found. Allowing access to login page.");
-    return; 
-  }
-
-  // 3. If we found a user, redirect them.
-  // This is OUTSIDE the try/catch, so Next.js can handle the redirect properly.
-  if (userToRedirect) {
-    await redirectToDashboard(userToRedirect.department);
-  }
-}
 
 export async function checkAccess(requiredRole: string) {
   let user = null;
@@ -162,9 +142,6 @@ export async function checkAccess(requiredRole: string) {
   }
 
   if (user.department !== requiredRole) {
-          
           throw new Error("Forbidden: Insufficient permissions");
       }
-
-
 }

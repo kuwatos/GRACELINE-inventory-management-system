@@ -19,7 +19,7 @@ export async function createLog(
 ) {
   // If 'tx' is provided, use it. Otherwise, use the standard 'db'.
   const client = tx || db; 
-  return client.insert(logsTable).values(data);
+  return  client.insert(logsTable).values(data);
 }
 
 //READ

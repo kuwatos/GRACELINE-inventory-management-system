@@ -21,16 +21,41 @@ import {
   SidebarRail,
   SidebarFooter,
 } from "@/components/ui/sidebar"
+import { useRouter } from "next/navigation"
+import { authClient } from "@/lib/auth-client"
 
-// Mock User Data (Replace with real data later)
-const user = {
-  name: "Temporary Name",
-  email: "admin@graceline.com",
-  avatar: "/avatars/shadcn.jpg",
-}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
+  // get session and return user details
+
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const {data, isPending}= authClient.useSession();
+  const isLoading = !mounted || isPending || (!data && mounted);
+  const user = {
+    // Only access data when we are SURE we aren't loading anymore
+    name: data?.user?.username || data?.user?.name || "User",
+    email: data?.user?.department?.toUpperCase() || "DEPARTMENT",
+    avatar: "/avatars/shadcn.jpg",
+  };
+  
+  const router = useRouter()
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false)
+  
+
+  const handleLogout = async () => {
+  setIsLoggingOut(true);
+  await authClient.signOut({
+    fetchOptions: {
+      onSuccess: () => router.push("/login"),
+      onResponse: () => setIsLoggingOut(false) 
+    },
+  })
+}
 
   // 👇 2. THE LOGIC FROM LAST NIGHT
   // Get the section from the URL (e.g. "warehouse", "admin")
@@ -101,7 +126,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenuItem>
           <SidebarMenuButton
             size="lg"
-            onClick={() => console.log("Logout Clicked")} // Whole bar is clickable
+            onClick={handleLogout} // Whole bar is clickable
             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           >
             {/* 1. The Avatar Box */}
@@ -111,8 +136,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
             {/* 2. The Text Info */}
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold">{user.name}</span>
-              <span className="truncate text-xs">{user.email}</span>
+              {isLoading ? (
+                // You can replace these with Shadcn Skeleton components if you have them
+                <>
+                  <div className="h-4 w-24 animate-pulse rounded bg-white/20" /> 
+                  <div className="h-3 w-16 animate-pulse rounded bg-white/10" />
+                </>
+              ) : (
+                <>
+                  <span className="truncate font-semibold">{user.name}</span>
+                  <span className="truncate text-xs">{user.email}</span>
+                </>
+              )}
             </div>
 
             {/* 3. The Logout Icon (Pushed to the right) */}
