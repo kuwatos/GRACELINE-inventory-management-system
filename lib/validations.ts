@@ -150,3 +150,27 @@ export const projectFormSchema = z.object({
 });
 
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;
+
+
+export const baseSupplierItemSchema = z.object({
+  supplierId: z.number().min(1, "Please select a supplier"),
+  productId: z.number().min(1, "Please select a product"),
+  unitPrice: z
+    .string()
+    .trim()
+    .min(1, "Price is required")
+    .regex(
+      /^\d+(\.\d{1,2})?$/,
+      "Invalid price format (e.g., 1450.00)"
+    )
+    .refine((val) => {
+      const num = parseFloat(val);
+      return num >= 0.01;
+    }, "Price must be at least 0.01")
+    .refine((val) => {
+      const num = parseFloat(val);
+      return num <= 9999999.99;
+    }, "Price exceeds the maximum limit of 9,999,999.99"),
+});
+export const newSupplierItemSchema = baseSupplierItemSchema;
+export const editSupplierItemSchema = baseSupplierItemSchema;

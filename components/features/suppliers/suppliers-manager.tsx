@@ -12,6 +12,8 @@ import { deleteSupplierAction } from "@/lib/action/supplier.action";
 
 interface SuppliersManagerProps {
   data: Supplier[];
+  suppliers: { supplierId: number; supplierName: string }[]; // For the "Link" dropdown
+  products: { productId: number; productName: string }[];    // For the "Link" dropdown
 }
 
 export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
