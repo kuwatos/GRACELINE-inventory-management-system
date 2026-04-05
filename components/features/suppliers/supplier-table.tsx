@@ -14,10 +14,12 @@ import {
 
 // ALIGN THIS WITH YOUR schema.ts
 export interface Supplier {
-  supplierId: number;   // Changed from id to supplierId
-  supplierName: string; // Changed from name to supplierName
-  contact: string;
-  email: string;
+  supplierId: number;
+  supplierName: string;
+  supplierLandline: string | null; // Matches the database return exactly
+  supplierEmail: string | null;
+  supplierMobile: string | null;
+  active: boolean|null;
 }
 
 interface SupplierTableProps {
@@ -60,11 +62,11 @@ export const SupplierTable = ({ data = [], onView, onEdit, onDelete }: SupplierT
         <TableBody>
           {currentItems.map((sup) => (
             // Use sup.supplierId instead of sup.id
-            <TableRow key={sup.supplierId} className="group hover:bg-black transition-colors cursor-default border-b border-gray-50">
+             <TableRow key={sup.supplierId} className="group hover:bg-black transition-colors cursor-default border-b border-gray-50">
               <TableCell className="px-6 py-6 font-mono text-xs text-gray-500 group-hover:text-zinc-400">{sup.supplierId}</TableCell>
               <TableCell className="px-6 py-6 font-medium text-gray-800 group-hover:text-white">{sup.supplierName}</TableCell>
-              <TableCell className="px-6 py-6 text-gray-600 group-hover:text-zinc-300">{sup.contact}</TableCell>
-              <TableCell className="px-6 py-6 text-gray-600 group-hover:text-zinc-300">{sup.email}</TableCell>
+              <TableCell className="px-6 py-6 text-gray-600 group-hover:text-zinc-300">{sup.supplierMobile || sup.supplierLandline || '-'}</TableCell>
+              <TableCell className="px-6 py-6 text-gray-600 group-hover:text-zinc-300">{sup.supplierEmail || '-'}</TableCell>
               <TableCell className="px-6 py-6 text-right">
                 <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => onView(sup)} className="text-zinc-400 hover:text-white transition-colors"><Eye className="w-4 h-4" /></button>
