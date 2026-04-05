@@ -71,16 +71,21 @@ const baseSupplierSchema = z.object({
   supplierLandline: z
     .string()
     .trim()
-    .optional(),
+    .min(7, "Landline number must be at least 7 digits")
+    .max(15, "Landline number must be at most 15 digits")
+    .optional()
+    .or(z.literal("")), // Allow empty string as well
   supplierEmail: z
     .string()
     .trim()
     .email("Please enter a valid email address")
-    .optional(),
+    .optional()
+    .or(z.literal("")), // Allow empty string as well
   supplierMobile: z
     .string()
-    .trim()
-    .optional(),
+    .trim().min(7, "Mobile number must be at least 7 digits")
+    .max(15, "Mobile number must be at most 15 digits")
+
 });
 
 // Schema for New Supplier
