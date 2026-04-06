@@ -1,7 +1,7 @@
 // CRUD lives here
 import { db } from "../../index";
 import { supplierItemsTable } from "../../db/schema";
-import { eq, lte, ilike, or } from "drizzle-orm";
+import { eq, and} from "drizzle-orm";
 import { createUserNotificationService } from "../user_notifications/user_notifications.service";
 import { createLog } from "../log/log.repository";
 
@@ -30,6 +30,22 @@ export async function readSupplierItemByItem() {
     .from(supplierItemsTable)
     .groupBy(supplierItemsTable.productId);
 }
+
+//FIND EXISTING LINK
+export async function findSupplierItemLink(supplierId: number, productId: number) {
+  return db
+      .select()
+      .from(supplierItemsTable)
+      .where(
+        and(
+          eq(supplierItemsTable.supplierId, supplierId),
+          eq(supplierItemsTable.productId, productId),
+          eq(supplierItemsTable.archived, false) // Only block if the active link exists
+        )
+      )
+      .limit(1);
+}
+
 
 //UPDATE
 export async function updateSupplierItem(data: {

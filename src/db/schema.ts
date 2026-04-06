@@ -8,6 +8,7 @@ import {
   varchar,
   timestamp,
   numeric,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 // --- BetterAuth required schema for auth and session (do not modify!) ---
@@ -157,8 +158,12 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
     .defaultNow()
     .$onUpdate(() => new Date()),
   archived: boolean("archived").default(false),
+}, (table) => {
+  return {
+    // This creates a constraint where the same supplier + product pair cannot repeat
+    uniqueLink: uniqueIndex("unique_supplier_product_idx").on(table.supplierId, table.productId),
+  };
 });
-
 // --- Orders ---
 
 //List of orders

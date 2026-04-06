@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { createSupplierItemAction } from "@/lib/action/supplier-items.action";
 import { newSupplierItemSchema } from "@/lib/validations";
+import { useState } from "react";
 
 interface NewSupplierItemModalProps {
   isOpen: boolean;
@@ -25,7 +26,7 @@ export const NewSupplierItemModal = ({
   suppliers, 
   products 
 }: NewSupplierItemModalProps) => {
-  const form = useForm<z.infer<typeof newSupplierItemSchema>>({
+  const form = useForm<z.input<typeof newSupplierItemSchema>>({
     resolver: zodResolver(newSupplierItemSchema),
     defaultValues: { 
       supplierId: 0, 
@@ -33,17 +34,18 @@ export const NewSupplierItemModal = ({
       unitPrice: ""
     },
   });
-
   const { isSubmitting } = form.formState;
+
 
   const handleClose = () => {
     form.reset();
     onClose();
   };
 
-  async function onSubmit(values: z.infer<typeof newSupplierItemSchema>) {
+  async function onSubmit(values: z.input<typeof newSupplierItemSchema>) {
     try {
-      const result = await createSupplierItemAction(values);
+      const validatedData = newSupplierItemSchema.parse(values);
+      const result = await createSupplierItemAction(validatedData);
 
       if (result.success) {
         handleClose();

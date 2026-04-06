@@ -153,8 +153,8 @@ export type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
 
 export const baseSupplierItemSchema = z.object({
-  supplierId: z.number().min(1, "Please select a supplier"),
-  productId: z.number().min(1, "Please select a product"),
+  supplierId: z.coerce.number().int().min(1, "Please select a valid supplier"),
+  productId: z.coerce.number().int().min(1, "Please select a valid product"),
   unitPrice: z
     .string()
     .trim()

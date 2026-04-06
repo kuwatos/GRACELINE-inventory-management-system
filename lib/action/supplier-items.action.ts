@@ -1,13 +1,17 @@
 "use server"; // This magic word tells Next.js to run this strictly on the backend!
 
 import { revalidatePath } from "next/cache";
-import { createSupplierItem, readSupplierItemBySupplier, readSupplierItemByItem, updateSupplierItem, deleteItem } from "@/src/entity/supplier_item/supplier_item.repository"; // Update this path to wherever your CRUD file is!
+import { createSupplierItem, findSupplierItemLink, readSupplierItemByItem, updateSupplierItem, deleteItem } from "@/src/entity/supplier_item/supplier_item.repository"; // Update this path to wherever your CRUD file is!
 import { newSupplierItemSchema } from "@/lib/validations";
 import { editSupplierItemSchema } from "@/lib/validations";
 import * as z from "zod";
 
 export async function createSupplierItemAction(values: z.infer<typeof newSupplierItemSchema>) {
   try {
+    const link = await findSupplierItemLink(values.supplierId, values.productId);
+    if (link.length > 0) {
+      return { success: false, error: "This product is already linked to this supplier." };
+    }
     const validData = newSupplierItemSchema.parse(values);
 
     await createSupplierItem({
