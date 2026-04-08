@@ -69,7 +69,7 @@ export const SupplierItemManager = ({
 
   const handleDeleteClick = async (item: SupplierItem) => {
     if (confirm(`Are you sure you want to remove the link between ${item.supplierName} and ${item.productName}?`)) {
-      // await archiveSupplierItemAction(item.supplierItemId);
+       await deleteSupplierItemAction(item.supplierItemId);
     }
   };
 
