@@ -95,7 +95,7 @@ export const logsTable = pgTable("log_tb", {
   prevValue: varchar("prev_value", { length: 255 }),
   newValue: varchar("new_value", { length: 255 }),
   remarks: varchar("remarks", { length: 255 }),
-  project: integer("project").references(() => projectsTable.projectId),
+  projectId: integer("project").references(() => projectsTable.projectId),
 });
 
 export const reportsTable = pgTable("report_tb", {

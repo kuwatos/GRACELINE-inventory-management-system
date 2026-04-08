@@ -46,12 +46,13 @@ interface EditItemModalProps {
   item: InventoryItem | null;
   categories: { name: string }[];
   measurements: { name: string }[];
+  projects: { id: number; name: string }[];
   isViewOnly?: boolean;
 }
 
-export const EditItemModal = ({ isOpen, onClose, item, categories, measurements, isViewOnly = false }: EditItemModalProps) => {
-   const [openCombobox, setOpenCombobox] = useState(false);
-   const [openCombobox2, setOpenCombobox2] = useState(false);
+export const EditItemModal = ({ isOpen, onClose, item, categories, measurements, projects, isViewOnly = false }: EditItemModalProps) => {
+  const [openCombobox, setOpenCombobox] = useState(false);
+  const [openCombobox2, setOpenCombobox2] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // 1. Setup React Hook Form with your editItemSchema
@@ -70,10 +71,12 @@ export const EditItemModal = ({ isOpen, onClose, item, categories, measurements,
       productQuantity: item?.productQuantity || 0,
       reorderLevel: item?.reorderLevel || 0,
       measurement: item?.measurement || "",
-      reason: "Initial adjustment", 
+      reason: "Initial edit", 
+      projectId: undefined,
     },
   });
-
+  // Place this right after your useForm hook
+  const watchReason = form.watch("reason");
 
   // 2. The function that runs when you click Submit
   async function onSubmit(data: z.input<typeof editItemSchema>) {
@@ -243,6 +246,7 @@ export const EditItemModal = ({ isOpen, onClose, item, categories, measurements,
                 <FormMessage />
               </FormItem>
             )} />
+            
 
             {/* SECTION: DESCRIPTION */}
             <FormField control={form.control} name="productDesc" render={({ field }) => (
@@ -293,26 +297,61 @@ export const EditItemModal = ({ isOpen, onClose, item, categories, measurements,
                 )} />
               </div>
 
-              {/* Reason for change */}
-              <FormField control={form.control} name="reason" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-bold text-gray-700 text-xs">Reason for Adjustment</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-11 rounded-xl bg-white">
-                        <SelectValue placeholder="Why is this changing?" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="audit">Inventory Audit</SelectItem>
-                      <SelectItem value="damage">Damaged / Expired</SelectItem>
-                      <SelectItem value="restock">Manual Restock</SelectItem>
-                      <SelectItem value="correction">Typo Correction</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )} />
+              <div className="grid grid-cols-3 gap-4">
+    {/* ... Current Stock, Adjusted Stock, and Reorder Level fields remain the same ... */}
+  </div>
+
+            {/* NEW: Reason & Project Row */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="reason" render={({ field }) => (
+                  <FormItem className={watchReason === "project" ? "col-span-1" : "col-span-2"}>
+                    <FormLabel className="font-bold text-gray-700 text-xs">Reason for Adjustment</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-11 rounded-xl bg-white">
+                          <SelectValue placeholder="Why is this changing?" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="audit">Inventory Audit</SelectItem>
+                        <SelectItem value="damage">Damaged / Expired</SelectItem>
+                        <SelectItem value="manual restock">Manual Restock</SelectItem>
+                        <SelectItem value="correction">Typo Correction</SelectItem>
+                        <SelectItem value="project">Used for a Project</SelectItem>
+                        <SelectItem value="returned">Returned to Supplier</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
+                {/* Project Dropdown - Only visible when reason is 'project' */}
+                {watchReason === "project" && (
+                  <FormField control={form.control} name="projectId" render={({ field }) => (
+                    <FormItem className="col-span-1 animate-in fade-in slide-in-from-left-2 duration-300">
+                      <FormLabel className="font-bold text-gray-700 text-xs">Target Project</FormLabel>
+                      <Select 
+                        onValueChange={(v) => field.onChange(Number(v))} 
+                        value={field.value?.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-11 rounded-xl bg-white border-blue-200">
+                            <SelectValue placeholder="Choose project..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {projects.map((p) => (
+                            <SelectItem key={p.id} value={p.id.toString()}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                )}
+              </div>
             </div>
           </div>
 

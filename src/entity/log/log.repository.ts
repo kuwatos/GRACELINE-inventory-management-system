@@ -13,6 +13,7 @@ export async function createLog(
     prevValue?: string | null;
     newValue?: string | null;
     remarks?: string | null;
+    projectId?: number | null; // Optional projectId for future use
   },
   tx?: any // Optional Transaction Client
 ) {

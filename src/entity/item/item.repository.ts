@@ -100,6 +100,7 @@ export async function updateItem(data: {
   reorderLevel?: number;
   remarks?: string;      // 👈 Extract this for logging
   measurement?: string;
+  projectId?: number | null;   // 👈 Extract this for logging
 }) {
   const { id, remarks: globalRemarks, ...rest } = data;
 
@@ -147,6 +148,7 @@ export async function updateItem(data: {
         prevValue: oldValue?.toString() || null,
         newValue: val.toString(),
         remarks: globalRemarks || null, // 👈 Use the passed-in reason here!
+        projectId: data.projectId || null, // 👈 Pass projectId for logging
       }, tx);
     }
   }

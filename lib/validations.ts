@@ -53,16 +53,19 @@ export const newItemSchema = baseItemSchema.extend({
 });
 
 // 3. EDIT ITEM (Essentials + Identity + Adjustments)
-export const editItemSchema = baseItemSchema
-  .extend({
-    newQuantity: z.coerce
-      .number()
-      .int()
-      .min(0, "Quantity cannot be negative")
-      .optional(),
-      
-    reason: z.string().trim().optional(),
-  });
+export const editItemSchema = baseItemSchema.extend({
+  reason: z.string().min(1, "Please provide a reason"),
+  projectId: z.coerce.number().int().optional(),
+}).superRefine((data, ctx) => {
+  // If reason is project, but no valid projectId is provided
+  if (data.reason === "project" && (!data.projectId || data.projectId <= 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Please select a target project",
+      path: ["projectId"], // This puts the red error message under the project dropdown
+    });
+  }
+});
 
 //=============== SUPPLIER =================
 // The base rules for a supplier

@@ -16,10 +16,11 @@ interface InventoryManagerProps {
   suppliers?: { id: number; name: string }[]; // Add suppliers to props
   categories?: { name: string }[]; // Add categories to props
   measurements?: { name: string }[]; // Add measurements to props
+  projects?: { id: number; name: string }[]; // Add projects to props
   
 }
 
-export const InventoryManager = ({ data = [], suppliers = [], categories = [], measurements = [] }: InventoryManagerProps) => {
+export const InventoryManager = ({ data = [], suppliers = [], categories = [], measurements = [], projects = [] }: InventoryManagerProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "low-stock">("all");
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
@@ -118,6 +119,7 @@ export const InventoryManager = ({ data = [], suppliers = [], categories = [], m
         isViewOnly={isViewOnly}
         categories={categories}
         measurements={measurements}
+        projects= {projects}
       />
     </div>
   );

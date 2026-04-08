@@ -60,7 +60,7 @@ export async function updateItemAction(itemId: number, values: z.infer<typeof ed
 
     // Hand the updated data to the Robot Butler
     await updateItem({
-        id: itemId,
+      id: itemId,
       productName: validData.productName,
       productCategory1: validData.category1,
       productCategory2: validData.category2,
@@ -72,6 +72,7 @@ export async function updateItemAction(itemId: number, values: z.infer<typeof ed
       reorderLevel: validData.reorderLevel,
       remarks: validData.reason,
       measurement: validData.measurement,
+      projectId: validData.projectId, // Pass projectId for logging
     });
 
     revalidatePath("/inventory"); 

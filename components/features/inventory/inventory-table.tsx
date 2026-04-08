@@ -26,6 +26,7 @@ export interface InventoryItem {
   productQuantity: number | null;
   reorderLevel: number | null;
   measurement: string;
+  projectId?: number; // Add projectId to the interface
 }
 
 // 2. Add 'data' to your props so the parent can pass it down
