@@ -86,9 +86,7 @@ export const EditSupplierItemModal = ({
         <Form {...form}>
           <form onSubmit={handleFormSubmit}>
             <DialogHeader className="px-8 py-8 border-b border-gray-100 flex flex-col items-center bg-gray-50/50">
-              <div className="h-12 w-12 rounded-2xl bg-black flex items-center justify-center mb-4 shadow-lg shadow-black/20">
-                <LinkIcon className="text-white w-6 h-6" />
-              </div>
+              
               <DialogTitle className="text-2xl font-bold text-gray-900">{title}</DialogTitle>
               <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-medium">
                 {item?.productName || "Direct Sourcing"}
