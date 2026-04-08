@@ -68,9 +68,12 @@ export const ActivityLogTable = ({ data = [] }: ActivityLogTableProps) => {
               className="group hover:bg-black transition-colors cursor-default border-b border-gray-50"
             >
               <TableCell className="px-6 py-4 text-xs font-mono text-gray-500 group-hover:text-zinc-400 whitespace-nowrap">
-                {log.timestamp instanceof Date 
-                  ? log.timestamp.toLocaleString() 
-                  : (log.timestamp || "N/A")}
+                {log.timestamp ? (
+                  // This extracts the "Numbers" directly without calculating offsets
+                  new Date(log.timestamp).toISOString().replace('T', ' ').slice(0, 16)
+                ) : (
+                  "-"
+                )}
               </TableCell>
               <TableCell className="px-6 py-4 font-medium text-gray-800 group-hover:text-white">
                 {log.user}

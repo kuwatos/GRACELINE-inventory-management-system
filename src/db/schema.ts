@@ -8,8 +8,9 @@ import {
   varchar,
   timestamp,
   numeric,
-  uniqueIndex,
+  uniqueIndex
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // --- BetterAuth required schema for auth and session (do not modify!) ---
 
@@ -87,7 +88,9 @@ export const logsTable = pgTable("log_tb", {
   userId: text("user_id").references(() => usersTable.id),
   actionId: integer("action_id").references(() => actionsTable.actionId),
   targetId: integer("target_id").notNull(),
-  logDate: timestamp("log_date").defaultNow(),
+  logDate: timestamp("log_date", { withTimezone: true })
+    .notNull()
+    .default(sql`timezone('Asia/Manila', now())`),
   columnName: varchar("column_name", { length: 50 }),
   prevValue: varchar("prev_value", { length: 255 }),
   newValue: varchar("new_value", { length: 255 }),
@@ -100,9 +103,10 @@ export const reportsTable = pgTable("report_tb", {
     .primaryKey(),
   userId: text("user_id").references(() => usersTable.id),
   reportType: text("report_type").notNull(),
-  dateCreated: timestamp("date_created").defaultNow(),
-  dateStart: timestamp("date_start"),
-  dateEnd: timestamp("date_end"),
+  dateCreated: timestamp("date_created", { withTimezone: true })
+    .defaultNow(),
+  dateStart: timestamp("date_start", { withTimezone: true }),
+  dateEnd: timestamp("date_end", { withTimezone: true })
 });
 
 // --- Projects ---
@@ -155,8 +159,10 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
   productId: integer("product_id").references(() => itemsTable.productId),
   unitPrice: numeric("unit_price", { precision: 10, scale: 2 }),
   lastUpdated: timestamp("last_updated")
-    .defaultNow()
-    .$onUpdate(() => new Date()),
+    // 1. For the initial insert (replaces defaultNow)
+  .default(sql`timezone('Asia/Manila', now())`)
+  // 2. For every update (replaces new Date())
+  .$onUpdate(() => sql`timezone('Asia/Manila', now())`),
   archived: boolean("archived").default(false),
 }, (table) => {
   return {
@@ -216,6 +222,9 @@ export const userNotificationsTable = pgTable("user_notification_tb", {
   targetId: integer("target_id"), // e.g., supplierId, orderId, etc. depending on the notification
   notifId: integer("notif_id").references(() => notificationsTable.notifId),
   isRead: boolean("is_read").default(false),
-  createdAt: date("created_at").defaultNow(),
+  createdAt: date("created_at")// 1. For the initial insert (replaces defaultNow)
+  .default(sql`timezone('Asia/Manila', now())`)
+  // 2. For every update (replaces new Date())
+  .$onUpdate(() => sql`timezone('Asia/Manila', now())`),
 });
 
