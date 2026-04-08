@@ -10,9 +10,36 @@ export async function createSupplierItem(data: {
   supplierId: number;
   productId: number;
   unitPrice: string;
-  //   lastUpdated not included because it is defaulted as Now() in the schema, so it is not included in the input
 }) {
-  return db.insert(supplierItemsTable).values(data).returning();
+  return await db.transaction(async (tx) => {
+    // 1. Insert the new link record
+    const [newLink] = await tx.insert(supplierItemsTable).values(data).returning();
+
+    if (newLink) {
+      // 2. Iterate through the record to generate logs for every field
+      for (const [key, val] of Object.entries(newLink)) {
+        // Skip null/undefined values to keep logs clean
+        if (val !== null && val !== undefined) {
+          await createLog({
+            actionId: 21,                   // [BLANK] - Fill in for "Link Supplier Item"
+            targetId: newLink.supplierItemId,
+            columnName: key,
+            prevValue: null,
+            newValue: val.toString(),
+            remarks: null
+          }, tx);
+        }
+      }
+
+      // 3. Trigger the notification service
+      await createUserNotificationService({ 
+        notifId: 8,                        // [BLANK] - Fill in for "New Item Linked"
+        targetId: newLink.supplierItemId 
+      }, tx);
+    }
+
+    return newLink;
+  });
 }
 
 //READ GROUPED BY SUPPLIER
@@ -75,7 +102,7 @@ export async function updateSupplierItem(data: {
         updates[key] = val;
 
         await createLog({
-          actionId: 12, 
+          actionId: 20, 
           targetId: id, // The ID of the specific supplier-item link
           columnName: key,
           prevValue: oldValue?.toString() || null,
