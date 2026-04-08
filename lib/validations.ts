@@ -54,7 +54,6 @@ export const newItemSchema = baseItemSchema.extend({
 // 3. EDIT ITEM (Essentials + Identity + Adjustments)
 export const editItemSchema = baseItemSchema
   .extend({
-    
     newQuantity: z.coerce
       .number()
       .int()
@@ -154,7 +153,6 @@ export type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
 export const baseSupplierItemSchema = z.object({
   supplierId: z.coerce.number().int().min(1, "Please select a valid supplier"),
-  productId: z.coerce.number().int().min(1, "Please select a valid product"),
   unitPrice: z
     .string()
     .trim()
@@ -172,5 +170,7 @@ export const baseSupplierItemSchema = z.object({
       return num <= 9999999.99;
     }, "Price exceeds the maximum limit of 9,999,999.99"),
 });
-export const newSupplierItemSchema = baseSupplierItemSchema;
+export const newSupplierItemSchema = baseSupplierItemSchema.extend({
+  productId: z.coerce.number().int().min(1, "Please select a valid product"),
+});
 export const editSupplierItemSchema = baseSupplierItemSchema;

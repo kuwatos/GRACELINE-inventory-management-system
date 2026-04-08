@@ -1,7 +1,7 @@
 "use server"; // This magic word tells Next.js to run this strictly on the backend!
 
 import { revalidatePath } from "next/cache";
-import { createSupplierItem, findSupplierItemLink, readSupplierItemByItem, updateSupplierItem, deleteItem } from "@/src/entity/supplier_item/supplier_item.repository"; // Update this path to wherever your CRUD file is!
+import { createSupplierItem, findSupplierItemLink, updateSupplierItem,deleteSupplierItem } from "@/src/entity/supplier_item/supplier_item.repository"; // Update this path to wherever your CRUD file is!
 import { newSupplierItemSchema } from "@/lib/validations";
 import { editSupplierItemSchema } from "@/lib/validations";
 import * as z from "zod";
@@ -46,20 +46,18 @@ export async function createSupplierItemAction(values: z.infer<typeof newSupplie
 }
 
 // --- UPDATE SUPPLIER ACTION ---
-export async function updateSupplierAction(supplierId: number, values: z.infer<typeof editSupplierSchema>) {
+export async function updateSupplierItemAction(supplierItemId: number, values: z.infer<typeof editSupplierItemSchema>) {
   try {
-    const validData = editSupplierSchema.parse(values);
+    const validData = editSupplierItemSchema.parse(values);
 
     // Hand the updated data to the Robot Butler
-    await updateSupplier({
-        id:supplierId ,
-      supplierName: validData.name,
-      supplierLandline: validData.supplierLandline,
-      supplierEmail: validData.supplierEmail,
-      supplierMobile: validData.supplierMobile,
+    await updateSupplierItem({
+        id:supplierItemId ,
+      supplierId: validData.supplierId,
+      unitPrice: validData.unitPrice,
     });
 
-    revalidatePath("/suppliers"); 
+    revalidatePath("/supplier-items"); 
     return { success: true };
     
   } catch (error: unknown) {
@@ -83,17 +81,17 @@ export async function updateSupplierAction(supplierId: number, values: z.infer<t
 }
 
 // --- DELETE USER ACTION ---
-export async function deleteSupplierAction(supplierId: number) {
+export async function deleteSupplierItemAction(supplierItemId: number) {
   try {
     // Tell the Robot Butler to deactivate this user
-    await deleteSupplier(supplierId);
+    await deleteSupplierItem(supplierItemId);
 
     // Refresh the page so they disappear from the table instantly
-    revalidatePath("/suppliers");
+    revalidatePath("/supplier-items");
     
     return { success: true };
   } catch (error) {
-    console.error("Failed to delete supplier:", error);
+    console.error("Failed to delete supplier item:", error);
     return { success: false, error: "Something went wrong" };
   }
 }

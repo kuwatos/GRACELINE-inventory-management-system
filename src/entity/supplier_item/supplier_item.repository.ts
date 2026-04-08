@@ -103,7 +103,7 @@ export async function updateSupplierItem(data: {
 }
 
 //DELETE
-export async function deleteItem(id: number) {
+export async function deleteSupplierItem(id: number) {
   await db
     .update(supplierItemsTable)
     .set({ archived: true })

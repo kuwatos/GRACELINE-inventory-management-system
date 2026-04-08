@@ -55,11 +55,8 @@ export const SupplierItemTable = ({ data = [], onView, onEdit, onDelete }: Suppl
   // Helper to format date
   const formatDate = (date: Date | string | null) => {
     if (!date) return '-';
-    return new Date(date).toLocaleDateString('en-PH', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    return new Date(date).toISOString().replace('T', ' ').slice(0, 16)
+   
   };
 
   return (

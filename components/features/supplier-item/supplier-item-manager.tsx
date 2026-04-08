@@ -9,8 +9,8 @@ import { Card } from "@/components/ui/card";
 // Import your sub-components (we will create these next)
 import { SupplierItemTable, SupplierItem } from "./supplier-item-table";
 import { NewSupplierItemModal } from "./new-supplier-item-modal";
-// import { EditSupplierItemModal } from "./edit-supplier-item-modal";
-// import { deleteSupplierItemAction } from "@/lib/action/supplier-item.action";
+import { EditSupplierItemModal } from "./edit-supplier-item-modal";
+import { deleteSupplierItemAction } from "@/lib/action/supplier-items.action";
 
 interface SupplierItemManagerProps {
   data: SupplierItem[]; // The linked items with names and prices
@@ -140,17 +140,16 @@ export const SupplierItemManager = ({
         products={products}
       />
 
-      {/* <EditSupplierItemModal 
+       <EditSupplierItemModal 
         isOpen={isEditModalOpen} 
         onClose={() => {
           setIsEditModalOpen(false);
           setSelectedLink(null);
         }}
-        supplierItem={selectedLink}
+        item={selectedLink}
         isViewOnly={isViewOnly}
         suppliers={suppliers}
-        products={products}
-      />  */}
+      />  
     </div>
   );
 };
