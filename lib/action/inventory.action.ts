@@ -22,6 +22,7 @@ export async function createItemAction(values: z.infer<typeof newItemSchema>) {
       reorderLevel: validData.reorderLevel,
       supplierId: validData.supplierId,
       unitPrice: validData.unitPrice,
+      measurement: validData.measurement,
     });
   
 
@@ -70,6 +71,7 @@ export async function updateItemAction(itemId: number, values: z.infer<typeof ed
       productQuantity: validData.productQuantity,
       reorderLevel: validData.reorderLevel,
       remarks: validData.reason,
+      measurement: validData.measurement,
     });
 
     revalidatePath("/inventory"); 

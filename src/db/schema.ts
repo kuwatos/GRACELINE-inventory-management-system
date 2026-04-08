@@ -95,6 +95,7 @@ export const logsTable = pgTable("log_tb", {
   prevValue: varchar("prev_value", { length: 255 }),
   newValue: varchar("new_value", { length: 255 }),
   remarks: varchar("remarks", { length: 255 }),
+  project: integer("project").references(() => projectsTable.projectId),
 });
 
 export const reportsTable = pgTable("report_tb", {
@@ -145,6 +146,7 @@ export const itemsTable = pgTable("item_tb", {
   productCategory4: text("product_category4"),
   productCategory5: text("product_category5"),
   productDesc: text("product_desc"),
+  measurement: text("measurement").notNull(),
   productQuantity: integer("product_quantity").default(0),
   reorderLevel: integer("reorder_level"),
   archived: boolean("archived").default(false),

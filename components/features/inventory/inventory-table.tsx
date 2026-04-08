@@ -25,6 +25,7 @@ export interface InventoryItem {
   productDesc: string | null;
   productQuantity: number | null;
   reorderLevel: number | null;
+  measurement: string;
 }
 
 // 2. Add 'data' to your props so the parent can pass it down
@@ -81,6 +82,9 @@ export const InventoryTable = ({ data, onEdit, onDelete }: InventoryTableProps) 
               Category 5
             </TableHead>
             <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
+              Measurement
+            </TableHead>
+            <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
               Description
             </TableHead>
             <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
@@ -122,8 +126,12 @@ export const InventoryTable = ({ data, onEdit, onDelete }: InventoryTableProps) 
                   {item.productCategory5}
                 </TableCell>
                 <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
+                  {item.measurement}
+                </TableCell>
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
                   {item.productDesc}
                 </TableCell>
+                
                 <TableCell className="px-4 py-4">
                   <span className={`flex items-center gap-1 ${
                     isLowStock 

@@ -16,6 +16,7 @@ export async function createItem(data: {
   productDesc?: string;
   productQuantity?: number;
   reorderLevel?: number;
+  measurement: string;
 }) {
   return await db.transaction(async (tx) => {
     // 1. Insert Item
@@ -98,6 +99,7 @@ export async function updateItem(data: {
   newQuantity?: number; // 👈 UI might send this
   reorderLevel?: number;
   remarks?: string;      // 👈 Extract this for logging
+  measurement?: string;
 }) {
   const { id, remarks: globalRemarks, ...rest } = data;
 
@@ -197,6 +199,14 @@ export async function findCategories() {
     .from(itemsTable)
     .where(isNotNull(itemsTable.productCategory1)) // 👈 Hide empty categories
     .groupBy(itemsTable.productCategory1);
+}
 
-  
+export async function findMeasurement() {
+  return await db
+    .select({
+      name: itemsTable.measurement
+    })
+    .from(itemsTable)
+    .where(isNotNull(itemsTable.measurement))
+    .groupBy(itemsTable.measurement);
 }

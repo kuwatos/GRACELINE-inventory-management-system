@@ -15,10 +15,11 @@ interface InventoryManagerProps {
   data?: InventoryItem[];
   suppliers?: { id: number; name: string }[]; // Add suppliers to props
   categories?: { name: string }[]; // Add categories to props
+  measurements?: { name: string }[]; // Add measurements to props
   
 }
 
-export const InventoryManager = ({ data = [], suppliers = [], categories = [] }: InventoryManagerProps) => {
+export const InventoryManager = ({ data = [], suppliers = [], categories = [], measurements = [] }: InventoryManagerProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "low-stock">("all");
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
@@ -104,6 +105,7 @@ export const InventoryManager = ({ data = [], suppliers = [], categories = [] }:
         onClose={() => setIsNewModalOpen(false)} 
         suppliers={suppliers} // Pass suppliers to the modal
         categories={categories} // Pass categories if needed in the future
+        measurements={measurements} // Pass measurements if needed in the future
       />
 
       <EditItemModal 
@@ -115,6 +117,7 @@ export const InventoryManager = ({ data = [], suppliers = [], categories = [] }:
         item={selectedItem}
         isViewOnly={isViewOnly}
         categories={categories}
+        measurements={measurements}
       />
     </div>
   );

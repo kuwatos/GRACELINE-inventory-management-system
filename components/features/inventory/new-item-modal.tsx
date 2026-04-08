@@ -23,10 +23,12 @@ interface NewItemModalProps {
   onClose: () => void;
   suppliers: { id: number; name: string }[];
   categories: { name: string }[];
+  measurements: { name: string }[];
 }
 
-export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [] }: NewItemModalProps) => {
+export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [], measurements = [] }: NewItemModalProps) => {
   const [openCombobox, setOpenCombobox] = useState(false);
+  const [openCombobox2, setOpenCombobox2] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.input<typeof newItemSchema>>({
@@ -165,6 +167,53 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [] 
                 </div>
               </div>
 
+              {/* MEASUREMENT */}
+              <FormField control={form.control} name="measurement" render={({ field }) => (
+                <FormItem className="col-span-2 flex flex-col">
+                  <FormLabel className="font-bold text-gray-700">Measurement</FormLabel>
+                  <Popover open={openCombobox2} onOpenChange={setOpenCombobox2}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn("h-11 justify-between rounded-xl font-normal border-gray-200", !field.value && "text-gray-400")}
+                        >
+                          {field.value || "Select or type unit..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[630px] p-0" align="start">
+                      <Command>
+                        <CommandInput 
+                          placeholder="Search unit..." 
+                          onValueChange={(val) => field.onChange(val)} 
+                        />
+                        <CommandList>
+                          <CommandEmpty>No existing measurement found. Type to create new.</CommandEmpty>
+                          <CommandGroup>
+                            {measurements.map((unit) => (
+                              <CommandItem
+                                key={unit.name}
+                                value={unit.name}
+                                onSelect={() => {
+                                  form.setValue("measurement", unit.name);
+                                  setOpenCombobox2(false);
+                                }}
+                              >
+                                <Check className={cn("mr-2 h-4 w-4", unit.name === field.value ? "opacity-100" : "opacity-0")} />
+                                {unit.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )} />
               {/* SECTION: DESCRIPTION & QUANTITY */}
               <div className="grid grid-cols-3 gap-4">
                 <FormField control={form.control} name="productDesc" render={({ field }) => (

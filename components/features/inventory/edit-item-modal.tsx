@@ -45,11 +45,13 @@ interface EditItemModalProps {
   onClose: () => void;
   item: InventoryItem | null;
   categories: { name: string }[];
+  measurements: { name: string }[];
   isViewOnly?: boolean;
 }
 
-export const EditItemModal = ({ isOpen, onClose, item, categories, isViewOnly = false }: EditItemModalProps) => {
+export const EditItemModal = ({ isOpen, onClose, item, categories, measurements, isViewOnly = false }: EditItemModalProps) => {
    const [openCombobox, setOpenCombobox] = useState(false);
+   const [openCombobox2, setOpenCombobox2] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // 1. Setup React Hook Form with your editItemSchema
@@ -67,6 +69,7 @@ export const EditItemModal = ({ isOpen, onClose, item, categories, isViewOnly = 
       productDesc: item?.productDesc || "",
       productQuantity: item?.productQuantity || 0,
       reorderLevel: item?.reorderLevel || 0,
+      measurement: item?.measurement || "",
       reason: "Initial adjustment", 
     },
   });
@@ -183,6 +186,63 @@ export const EditItemModal = ({ isOpen, onClose, item, categories, isViewOnly = 
                   ))}
                 </div>
               </div>
+
+            {/* Unit of Measurement Combobox */}
+            <FormField control={form.control} name="measurement" render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel className="font-bold text-gray-700">Unit of Measurement</FormLabel>
+                <Popover open={openCombobox2} onOpenChange={setOpenCombobox2}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          "h-11 justify-between rounded-xl font-normal border-gray-200",
+                          !field.value && "text-gray-400"
+                        )}
+                      >
+                        {/* Display the current value from the form (which defaults to item.measurement) */}
+                        {field.value || "Select or type unit..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[630px] p-0" align="start">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Search units (e.g., kg, pcs, box)..." 
+                        onValueChange={(val) => field.onChange(val)} // Allows typing new units
+                      />
+                      <CommandList>
+                        <CommandEmpty>No matching unit. Type to create "{field.value}"</CommandEmpty>
+                        <CommandGroup>
+                          {measurements.map((unit) => (
+                            <CommandItem
+                              key={unit.name}
+                              value={unit.name}
+                              onSelect={() => {
+                                form.setValue("measurement", unit.name);
+                                setOpenCombobox2(false);
+                              }}
+                            >
+                              <Check 
+                                className={cn(
+                                  "mr-2 h-4 w-4", 
+                                  unit.name === field.value ? "opacity-100" : "opacity-0"
+                                )} 
+                              />
+                              {unit.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )} />
 
             {/* SECTION: DESCRIPTION */}
             <FormField control={form.control} name="productDesc" render={({ field }) => (

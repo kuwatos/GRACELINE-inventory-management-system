@@ -18,6 +18,7 @@ export const baseItemSchema = z.object({
   category3: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
   category4: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
   category5: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
+  measurement: z.string().min(1, "Please select a unit of measurement"),
 
   productDesc: z
     .string()
