@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect,useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { projectFormSchema, ProjectFormValues } from "@/lib/validations";
 import { updateProjectAction } from "@/lib/action/project.action";
 import { Project } from "./project-table";
+import { executeAction } from "@/lib/error.handler";
+
 
 interface EditProjectModalProps {
   isOpen: boolean;
@@ -25,7 +27,7 @@ export function EditProjectModal({ isOpen, onClose, project, isViewOnly = false 
     defaultValues: { projectName: "" },
   });
 
-  const { isSubmitting, errors } = form.formState;
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Pattern: Similar to Supplier, reset form when project is loaded
   useEffect(() => {
@@ -37,18 +39,32 @@ export function EditProjectModal({ isOpen, onClose, project, isViewOnly = false 
   }, [isOpen, project, form]);
 
   async function onSubmit(values: ProjectFormValues) {
-    if (!project) return;
-    try {
-      const result = await updateProjectAction(project.projectId, values);
-      if (result?.success) {
-        onClose();
-      } else {
-        alert(result?.error || "Failed to update project.");
-      }
-    } catch (error) {
-      console.error("Server error:", error);
+  setIsSubmitting(true);
+
+  await executeAction(async () => {
+    // 1. Safety check (Changed from 'return' to 'throw' to trigger the red toast)
+    if (!project) {
+      throw new Error("Missing project context. Please refresh and try again.");
     }
-  }
+
+    // 2. Call the Server Action
+    const result = await updateProjectAction(project.projectId, values);
+
+    // 3. Error Handling (Throws the object so handleError can find the .error property)
+    if (!result?.success) {
+      throw result;
+    }
+
+    // 4. Success UI Logic
+    // Only runs if the action above succeeded
+    if (form.reset) form.reset(); 
+    onClose();
+
+    return result;
+  }, "Project updated successfully!");
+
+  setIsSubmitting(false);
+}
 
   const handleFormSubmit = isViewOnly ? (e: React.FormEvent) => e.preventDefault() : form.handleSubmit(onSubmit);
   const title = isViewOnly ? `View Project: ${project?.projectId}` : `Edit Project: ${project?.projectId}`;

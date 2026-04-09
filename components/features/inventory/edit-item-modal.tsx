@@ -39,6 +39,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { updateItemAction } from "@/lib/action/inventory.action";
+import { executeAction } from "@/lib/error.handler";
+
 
 interface EditItemModalProps {
   isOpen: boolean;
@@ -80,25 +82,29 @@ export const EditItemModal = ({ isOpen, onClose, item, categories, measurements,
 
   // 2. The function that runs when you click Submit
   async function onSubmit(data: z.input<typeof editItemSchema>) {
-    // 1. Safety check: make sure we actually have a supplier selected!
-          if (!item) return; 
+    setIsSubmitting(true);
+    
+    await executeAction(async () => {
+      if (!item) {
+        throw new Error("Missing item context. Please refresh and try again.");
+      } // Just a safety check
       
-          try {
-            const validatedData = editItemSchema.parse(data);
-            // 2. Send the ID and the new form values across the bridge
-            const result = await updateItemAction(item.productId, validatedData);
-      
-            // 3. If the Robot Butler succeeds, close the modal
-            if (result?.success) {
-              onClose();
-            } else {
-              console.error("Failed to update item:", result?.error);
-              alert("Failed to update item. Please try again.");
-            }
-          } catch (error) {
-            console.error("Server error:", error);
-          }
-        }
+      // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
+      const validatedData = editItemSchema.parse(data);
+  
+      const res = await updateItemAction(item.productId,validatedData);
+  
+      // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
+      if (!res.success) {
+        throw res; 
+      }
+      form.reset();
+      onClose();
+      return res;
+    }, "Item added successfully!");
+  
+    setIsSubmitting(false);
+  }
 
   if (!item) return null;
 

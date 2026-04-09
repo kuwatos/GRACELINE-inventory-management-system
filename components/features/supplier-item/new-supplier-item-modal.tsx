@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { createSupplierItemAction } from "@/lib/action/supplier-items.action";
 import { newSupplierItemSchema } from "@/lib/validations";
 import { useState } from "react";
+import { executeAction } from "@/lib/error.handler";
+
 
 interface NewSupplierItemModalProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ export const NewSupplierItemModal = ({
   suppliers, 
   products 
 }: NewSupplierItemModalProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<z.input<typeof newSupplierItemSchema>>({
     resolver: zodResolver(newSupplierItemSchema),
     defaultValues: { 
@@ -34,8 +37,6 @@ export const NewSupplierItemModal = ({
       unitPrice: ""
     },
   });
-  const { isSubmitting } = form.formState;
-
 
   const handleClose = () => {
     form.reset();
@@ -43,19 +44,27 @@ export const NewSupplierItemModal = ({
   };
 
   async function onSubmit(values: z.input<typeof newSupplierItemSchema>) {
-    try {
-      const validatedData = newSupplierItemSchema.parse(values);
-      const result = await createSupplierItemAction(validatedData);
-
-      if (result.success) {
-        handleClose();
-      } else {
-        alert(result.error || "Failed to link item.");
-      }
-    } catch (error) {
-      console.error("Server error:", error);
+    setIsSubmitting(true);
+    
+      // You call the wrapper here...
+      await executeAction(async () => {
+        
+        // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
+        const validatedData = newSupplierItemSchema.parse(values);
+    
+        const res = await createSupplierItemAction(validatedData);
+    
+        // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
+        if (!res.success) {
+          throw res; 
+        }
+        form.reset();
+        onClose();
+        return res;
+      }, "Supplier item added successfully!");
+    
+      setIsSubmitting(false);
     }
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

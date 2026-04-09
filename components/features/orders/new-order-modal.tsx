@@ -13,8 +13,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { executeAction } from "@/lib/error.handler";
+import { useState } from "react";
+
 
 export const NewOrderModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);  
   const form = useForm<z.infer<typeof newOrderSchema>>({
     resolver: zodResolver(newOrderSchema),
     defaultValues: {
@@ -34,9 +38,27 @@ export const NewOrderModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
     onClose();
   };
 
-  function onSubmit(values: z.infer<typeof newOrderSchema>) {
-    console.log("Ready for Supabase Insert:", values);
-    handleClose();
+ 
+   async function onSubmit(values: z.input<typeof newOrderSchema>) {
+    setIsSubmitting(true);
+  
+    // You call the wrapper here...
+    await executeAction(async () => {
+      
+      // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
+      const validatedData = newOrderSchema.parse(values);
+  
+      //const res = await createItemAction(validatedData);
+  
+      // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
+      if (!res.success) {
+        throw res; 
+      }
+      handleClose();
+      return res;
+    }, "ADD MESSAGE HERE!");
+  
+    setIsSubmitting(false);
   }
 
   return (

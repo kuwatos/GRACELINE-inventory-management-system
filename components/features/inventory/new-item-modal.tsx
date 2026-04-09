@@ -17,6 +17,7 @@ import { createItemAction } from "@/lib/action/inventory.action";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Textarea } from "@/components/ui/textarea";
+import { executeAction } from "@/lib/error.handler";
 
 interface NewItemModalProps {
   isOpen: boolean;
@@ -48,23 +49,28 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
     },
   });
 
-  async function onSubmit(values: z.input<typeof newItemSchema>) {
-    setIsSubmitting(true);
-    try {
-      const validatedData = newItemSchema.parse(values);
-      const result = await createItemAction(validatedData);
+ async function onSubmit(values: z.input<typeof newItemSchema>) {
+  setIsSubmitting(true);
 
-      if (result.success) {
-        form.reset();
-        onClose();
-      }
-    } catch (error) {
-      console.error("Server error:", error);
-    } finally {
-      setIsSubmitting(false);
+  // You call the wrapper here...
+  await executeAction(async () => {
+    
+    // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
+    const validatedData = newItemSchema.parse(values);
+
+    const res = await createItemAction(validatedData);
+
+    // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
+    if (!res.success) {
+      throw res; 
     }
-  }
+    form.reset();
+    onClose();
+    return res;
+  }, "Item added successfully!");
 
+  setIsSubmitting(false);
+}
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden border-none shadow-2xl">

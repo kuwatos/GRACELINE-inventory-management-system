@@ -10,6 +10,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { createSupplierAction } from "@/lib/action/supplier.action";
+import { useState } from "react";
+import { executeAction } from "@/lib/error.handler";
+
 
 interface NewSupplierModalProps {
   isOpen: boolean;
@@ -17,6 +20,8 @@ interface NewSupplierModalProps {
 }
 
 export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const form = useForm<z.infer<typeof newSupplierSchema>>({
     resolver: zodResolver(newSupplierSchema),
     defaultValues: { 
@@ -26,27 +31,27 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
       supplierMobile: "" },
   });
 
-  const handleClose = () => {
-    form.reset();
-    onClose();
-  };
-
   async function onSubmit(values: z.infer<typeof newSupplierSchema>) {
-    try {
-      const result = await createSupplierAction(values);
-
-      if (result.success) {
-        handleClose();
-      } else {
-        // If it fails, attach the error message directly to the username field!
-        // form.setError("username", {
-        //   type: "manual",
-        //   message: result.error, // This prints the friendly message we wrote in the action
-        // });
+    setIsSubmitting(true);
+        
+    // You call the wrapper here...
+    await executeAction(async () => {
+      
+      // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
+      const validatedData = newSupplierSchema.parse(values);
+  
+      const res = await createSupplierAction(validatedData);
+  
+      // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
+      if (!res.success) {
+        throw res; 
       }
-    } catch (error) {
-      console.error("Server error:", error);
-    }
+      form.reset();
+      onClose();
+      return res;
+    }, "Supplier added successfully!");
+  
+    setIsSubmitting(false);
   }
 
   return (

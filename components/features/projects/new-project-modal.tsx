@@ -1,5 +1,5 @@
 "use client";
-
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { projectFormSchema, ProjectFormValues } from "@/lib/validations"; 
 import { createProjectAction } from "@/lib/action/project.action";
+import { executeAction } from "@/lib/error.handler";
+
 
 interface NewProjectModalProps {
   isOpen: boolean;
@@ -16,29 +18,32 @@ interface NewProjectModalProps {
 }
 
 export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<ProjectFormValues>({ 
     resolver: zodResolver(projectFormSchema), 
     defaultValues: { projectName: "" } 
   });
 
-  const { isSubmitting } = form.formState;
+  async function onSubmit(data: ProjectFormValues) {
+    setIsSubmitting(true);
+    await executeAction(async () => {
+    
+    // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
+    const validatedData = projectFormSchema.parse(data);
 
-  const onSubmit = async (data: ProjectFormValues) => {
-    try {
-      const result = await createProjectAction(data);
+    const res = await createProjectAction(validatedData);
 
-      if (result?.success) {
-        form.reset();
-        onClose();
-      } else {
-        // You can use form.setError here if the action returns a specific field error
-        console.error("Failed to create project:", result?.error);
-        alert(result?.error || "Failed to create project. Please try again.");
-      }
-    } catch (error) {
-      console.error("Server error:", error);
+    // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
+    if (!res.success) {
+      throw res; 
     }
-  };
+    form.reset();
+    onClose();
+    return res;
+  }, "Project added successfully!");
+
+  setIsSubmitting(false);
+};
 
   return (
     <Dialog 

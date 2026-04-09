@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { updateSupplierItemAction } from "@/lib/action/supplier-items.action";
+import { executeAction } from "@/lib/error.handler";
+
 
 interface EditSupplierItemModalProps {
   isOpen: boolean;
@@ -60,21 +62,27 @@ export const EditSupplierItemModal = ({
 
   async function onSubmit(values: z.input<typeof editSupplierItemSchema>) {
     setIsSubmitting(true);
-    try {
+    
+    await executeAction(async () => {
+      if (!item) {
+        throw new Error("Missing item context. Please refresh and try again.");
+      } // Just a safety check
+      
+      // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
       const validatedData = editSupplierItemSchema.parse(values);
-      // Pass the primary key (supplierItemId) and the updated values
-      const result = await updateSupplierItemAction(item!.supplierItemId, validatedData);
-
-      if (result.success) {
-        handleClose();
-      } else {
-        alert(result.error || "Failed to update link.");
+  
+      const res = await updateSupplierItemAction(item.supplierItemId, validatedData);
+  
+      // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
+      if (!res.success) {
+        throw res; 
       }
-    } catch (error) {
-      console.error("Server error:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+      form.reset();
+      onClose();
+      return res;
+    }, "Supplier item updated successfully!");
+  
+    setIsSubmitting(false);
   }
 
   const handleFormSubmit = isViewOnly ? (e: React.FormEvent) => e.preventDefault() : form.handleSubmit(onSubmit);

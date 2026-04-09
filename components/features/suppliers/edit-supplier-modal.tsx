@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -8,6 +8,8 @@ import { Loader2 } from "lucide-react";
 
 import { editSupplierSchema } from "@/lib/validations";
 import { Supplier } from "./supplier-table";
+import { executeAction } from "@/lib/error.handler";
+
 
 import {
   Dialog,
@@ -36,6 +38,8 @@ interface EditSupplierModalProps {
 }
 
 export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = false }: EditSupplierModalProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // 1. Setup React Hook Form
   const form = useForm<z.infer<typeof editSupplierSchema>>({
     resolver: zodResolver(editSupplierSchema),
@@ -46,9 +50,6 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
       supplierMobile: "",
     },
   });
-
-  const { isSubmitting } = form.formState;
-
   // 2. Sync Form when supplier changes
   useEffect(() => {
     if (isOpen && supplier) {
@@ -63,8 +64,27 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
 
   // 3. Submit Handler
   async function onSubmit(values: z.infer<typeof editSupplierSchema>) {
-    const result = await updateSupplierAction(supplier!.supplierId, values);
-    onClose();
+    setIsSubmitting(true);
+    await executeAction(async () => {
+      if (!supplier) {
+        throw new Error("Missing supplier context. Please refresh and try again.");
+      } // Just a safety check
+      
+      // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
+      const validatedData = editSupplierSchema.parse(values);
+  
+      const res = await updateSupplierAction(supplier.supplierId,validatedData);
+  
+      // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
+      if (!res.success) {
+        throw res; 
+      }
+      form.reset();
+      onClose();
+      return res;
+    }, "Supplier updated successfully!");
+  
+    setIsSubmitting(false);
   }
 
   const handleFormSubmit = isViewOnly ? (e: React.FormEvent) => e.preventDefault() : form.handleSubmit(onSubmit);
