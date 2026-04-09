@@ -313,11 +313,11 @@ export const EditItemModal = ({ isOpen, onClose, item, categories, measurements,
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="project">Used for a Project</SelectItem>
                         <SelectItem value="audit">Inventory Audit</SelectItem>
                         <SelectItem value="damage">Damaged / Expired</SelectItem>
                         <SelectItem value="manual restock">Manual Restock</SelectItem>
                         <SelectItem value="correction">Typo Correction</SelectItem>
-                        <SelectItem value="project">Used for a Project</SelectItem>
                         <SelectItem value="returned">Returned to Supplier</SelectItem>
                       </SelectContent>
                     </Select>

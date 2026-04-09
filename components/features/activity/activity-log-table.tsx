@@ -22,6 +22,7 @@ export interface Log {
   next: string | null;
   remarks: string | null;
   column: string | null;
+  project: string | null; // Optional project info
 }
 
 interface ActivityLogTableProps {
@@ -59,6 +60,7 @@ export const ActivityLogTable = ({ data = [] }: ActivityLogTableProps) => {
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-center">Prev</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-center">New</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-center">Remarks</TableHead>
+            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-center">Project</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -100,6 +102,9 @@ export const ActivityLogTable = ({ data = [] }: ActivityLogTableProps) => {
               </TableCell>
               <TableCell className="px-6 py-4 font-medium text-gray-700 group-hover:text-zinc-200">
                 {log.remarks}
+              </TableCell>
+              <TableCell className="px-6 py-4 font-medium text-gray-700 group-hover:text-zinc-200">
+                {log.project}
               </TableCell>
             </TableRow>
           ))}
