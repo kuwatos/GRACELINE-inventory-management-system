@@ -6,6 +6,7 @@ import { and, or, ilike, eq } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { auth, type User} from "@/lib/auth";
 import { headers } from "next/headers";
+import { id } from "zod/v4/locales";
 
 export async function createUser(data: { 
   firstName: string; 
@@ -290,11 +291,15 @@ export async function signOut() {
 
 }
 
-export async function validateSessionUser() {
+export async function validateSessionUser(department?: string) {
     const session = await auth.api.getSession({headers: await headers()}); // Better Auth session fetch
 
     if (!session || !session.user.active) {
         throw new Error("Unauthorized: Account inactive or session expired");
+    }
+
+    if (department && session.user.department != department) { // continue later
+      
     }
 
     console.log("Session valid for user:", session.user.username);

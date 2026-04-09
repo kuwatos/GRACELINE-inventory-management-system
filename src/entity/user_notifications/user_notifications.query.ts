@@ -2,7 +2,7 @@ import { db } from "../../index";
 import { notificationsTable, userNotificationsTable } from "../../db/schema";
 import { eq, and } from "drizzle-orm";
 
-export async function readUserNotifications(userId: number) {
+export async function readUserNotifications(userId: string) {
   return await db
     .select({
       description: notificationsTable.description,

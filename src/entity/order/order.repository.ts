@@ -7,7 +7,6 @@ import { createUserNotificationService } from "../user_notifications/user_notifi
 
 // CREATE
 export async function createOrder(data: {
-  sessionUserId: string;
   orderStatus: string;
   orderDate: Date;
   supplierId: number;
@@ -26,7 +25,7 @@ export async function createOrder(data: {
       for (const [key, val] of Object.entries(newOrder)) {
         if (val !== null && val !== undefined) {
           await createLog({
-            userId: data.sessionUserId,
+            userId: data.createdBy,
             actionId: 15,                  // Created a purchase order
             targetId: newOrder.orderId,
             columnName: key,

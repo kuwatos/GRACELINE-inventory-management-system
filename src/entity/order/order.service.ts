@@ -8,8 +8,8 @@ export async function createOrderService(data: {
   expectedDeliveryDate: Date;
   actualDeliveryDate?: Date;
   projectId: number;
-  createdBy: number;
-  approvedBy?: number;
+  createdBy: string;
+  approvedBy?: string;
   items: {
     productId: number;
     quantity: number;
@@ -27,7 +27,7 @@ export async function createOrderService(data: {
     approvedBy: data.approvedBy,
   });
 
-  const orderId = order[0].orderId;
+  const orderId = order.orderId;
 
   await Promise.all(
     data.items.map(async (item) => {
