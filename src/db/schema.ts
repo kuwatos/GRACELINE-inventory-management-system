@@ -139,7 +139,7 @@ export const itemsTable = pgTable("item_tb", {
   productId: integer("product_id")
     .generatedAlwaysAsIdentity({ startWith: 8000001 })
     .primaryKey(),
-  productName: text("product_name").notNull().unique(),
+  productName: text("product_name").notNull(),
   productCategory1: text("product_category1").notNull(),
   productCategory2: text("product_category2"),
   productCategory3: text("product_category3"),

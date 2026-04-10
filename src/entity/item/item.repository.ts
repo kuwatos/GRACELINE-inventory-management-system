@@ -1,7 +1,7 @@
 // CRUD lives here
 import { db } from "../../index";
 import { itemsTable } from "../../db/schema";
-import { eq, lte, ilike, or, and, isNotNull } from "drizzle-orm";
+import { eq, lte, ilike, or, and, isNotNull, isNull } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import {createUserNotificationService} from "../user_notifications/user_notifications.service";
 
@@ -212,3 +212,75 @@ export async function findMeasurement() {
     .where(isNotNull(itemsTable.measurement))
     .groupBy(itemsTable.measurement);
 }
+
+export async function findExistingItem(data: {
+  productName: string;
+  category1: string;
+  category2?: string | null;
+  category3?: string | null;
+  category4?: string | null;
+  category5?: string | null;
+  measurement: string;
+}) {
+  const conditions = [
+    ilike(itemsTable.productName, data.productName),
+    eq(itemsTable.productCategory1, data.category1),
+    eq(itemsTable.measurement, data.measurement)
+  ];
+
+  if (data.category2 !== undefined) {
+    conditions.push(data.category2 === null ? isNull(itemsTable.productCategory2) : eq(itemsTable.productCategory2, data.category2));
+  }
+  if (data.category3 !== undefined) {
+    conditions.push(data.category3 === null ? isNull(itemsTable.productCategory3) : eq(itemsTable.productCategory3, data.category3));
+  }
+  if (data.category4 !== undefined) {
+    conditions.push(data.category4 === null ? isNull(itemsTable.productCategory4) : eq(itemsTable.productCategory4, data.category4));
+  }
+  if (data.category5 !== undefined) {
+    conditions.push(data.category5 === null ? isNull(itemsTable.productCategory5) : eq(itemsTable.productCategory5, data.category5));
+  }
+
+  return db.select().from(itemsTable).where(and(...conditions)).limit(1);
+}
+
+export async function restoreItem(
+  id:number,
+  data: {productName: string;
+  productCategory1: string;
+  productCategory2?: string;
+  productCategory3?: string;
+  productCategory4?: string;
+  productCategory5?: string;
+  productDesc?: string;
+  productQuantity?: number;
+  reorderLevel?: number;
+  measurement: string;
+}) {
+  return await db.transaction(async (tx) => {
+    const [restoredItem] = await tx
+      .update(itemsTable)
+      .set({ ...data, archived: false })
+      .where(eq(itemsTable.productId, id))
+      .returning();
+  
+  if (restoredItem) {
+      for (const [key, val] of Object.entries(restoredItem)) {
+        // We only log if the value actually exists (not null/undefined)
+        if (val !== null && val !== undefined) {
+          await createLog({
+            actionId: 8,                    // Added a New Inventory Item
+            targetId: restoredItem.productId,
+            columnName: key,                // Dynamic: productName, productCategory1, etc.
+            prevValue: null,                // It's a creation, so previous is always null
+            newValue: val.toString(),
+            remarks: null
+          }, tx);
+        }
+      }
+    }
+
+    await createUserNotificationService({ notifId: 1, targetId: restoredItem.productId }, tx); // Assuming notifId 1 is for new item notifications
+    return restoredItem;
+  });
+};
