@@ -9,15 +9,15 @@ import * as z from "zod";
 export async function generateReportAction(values: z.input<typeof baseReportSchema>) {
   try {
     // 1. Authenticate the user
-    const session = await auth();
-    if (!session?.user?.id) throw new Error("Unauthorized");
+    // const session = await auth();
+    // if (!session?.user?.id) throw new Error("Unauthorized");
 
     // 2. Validate and Coerce strings to Dates
     const validated = baseReportSchema.parse(values);
 
     // 3. Call the Repository
     await createReport({
-      userId: session.user.id,
+      userId: "user_001",
       reportType: validated.reportType,
       dateStart: validated.startDate,
       dateEnd: validated.endDate,
