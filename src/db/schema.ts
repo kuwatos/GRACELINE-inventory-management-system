@@ -102,12 +102,12 @@ export const reportsTable = pgTable("report_tb", {
   reportId: integer("report_id")
     .generatedAlwaysAsIdentity({ startWith: 5000001 })
     .primaryKey(),
-  userId: text("user_id").references(() => usersTable.id),
+  userId: text("user_id").references(() => usersTable.id).notNull(),
   reportType: text("report_type").notNull(),
   dateCreated: timestamp("date_created", { withTimezone: true })
     .defaultNow(),
-  dateStart: timestamp("date_start", { withTimezone: true }),
-  dateEnd: timestamp("date_end", { withTimezone: true })
+  dateStart: timestamp("date_start", { withTimezone: true }).notNull(),
+  dateEnd: timestamp("date_end", { withTimezone: true }).notNull(),
 });
 
 // --- Projects ---
@@ -129,7 +129,7 @@ export const suppliersTable = pgTable("supplier_tb", {
   supplierName: text("supplier_name").notNull().unique(),
   supplierLandline: text("supplier_landline"),
   supplierEmail: text("supplier_email"),
-  supplierMobile: text("supplier_mobile"),
+  supplierMobile: text("supplier_mobile").notNull(),
   active: boolean("active").default(true),
 });
 
@@ -157,9 +157,9 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
   supplierItemId: integer("supplier_item_id")
     .generatedAlwaysAsIdentity({ startWith: 6000001 })
     .primaryKey(),
-  supplierId: integer("supplier_id").references(() => suppliersTable.supplierId),
-  productId: integer("product_id").references(() => itemsTable.productId),
-  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }),
+  supplierId: integer("supplier_id").references(() => suppliersTable.supplierId).notNull(),
+  productId: integer("product_id").references(() => itemsTable.productId).notNull(),
+  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
   lastUpdated: timestamp("last_updated")
     // 1. For the initial insert (replaces defaultNow)
   .default(sql`timezone('Asia/Manila', now())`)
@@ -181,7 +181,7 @@ export const ordersTable = pgTable("order_tb", {
     .primaryKey(),
   orderStatus: text("order_status").notNull(),
   orderDate: timestamp("order_date").notNull().defaultNow(),
-  supplierId: integer("supplier_id").references(() => suppliersTable.supplierId),
+  supplierId: integer("supplier_id").references(() => suppliersTable.supplierId).notNull(),
   expectedDeliveryDate: timestamp("expected_delivery_date"),
   actualDeliveryDate: timestamp("actual_delivery_date"),
   projectId: integer("project_id").references(() => projectsTable.projectId),

@@ -15,7 +15,7 @@ import { deleteSupplierItemAction } from "@/lib/action/supplier-items.action";
 interface SupplierItemManagerProps {
   data: SupplierItem[]; // The linked items with names and prices
   suppliers: { supplierId: number; supplierName: string }[]; // For the "Link" dropdown
-  products: { productId: number; productName: string }[];    // For the "Link" dropdown
+  products: { productId: number; productName: string; productCategory1: string; measurement: string }[];    // For the "Link" dropdown
 }
 
 export const SupplierItemManager = ({ 
@@ -149,6 +149,7 @@ export const SupplierItemManager = ({
         item={selectedLink}
         isViewOnly={isViewOnly}
         suppliers={suppliers}
+        products={products}
       />  
     </div>
   );

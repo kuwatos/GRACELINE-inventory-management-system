@@ -16,14 +16,14 @@ import {
 // to get the names alongside the IDs.
 export interface SupplierItem {
   supplierItemId: number;
-  supplierId: number | null;
+  supplierId: number;
   supplierName: string;
-  productId: number    | null;
+  productId: number;
   productName: string;
-  unitPrice: string | number | null; // 👈 Drizzle numeric returns as string  category1: string | null;
-  category1: string | null;
+  unitPrice: string | number; // 👈 Drizzle numeric returns as string  category1: string | null;
+  category1: string;
   lastUpdated: Date | string | null;
-  measurement: string | null;
+  measurement: string;
 }
 
 interface SupplierItemTableProps {

@@ -18,7 +18,7 @@ export interface Supplier {
   supplierName: string;
   supplierLandline: string | null; // Matches the database return exactly
   supplierEmail: string | null;
-  supplierMobile: string | null;
+  supplierMobile: string;
   active: boolean|null;
 }
 

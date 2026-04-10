@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 export interface ReportRecord {
   reportId: number;
   reportType: string;
-  dateGenerated: Date| null;
-  generatedBy: string| null;
-  startDate: Date| null;
-  endDate: Date| null;
+  dateGenerated: Date;
+  generatedBy: string;
+  startDate: Date;
+  endDate: Date;
 }
 
 export const ReportsHistoryTable = ({ data, onView, onDelete, onDownload }: any) => {
