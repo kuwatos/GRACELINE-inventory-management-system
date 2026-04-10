@@ -126,7 +126,7 @@ export const suppliersTable = pgTable("supplier_tb", {
   supplierId: integer("supplier_id")
     .generatedAlwaysAsIdentity({ startWith: 7000001 })
     .primaryKey(),
-  supplierName: text("supplier_name").notNull(),
+  supplierName: text("supplier_name").notNull().unique(),
   supplierLandline: text("supplier_landline"),
   supplierEmail: text("supplier_email"),
   supplierMobile: text("supplier_mobile"),
