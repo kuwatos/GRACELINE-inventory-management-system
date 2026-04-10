@@ -67,7 +67,6 @@ export async function findSupplierItemLink(supplierId: number, productId: number
         and(
           eq(supplierItemsTable.supplierId, supplierId),
           eq(supplierItemsTable.productId, productId),
-          eq(supplierItemsTable.archived, false) // Only block if the active link exists
         )
       )
       .limit(1);
@@ -138,3 +137,46 @@ export async function deleteSupplierItem(id: number) {
     .returning();
   return { success: true };
 }
+
+export async function restoreSupplierItem(data: {
+  id: number; // 👈 This is the supplierItemId
+  supplierId: number;
+  unitPrice: string;
+}) {
+  return await db.transaction(async (tx) => {
+    const [restoredSupplierItem] = await tx
+      .update(supplierItemsTable)
+      .set({ 
+        archived: false,
+        supplierId: data.supplierId,
+        unitPrice: data.unitPrice
+       })
+      .where(eq(supplierItemsTable.supplierItemId, data.id))
+      .returning();
+
+    if (restoredSupplierItem) {
+      for (const [key, val] of Object.entries(restoredSupplierItem)) {
+        // Skip null/undefined values to keep logs clean
+        if (val !== null && val !== undefined) {
+          await createLog({
+            actionId: 21,                   // [BLANK] - Fill in for "Link Supplier Item"
+            targetId: restoredSupplierItem.supplierItemId,
+            columnName: key,
+            prevValue: null,
+            newValue: val.toString(),
+            remarks: null
+          }, tx);
+        }
+      }
+
+      // 3. Trigger the notification service
+      await createUserNotificationService({ 
+        notifId: 8,                        // [BLANK] - Fill in for "New Item Linked"
+        targetId: restoredSupplierItem.supplierItemId 
+      }, tx);
+    }
+
+    return restoredSupplierItem;
+  })
+}
+

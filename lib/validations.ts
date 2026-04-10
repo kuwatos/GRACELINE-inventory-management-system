@@ -173,8 +173,7 @@ export const baseSupplierItemSchema = z.object({
       const num = parseFloat(val);
       return num <= 9999999.99;
     }, "Price exceeds the maximum limit of 9,999,999.99"),
+  productId: z.coerce.number().int().min(1, "Please select a valid product")
 });
-export const newSupplierItemSchema = baseSupplierItemSchema.extend({
-  productId: z.coerce.number().int().min(1, "Please select a valid product"),
-});
+export const newSupplierItemSchema = baseSupplierItemSchema;
 export const editSupplierItemSchema = baseSupplierItemSchema;

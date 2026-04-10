@@ -1,18 +1,30 @@
 "use server"; // This magic word tells Next.js to run this strictly on the backend!
 
 import { revalidatePath } from "next/cache";
-import { createSupplierItem, findSupplierItemLink, updateSupplierItem,deleteSupplierItem } from "@/src/entity/supplier_item/supplier_item.repository"; // Update this path to wherever your CRUD file is!
+import { restoreSupplierItem, createSupplierItem, findSupplierItemLink, updateSupplierItem,deleteSupplierItem } from "@/src/entity/supplier_item/supplier_item.repository"; // Update this path to wherever your CRUD file is!
 import { newSupplierItemSchema } from "@/lib/validations";
 import { editSupplierItemSchema } from "@/lib/validations";
 import * as z from "zod";
 
 export async function createSupplierItemAction(values: z.infer<typeof newSupplierItemSchema>) {
   try {
-    const link = await findSupplierItemLink(values.supplierId, values.productId);
-    if (link.length > 0) {
-      return { success: false, error: "This product is already linked to this supplier." };
-    }
     const validData = newSupplierItemSchema.parse(values);
+
+    const existing = await findSupplierItemLink(values.supplierId, values.productId);
+    
+    if (existing && existing.length > 0) {
+      if (!existing[0].archived) {
+        return { success: false, error: "This supplier-product link already exists." };
+      }
+      await restoreSupplierItem({
+        id: existing[0].supplierItemId,
+        supplierId: validData.supplierId,
+        unitPrice: validData.unitPrice
+      });
+
+      revalidatePath("/supplier-items");
+      return { success: true, message: "Archived supplier-item link restored successfully!" };
+    }
 
     await createSupplierItem({
       supplierId: validData.supplierId,
@@ -36,8 +48,10 @@ export async function createSupplierItemAction(values: z.infer<typeof newSupplie
       cause?.code === '23505' || 
       String(err.message).includes('unique constraint') || 
       String(cause?.message).includes('unique constraint');
-
     
+    if (isDuplicate) {
+      return { success: false, error: "This supplier-product link already exists." }; 
+    }
     
     // 4. If it's something else, log it and show the generic system error
     console.error("System crash:", error);
@@ -49,10 +63,18 @@ export async function createSupplierItemAction(values: z.infer<typeof newSupplie
 export async function updateSupplierItemAction(supplierItemId: number, values: z.infer<typeof editSupplierItemSchema>) {
   try {
     const validData = editSupplierItemSchema.parse(values);
+    const existing = await findSupplierItemLink(validData.supplierId, validData.productId);
 
+    if (existing && existing[0].supplierItemId !== supplierItemId) {
+      if (!existing[0].archived) {
+        return { success: false, error: "Update failed: This supplier-product link already exists." };
+      } else {
+        return { success: false, error: "Update failed: This link is archived. Please restore the archived link instead." };
+      }
+    }
     // Hand the updated data to the Robot Butler
     await updateSupplierItem({
-        id:supplierItemId ,
+      id:supplierItemId ,
       supplierId: validData.supplierId,
       unitPrice: validData.unitPrice,
     });
