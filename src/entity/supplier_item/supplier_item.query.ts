@@ -18,6 +18,7 @@ export async function readItemsWithSupplier() {
       category2: itemsTable.productCategory2,
       unitPrice: supplierItemsTable.unitPrice,
       lastUpdated: supplierItemsTable.lastUpdated,
+      measurement: itemsTable.measurement
     })
     .from(supplierItemsTable)
     .innerJoin(

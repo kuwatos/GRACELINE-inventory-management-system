@@ -19,7 +19,12 @@ interface NewSupplierItemModalProps {
   isOpen: boolean;
   onClose: () => void;
   suppliers: { supplierId: number; supplierName: string }[];
-  products: { productId: number; productName: string }[];
+  products: { 
+    productId: number; 
+    productName: string; 
+    productCategory1: string; // Added
+    measurement: string;      // Added
+  }[];
 }
 
 export const NewSupplierItemModal = ({ 
@@ -114,7 +119,8 @@ export const NewSupplierItemModal = ({
                     <SelectContent>
                       {products.map((p) => (
                         <SelectItem key={p.productId} value={p.productId.toString()}>
-                          {p.productName}
+                          {/* Concatenated: Name - Category (Measurement) */}
+                          {p.productName} — {p.productCategory1} ({p.measurement})
                         </SelectItem>
                       ))}
                     </SelectContent>

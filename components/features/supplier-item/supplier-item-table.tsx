@@ -21,8 +21,9 @@ export interface SupplierItem {
   productId: number    | null;
   productName: string;
   unitPrice: string | number | null; // 👈 Drizzle numeric returns as string  category1: string | null;
-  category2: string | null;
+  category1: string | null;
   lastUpdated: Date | string | null;
+  measurement: string | null;
 }
 
 interface SupplierItemTableProps {
@@ -67,6 +68,8 @@ export const SupplierItemTable = ({ data = [], onView, onEdit, onDelete }: Suppl
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Link ID</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Supplier</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Product</TableHead>
+            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Category</TableHead>
+            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Measurement</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-right">Unit Price</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Last Updated</TableHead>
             <TableHead className="px-6 py-4 text-right"></TableHead>
@@ -87,6 +90,20 @@ export const SupplierItemTable = ({ data = [], onView, onEdit, onDelete }: Suppl
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-gray-600 group-hover:text-zinc-300">
                     {item.productName}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell className="px-6 py-6">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-gray-600 group-hover:text-zinc-300">
+                    {item.category1}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell className="px-6 py-6">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-gray-600 group-hover:text-zinc-300">
+                    {item.measurement}
                   </span>
                 </div>
               </TableCell>

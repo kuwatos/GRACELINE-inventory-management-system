@@ -23,6 +23,12 @@ interface EditSupplierItemModalProps {
   onClose: () => void;
   item: SupplierItem | null;
   suppliers: { supplierId: number; supplierName: string }[];
+  products: { 
+    productId: number; 
+    productName: string; 
+    productCategory1: string; // Added
+    measurement: string;      // Added
+  }[];
   isViewOnly?: boolean;
 }
 
@@ -97,7 +103,7 @@ export const EditSupplierItemModal = ({
               
               <DialogTitle className="text-2xl font-bold text-gray-900">{title}</DialogTitle>
               <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-medium">
-                {item?.productName || "Direct Sourcing"}
+                {item?.productName || "Direct Sourcing"} - {item?.supplierName || "No Supplier"} ({item?.measurement || "N/A"})
               </p>
             </DialogHeader>
 
