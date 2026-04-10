@@ -116,7 +116,7 @@ export const projectsTable = pgTable("project_tb", {
   projectId: integer("project_id")
     .generatedAlwaysAsIdentity({ startWith: 4000001 })
     .primaryKey(),
-  projectName: text("project_name").notNull(),
+  projectName: text("project_name").notNull().unique(),
   archived: boolean("archived").default(false),
 });
 
@@ -139,7 +139,7 @@ export const itemsTable = pgTable("item_tb", {
   productId: integer("product_id")
     .generatedAlwaysAsIdentity({ startWith: 8000001 })
     .primaryKey(),
-  productName: text("product_name").notNull(),
+  productName: text("product_name").notNull().unique(),
   productCategory1: text("product_category1").notNull(),
   productCategory2: text("product_category2"),
   productCategory3: text("product_category3"),
@@ -198,7 +198,9 @@ export const orderProductsTable = pgTable("order_product_tb", {
   orderId: integer("order_id").references(() => ordersTable.orderId),
   productId: integer("product_id").references(() => itemsTable.productId),
   orderProductQuantity: integer("order_product_quantity").notNull(),
-});
+}, (table) => ({
+  unqOrderProduct: uniqueIndex("unique_order_product_idx").on(table.orderId, table.productId),
+}));
 
 // --- Notifications ---
 

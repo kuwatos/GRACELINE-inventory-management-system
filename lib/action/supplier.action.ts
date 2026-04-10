@@ -1,7 +1,7 @@
 "use server"; // This magic word tells Next.js to run this strictly on the backend!
 
 import { revalidatePath } from "next/cache";
-import { createSupplier,readSuppliers, updateSupplier,deleteSupplier } from "@/src/entity/supplier/supplier.repository"; // Update this path to wherever your CRUD file is!
+import { restoreSupplier,createSupplier,findExistingSupplier, updateSupplier,deleteSupplier } from "@/src/entity/supplier/supplier.repository"; // Update this path to wherever your CRUD file is!
 import { editSupplierSchema } from "@/lib/validations";
 import { newSupplierSchema } from "@/lib/validations";
 import * as z from "zod";
@@ -10,6 +10,25 @@ export async function createSupplierAction(values: z.infer<typeof newSupplierSch
   try {
     const validData = newSupplierSchema.parse(values);
 
+    const existingSupplier = await findExistingSupplier(validData.name);
+    
+    if (existingSupplier && existingSupplier.length > 0) {
+      if (existingSupplier[0].active) {
+        return { success: false, error: "A supplier with this name already exists." };
+      }
+      // If the supplier exists but is inactive, restore it instead of creating a new one
+      await restoreSupplier(existingSupplier[0].supplierId, {
+        supplierName: validData.name,
+        supplierLandline: validData.supplierLandline,
+        supplierEmail: validData.supplierEmail,
+        supplierMobile: validData.supplierMobile
+      });
+
+      revalidatePath("/suppliers");
+      return { success: true,message: "Archived supplier restored successfully!" };
+    }
+
+    // If no existing supplier, create a new one
     await createSupplier({
       supplierName: validData.name,
       supplierLandline: validData.supplierLandline,

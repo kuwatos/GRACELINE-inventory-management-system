@@ -64,7 +64,8 @@ export async function executeAction(
 ) {
   try {
     const result = await action();
-    if (successMessage) toast.success(successMessage);
+    const message = result?.message || successMessage;
+    if (message) toast.success(message);
     return result;
   } catch (error) {
     handleError(error);
