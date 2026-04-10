@@ -7,11 +7,11 @@ export async function readReportHistory() {
     .select({
       reportId: reportsTable.reportId,
       reportType: reportsTable.reportType,
-      dateGenerated: reportsTable.dateCreated,
-      generatedBy: usersTable.username, // Joined from User table
-      startDate: reportsTable.dateStart,
-      endDate: reportsTable.dateEnd,
+      dateCreated: reportsTable.dateCreated,
+      username: usersTable.username, // Joined from User table
+      dateStart: reportsTable.dateStart,
+      dateEnd: reportsTable.dateEnd,
     })
     .from(reportsTable)
-    .leftJoin(usersTable, eq(reportsTable.userId, usersTable.id));
+    .innerJoin(usersTable, eq(reportsTable.userId, usersTable.id));
 }

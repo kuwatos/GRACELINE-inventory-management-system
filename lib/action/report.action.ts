@@ -19,8 +19,8 @@ export async function generateReportAction(values: z.input<typeof baseReportSche
     await createReport({
       userId: "user_001",
       reportType: validated.reportType,
-      dateStart: validated.startDate,
-      dateEnd: validated.endDate,
+      dateStart: validated.dateStart,
+      dateEnd: validated.dateEnd,
     });
 
     // 4. Refresh the history table

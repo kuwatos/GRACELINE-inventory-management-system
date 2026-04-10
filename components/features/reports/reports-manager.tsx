@@ -7,26 +7,29 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { ReportsHistoryTable, ReportRecord } from "./reports-history-table";
+import { ReportsHistoryTable, Report } from "./reports-history-table";
 import { ReportViewerModal } from "./report-viewer-modal";
 import { PrintableReport } from "./printable-report";
 
-export const ReportsManager = () => {
-  const [reports, setReports] = useState<ReportRecord[]>([
-    { reportId: 1, reportType: "Month-End Report", dateGenerated: new Date("2026-03-31"), generatedBy: "John Carlo", startDate: new Date("2026-03-01"), endDate: new Date("2026-03-31") },
-  ]);
+interface ReportsManagerProps {
+  data: Report[];
+}
+
+export const ReportsManager = ({ data=[] }: ReportsManagerProps) => {
+  const [reports, setReports] = useState<Report[]>(data);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedReport, setSelectedReport] = useState<ReportRecord | null>(null);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
   
   const printRef = useRef<HTMLDivElement>(null);
+
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: `GraceLine-MonthEnd-${selectedReport?.dateGenerated || "Report"}`,
+    documentTitle: `GraceLine-MonthEnd-${selectedReport?.dateCreated || "Report"}`,
   });
 
   const handleGenerateClick = () => {
@@ -35,13 +38,13 @@ export const ReportsManager = () => {
     
     // Simulate generation delay
     setTimeout(() => {
-      const newReport: ReportRecord = {
+      const newReport: Report = {
         reportId: 232323, // Random ID for demo
         reportType: "Month-End Report",
-        dateGenerated: new Date(),
-        generatedBy: "John Carlo",
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
+        dateCreated: new Date(),
+        username: "John Carlo",
+        dateStart: new Date(startDate),
+        dateEnd: new Date(endDate),
       };
       setReports([newReport, ...reports]);
       setIsGenerating(false);
@@ -51,7 +54,7 @@ export const ReportsManager = () => {
   };
 
   const filteredData = reports.filter((r) => 
-    r.dateGenerated?.toLocaleString().includes(searchQuery) || r.generatedBy?.toLowerCase().includes(searchQuery.toLowerCase())
+    r.dateCreated?.toLocaleString().includes(searchQuery) || r.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (

@@ -144,8 +144,8 @@ export const editOrderSchema = baseOrderSchema;
 
 export const baseReportSchema = z.object({
   reportType: z.string().min(1, "Please select a report type"),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
+  dateStart: z.coerce.date(),
+  dateEnd: z.coerce.date(),
 });
 //Project Form Validation
 export const projectFormSchema = z.object({

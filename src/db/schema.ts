@@ -25,7 +25,7 @@ export const usersTable = pgTable("user", {
 	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
   
   //for username login plug-in
-  username: varchar("username", { length: 255 }).unique(),
+  username: varchar("username", { length: 255 }).unique().notNull(),
 	displayUsername: text("display_username"),
 
 
@@ -102,10 +102,11 @@ export const reportsTable = pgTable("report_tb", {
   reportId: integer("report_id")
     .generatedAlwaysAsIdentity({ startWith: 5000001 })
     .primaryKey(),
-  userId: text("user_id").references(() => usersTable.id).notNull(),
+  userId: text("user_id").notNull().references(() => usersTable.id),
   reportType: text("report_type").notNull(),
   dateCreated: timestamp("date_created", { withTimezone: true })
-    .defaultNow(),
+    .defaultNow()
+    .notNull(),
   dateStart: timestamp("date_start", { withTimezone: true }).notNull(),
   dateEnd: timestamp("date_end", { withTimezone: true }).notNull(),
 });
