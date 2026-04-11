@@ -40,7 +40,7 @@ export const ReportsHistoryTable = ({ data, onView, onDelete, onDownload }: any)
               <TableCell className="px-6 py-4 font-bold group-hover:text-white">{report.reportType}</TableCell>
             
               <TableCell className="text-center text-gray-500 group-hover:text-gray-400 font-mono text-xs">{formatDate(report.dateCreated)}</TableCell>
-              <TableCell className="text-center text-gray-500 group-hover:text-gray-400 font-mono text-xs">{formatDate(report.username)}</TableCell>
+              <TableCell className="text-center text-gray-500 group-hover:text-gray-400 font-mono text-xs">{(report.username)}</TableCell>
               <TableCell className="text-center text-gray-500 group-hover:text-gray-400 font-mono text-xs">{formatDate(report.dateStart)}</TableCell>
               <TableCell className="text-center text-gray-500 group-hover:text-gray-400 font-mono text-xs">{formatDate(report.dateEnd)}</TableCell>
               <TableCell className="px-6 text-right">

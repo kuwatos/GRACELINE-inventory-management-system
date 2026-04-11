@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { ReportsHistoryTable, Report } from "./reports-history-table";
 import { ReportViewerModal } from "./report-viewer-modal";
 import { PrintableReport } from "./printable-report";
+import { deleteReportAction, generateReportAction, getMonthlyReportAction } from "@/lib/action/report.action";
 
 interface ReportsManagerProps {
   data: Report[];
@@ -32,26 +33,61 @@ export const ReportsManager = ({ data=[] }: ReportsManagerProps) => {
     documentTitle: `GraceLine-MonthEnd-${selectedReport?.dateCreated || "Report"}`,
   });
 
-  const handleGenerateClick = () => {
+  const [auditData, setAuditData] = useState<any>(null);
+
+  const handleGenerateClick = async () => {
     if (!startDate || !endDate) return;
     setIsGenerating(true);
     
-    // Simulate generation delay
-    setTimeout(() => {
-      const newReport: Report = {
-        reportId: 232323, // Random ID for demo
-        reportType: "Month-End Report",
-        dateCreated: new Date(),
-        username: "John Carlo",
-        dateStart: new Date(startDate),
-        dateEnd: new Date(endDate),
-      };
-      setReports([newReport, ...reports]);
-      setIsGenerating(false);
-      setStartDate("");
-      setEndDate("");
-    }, 1000);
-  };
+    const res = await getMonthlyReportAction(startDate, endDate);
+  
+  if (res.success) {
+    setAuditData(res.data); // Store the results
+    setSelectedReport({ 
+      reportId: Date.now(), 
+      reportType: "Live Generated Audit",
+      username: "Current User",
+      dateCreated: new Date(),
+      dateStart: new Date(startDate),
+      dateEnd: new Date(endDate)
+    });
+    await generateReportAction({
+      userId: "user_001",
+      reportType: "Live Generated Audit",
+      dateStart: new Date(startDate),
+      dateEnd: new Date(endDate)
+    });
+    setIsViewerOpen(true); // Open the modal automatically
+  }
+  
+  setIsGenerating(false);
+};
+
+const handleViewReport = async (report: Report) => {
+  setIsGenerating(true); // Show a loader while fetching historical numbers
+
+  // Fetch the actual audit numbers based on the saved report's dates
+  const res = await getMonthlyReportAction(
+    report.dateStart.toString(), 
+    report.dateEnd.toString()
+  );
+
+  if (res.success) {
+    setAuditData(res.data); // Fill the gap!
+    setSelectedReport(report);
+    setIsViewerOpen(true);
+  } else {
+    // Handle error (e.g., toast.error("Failed to load report data"))
+    console.error(res.error);
+  }
+
+  setIsGenerating(false);
+};
+
+const handleDeleteReport = (report: Report) => {
+  setSelectedReport(report);
+  const result = deleteReportAction(report.reportId);
+}
 
   const filteredData = reports.filter((r) => 
     r.dateCreated?.toLocaleString().includes(searchQuery) || r.username?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -106,13 +142,13 @@ export const ReportsManager = ({ data=[] }: ReportsManagerProps) => {
 
         <ReportsHistoryTable 
           data={filteredData} 
-          onView={(r: any) => { setSelectedReport(r); setIsViewerOpen(true); }} 
+          onView={handleViewReport} 
           onDownload={(r: any) => { setSelectedReport(r); setTimeout(() => handlePrint(), 100); }} 
-          onDelete={async (id: number) => setReports(reports.filter(r => r.reportId !== id))} 
+          onDelete={handleDeleteReport} 
         />
       </Card>
 
-      <ReportViewerModal isOpen={isViewerOpen} onClose={() => setIsViewerOpen(false)} reportData={selectedReport} />
+      <ReportViewerModal isOpen={isViewerOpen} onClose={() => setIsViewerOpen(false)} reportData={selectedReport} auditResults={auditData} />
       <PrintableReport ref={printRef} reportData={selectedReport} />
     </div>
   );

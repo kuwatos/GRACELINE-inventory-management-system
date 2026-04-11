@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth"; // Your auth import
 import { createReport, deleteReport } from "@/src/entity/reports/reports.repository";
+import { generateMonthlyAudit } from "@/src/entity/reports/reports.query";
 import { baseReportSchema } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 import * as z from "zod";
@@ -45,5 +46,15 @@ export async function deleteReportAction(reportId: number) {
   } catch (error) {
     console.error("Failed to delete report:", error);
     return { success: false, error: "Something went wrong" };
+  }
+}
+
+export async function getMonthlyReportAction(startDate: string, endDate: string) {
+  try {
+    const data = await generateMonthlyAudit(new Date(startDate), new Date(endDate));
+    return { success: true, data };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: "Failed to generate audit." };
   }
 }
