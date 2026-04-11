@@ -11,13 +11,12 @@ import {
 } from "@/components/ui/breadcrumb"
 import DashboardHeader from "@/components/dashboard-header";
 
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
+  
   
 return (
      <SidebarProvider className="flex h-screen sm:rounded-3xl overflow-hidden">

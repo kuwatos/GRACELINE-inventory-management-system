@@ -16,11 +16,16 @@ export const ActivityLogManager = ({ data = [] }: ActivityLogManagerProps) => {
   // Filter logic allowing search by User, Action, Dept, or Target ID
   const filteredData = data.filter((log) => {
     const searchLower = searchQuery.toLowerCase();
+    const user = (log.user ?? "").toLowerCase();
+    const action = (log.action ?? "").toLowerCase();
+    const dept = (log.dept ?? "").toLowerCase();
+    const target = (log.target ?? "").toString().toLowerCase();
+
     return (
-      // log.user.toLowerCase().includes(searchLower) ||
-      log.action.toLowerCase().includes(searchLower) ||
-      log.dept.toLowerCase().includes(searchLower) ||
-      log.target.toString().toLowerCase().includes(searchLower)
+      user.includes(searchLower) ||
+      action.includes(searchLower) ||
+      dept.includes(searchLower) ||
+      target.includes(searchLower)
     );
   });
 

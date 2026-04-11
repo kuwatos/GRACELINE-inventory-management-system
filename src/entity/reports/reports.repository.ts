@@ -4,6 +4,7 @@ import { reportsTable } from "../../db/schema";
 import { eq, count, ilike, or, and } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { createUserNotificationService } from "../user_notifications/user_notifications.service";
+import { validateSessionUser } from "../user/user.repository";
 
 //CREATE
 export async function createReport(data: {
@@ -14,6 +15,7 @@ export async function createReport(data: {
 }) {
   return await db.transaction(async (tx) => {
       // Insert the new supplier
+          const user = await validateSessionUser()
       const [newReport] = await tx.insert(reportsTable).values(data).returning();
   
       if (newReport) {
@@ -22,6 +24,7 @@ export async function createReport(data: {
           // Log every column that has a value
           if (val !== null && val !== undefined) {
             await createLog({
+              userId: user.id,
               actionId: 20,                  
               targetId: newReport.reportId,
               columnName: key,               

@@ -67,7 +67,8 @@ export const OrderHistoryTable = ({
                   
                   {/* --- DRAFT BUTTONS --- */}
                   {viewMode === "draft" && (
-                    <>
+                    <> 
+                    
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:bg-green-50 hover:text-green-700" onClick={() => onApprove?.(order.id)} title="Approve & Make Official">
                         <CheckCircle className="w-4 h-4" />
                       </Button>

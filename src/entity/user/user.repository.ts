@@ -1,33 +1,72 @@
 // CRUD lives here
+"use server";
 import { db } from "../../index";
 import { usersTable } from "../../db/schema";
 import { and, or, ilike, eq } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
+import { auth, type User} from "@/lib/auth";
+import { headers } from "next/headers";
+import { id } from "zod/v4/locales";
 
-//CREATE
-export async function createUser(data: { username: string; userType: string }) {
-  // TODO: Add password
-  return await db.transaction(async (tx) => {
-    const [newUser] = await tx.insert(usersTable).values(data).returning();
+export async function createUser(data: { 
+  firstName: string; 
+  lastName: string; 
+  username: string;
+  department: string; 
+  passwordStr: string 
+}) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const name = data.firstName + " " + data.lastName;
+  const department = data.department.toLowerCase();
+  const email = data.username + "@internal.local"; // placeholder only, not used for login
+  const role = data.department === "admin" ? "admin" : "user"; // Basic role assignment based on department
 
-    if (newUser) {
-      for (const [key, val] of Object.entries(newUser)) {
+  // 1. Security Check: Only admins can do this
+  if (session?.user.department.toLowerCase() !== "admin") {
+        throw new Error("Unauthorized");
+    }
+
+  // 2. Create the user via the API
+  try {
+    const newUser = await auth.api.createUser({
+        body: {
+            name,
+            email,
+            password: data.passwordStr,
+            role,
+            data: {
+              username: data.username,
+              displayUsername: name,
+              firstName: data.firstName,
+              lastName: data.lastName,
+              department,
+              active: true, // Default status
+            }
+        },
+        headers: await headers()
+    });
+
+    if (newUser.user) {
+      for (const [key, val] of Object.entries(newUser.user)) {
         // We only log if the value actually exists (not null/undefined)
         if (val !== null && val !== undefined) {
           await createLog({
+            userId: session?.user.id || "unknown", // Who performed the action
             actionId: 3,                    // Added a New Inventory Item
-            targetId: newUser.id,
+            targetId: newUser.user.id,
             columnName: key,                // Dynamic: productName, productCategory1, etc.
             prevValue: null,                // It's a creation, so previous is always null
             newValue: val.toString(),
             remarks: null
-          }, tx);
+          });
         }
       }
     }
-
-    return newUser;
-  });
+    return { success: true, user: newUser};
+  }catch (error: any) {
+      console.error("Admin Create User Error:", error);
+      return { success: false, message: error.message || "Failed to create user." };
+  }
 }
 
 // READ
@@ -70,86 +109,199 @@ export async function searchUsers(filters: {
 
 // UPDATE
 export async function updateUser(data: {
-  id: number;
-  username?: string;
-  firstName?: string;
-  lastName?: string;
-  department?: string;
-  password?: string; // Notice this is optional (?)
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  department: string;
+  password?: string | undefined; // Notice this is optional (?)
 }) {
-  const { id, ...incomingFields } = data;
+    const { id, password, username, firstName, lastName, department } = data;
+    console.log("checking")
+    const oldUser = await auth.api.getUser({
+      query: { id },
+      headers: await headers(),
+    }) as unknown as User; // Type assertion to include our custom fields
+    const session = await auth.api.getSession({ headers: await headers() });
 
-  return await db.transaction(async (tx) => {
-    // 1. Get current state to compare fields
-    const [existing] = await tx
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.id, id))
-      .limit(1);
-
-    if (!existing) throw new Error("User not found");
-
-    const updates: Record<string, any> = {};
-
-    // 2. Loop and Log individual changes
-    for (const [key, val] of Object.entries(incomingFields)) {
-      const oldValue = (existing as any)[key];
-
-      // Ensure we aren't comparing 'undefined' and that values actually differ
-      if (val !== undefined && String(val) !== String(oldValue)) {
-        updates[key] = val;
-
-        // DYNAMIC LOGGING
-        await createLog({
-          actionId: 5,                  // "Changed User Details"
-          targetId: id,
-          columnName: key,             // DYNAMIC: This will be "username" or "userType"
-          prevValue: oldValue?.toString() || null,
-          newValue: val.toString(),
-        }, tx);
+    // 1. Security Check: Only admins can do this
+    if (session?.user.department!== "admin") {
+          throw new Error("Unauthorized");
       }
+    console.log(id)
+    console.log(username)
+    console.log(password)
+    console.log(firstName)
+    console.log(lastName)
+    console.log(department)
+    // 2. Update the user via the API
+    try {
+      await auth.api.adminUpdateUser({
+          body: { 
+            userId: id,
+            data: {
+              username,
+              firstName,
+              lastName,
+              department
+              }
+            },
+          headers: await headers(),
+      }) as unknown as User; // Type assertion to include our custom fields
+      // 2.1 IF the admin typed a new password, update the password as well (separate API call since it's a different endpoint)
+      if (password && password !=null) {
+        await auth.api.setUserPassword({
+          body: {
+              newPassword: password, // required
+              userId: id, // required
+          },
+        headers: await headers(),
+        })
+      }
+      // 3. Fetch the updated user to get new values for logging
+      const updatedUser = await auth.api.getUser({
+        query: { id },
+        headers: await headers(),
+      }) as unknown as User; // Type assertion to include our custom fields
+
+      // 3. Log the changes (only log fields that were actually updated)
+      if (oldUser && updatedUser) {
+        for (const [key, val] of Object.entries(updatedUser)) {
+          // 1. Grab the previous value from the oldUser object
+          const prevVal = (oldUser as Record<string, any>)[key];
+
+          // 2. Only log if the value has actually changed AND it's not the 'id' field
+          // We use != instead of !== if you want to ignore type differences (like "1" vs 1)
+          if (val !== prevVal && key !== 'id') {
+            await createLog({
+              userId: session?.user.id || "unknown",
+              actionId: 5,
+              targetId: updatedUser.id,
+              columnName: key,
+              // 3. Convert prevValue to string safely (handle null/undefined)
+              prevValue: prevVal != null ? prevVal.toString() : null,
+              // 4. Convert newValue to string safely
+              newValue: val != null ? val.toString() : null,
+              remarks: null
+            });
+          }
+        }
+      }
+
+    if (password && oldUser && updatedUser) {
+      await createLog({
+        userId: session?.user.id || "unknown", // Who performed the action
+        actionId: 4,                    // Changed User password
+        targetId: updatedUser.id,
+        columnName: "password",                // Dynamic: productName, productCategory1, etc.
+        prevValue: null,                // from oldUser
+        newValue: null,
+        remarks: null
+      });
     }
-
-    // 3. Finalize update only if something actually changed
-    if (Object.keys(updates).length === 0) return { message: "No changes" };
-
-    const [updatedUser] = await tx
-      .update(usersTable)
-      .set(updates)
-      .where(eq(usersTable.id, id))
-      .returning();
-
-    return updatedUser;
-  });
+    return { success: true, user: updatedUser};
+  }catch (error: any) {
+      console.error("Admin Update User Error:", error);
+      return { success: false, message: error.message || "Failed to update user details." };
+  }
 }
 
 // DELETE (True Soft Delete - Enterprise Way)
-export async function deleteUser(id: number) {
-  return await db.transaction(async (tx) => {
-    const [existing] = await tx
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.id, id))
-      .limit(1);
+export async function deleteUser(id: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  // 1. Security Check: Only admins can do this
+  if (session?.user.department!== "admin") {
+        throw new Error("Unauthorized");
+    }
+  try {
+    const deletedUser = await auth.api.adminUpdateUser({
+      body: {
+        userId: id,
+        data: {
+          active: false
+        }
+      },
+      headers: await headers(),
+    }) as unknown as User; // Type assertion to include our custom fields
 
-    if (!existing) throw new Error("User not found");
+      try {
+        await createLog({
+          userId: session?.user.id || "unknown",
+          actionId: 6,
+          targetId: deletedUser.id,
+          columnName: "active",
+          prevValue: "true",
+          newValue:  deletedUser?.active != null ? deletedUser.active.toString() : null,
+          remarks: null
+        });
+      } catch (logError) {
+        console.error("LOG ERROR:", logError);
+      }
+    return{success: true, deletedUser};
+  }catch (error: any) {
+      console.error("Admin Delete User Error:", error);
+      return { success: false, message: error.message || "Failed to delete user." };
+  }
+}
 
-    const [deletedUser] = await tx
-      .update(usersTable)
-      .set({ active: false })
-      .where(eq(usersTable.id, id))
-      .returning();
-
-    if (deletedUser) {
+export async function signIn(data: { username: string; password: string }) {
+  try {  
+    const signInResult =await auth.api.signInUsername({
+          body: {
+              username: data.username,
+              password: data.password,
+          },
+    });
+    if (signInResult.user) {
       await createLog({
-        actionId: 6,
-        targetId: id,
-        columnName: "username",
-        prevValue: existing.username,
+        userId: signInResult.user.id || "unknown",
+        actionId: 1, // User Sign In
+        targetId: signInResult.user.id || "unknown",
+        columnName: "none",
+        prevValue: null,
         newValue: null,
-      }, tx);
+        remarks: null
+      });
+    }
+    return { success: true };
+  }catch (error: any) {
+      console.error("User Sign In Error:", error);
+      return { success: false, message: error.message || "Failed to sign in user." };
+  }
+}
+
+export async function signOut() {
+  const session = await auth.api.getSession({ headers: await headers() });
+    try {
+      await auth.api.signOut();
+      await createLog({
+        userId: session?.user.id || "unknown",
+        actionId: 2, // User Sign Out
+        targetId: session?.user.id || "unknown",
+        columnName: "none",
+        prevValue: null,
+        newValue: null,
+        remarks: null
+      });
+      return { success: true };
+    }catch (error: any) {
+      console.error("User Sign Out Error:", error);
+      return { success: false, message: error.message || "Failed to sign out user." };
+  }
+
+}
+
+export async function validateSessionUser(requiredDepartment?: string) {
+    const session = await auth.api.getSession({headers: await headers()}); // Better Auth session fetch
+
+    if (!session || !session.user.active) {
+        throw new Error("Unauthorized: Account inactive or session expired");
     }
 
-    return deletedUser;
-  });
+    if (requiredDepartment && session.user.department !== requiredDepartment) {
+        throw new Error("Forbidden: Insufficient permissions");
+    }
+
+    console.log("Session valid for user:", session.user.username);
+    return session.user;
 }

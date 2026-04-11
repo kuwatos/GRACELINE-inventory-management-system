@@ -1,11 +1,13 @@
 "use server"; // This magic word tells Next.js to run this strictly on the backend!
 
 import { revalidatePath } from "next/cache";
-import { createUser } from "@/src/entity/user/user.repository"; // Update this path to wherever your CRUD file is!
+import { createUser, validateSessionUser } from "@/src/entity/user/user.repository"; // Update this path to wherever your CRUD file is!
 import { updateUser, deleteUser } from "@/src/entity/user/user.repository"; 
 import { editUserSchema } from "@/lib/validations";
 import { newUserSchema } from "@/lib/validations";
 import * as z from "zod";
+import { redirect } from "next/dist/client/components/navigation";
+
 
 export async function createUserAction(values: z.infer<typeof newUserSchema>) {
   try {
@@ -17,6 +19,7 @@ export async function createUserAction(values: z.infer<typeof newUserSchema>) {
       lastName: validData.lastName,
       department: validData.department,
       passwordStr: validData.password, 
+      
     });
 
     revalidatePath("/users"); 
@@ -47,7 +50,7 @@ export async function createUserAction(values: z.infer<typeof newUserSchema>) {
 }
 
 // --- UPDATE USER ACTION ---
-export async function updateUserAction(userId: number, values: z.infer<typeof editUserSchema>) {
+export async function updateUserAction(userId: string, values: z.infer<typeof editUserSchema>) {
   try {
     const validData = editUserSchema.parse(values);
 
@@ -85,7 +88,7 @@ export async function updateUserAction(userId: number, values: z.infer<typeof ed
 }
 
 // --- DELETE USER ACTION ---
-export async function deleteUserAction(userId: number) {
+export async function deleteUserAction(userId: string) {
   try {
     // Tell the Robot Butler to deactivate this user
     await deleteUser(userId);
@@ -98,4 +101,47 @@ export async function deleteUserAction(userId: number) {
     console.error("Failed to delete user:", error);
     return { success: false, error: "Something went wrong" };
   }
+}
+
+export async function redirectToDashboard(department: string) {
+  let targetPath = "";
+
+  // Normalize to lowercase to prevent "Admin" vs "admin" mismatches
+  switch (department.toLowerCase()) {
+    case "admin":
+      targetPath = "/admin/dashboard";
+      break;
+    case "purchasing":
+      targetPath = "/purchasing/dashboard";
+      break;
+    case "warehouse":
+      targetPath = "/warehouse/dashboard";
+      break;
+    case "finance":
+      targetPath = "/finance/dashboard";
+      break;
+    default:
+      targetPath = "/login"; 
+  }
+
+  // 1. Tell Next.js to clear the cache for the layout 
+  // This is what forces the Sidebar to see the new session
+  revalidatePath("/", "layout");
+  // Always call redirect OUTSIDE of any try/catch blocks
+  return targetPath;
+}
+
+
+export async function checkAccess(requiredRole: string) {
+  let user = null;
+  try {
+    user = await validateSessionUser();
+  } catch (error:any)
+  {
+    redirect("/login")
+  }
+
+  if (user.department !== requiredRole) {
+          throw new Error("Forbidden: Insufficient permissions");
+      }
 }

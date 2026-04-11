@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "dotenv/config"; // check if still needed since we are using process.env directly in index.ts, but it doesn't hurt to have it here for any other files that might need it
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./db/schema"; 

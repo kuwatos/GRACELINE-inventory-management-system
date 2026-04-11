@@ -24,10 +24,16 @@ export const usersTable = pgTable("user", {
 	createdAt: timestamp("created_at", { precision: 6, withTimezone: true }).notNull(),
 	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
   
-  //for username login plug-in
-  username: varchar("username", { length: 255 }).unique().notNull(),
+  // required fields for username login plug-in
+  username: varchar("username", { length: 255 }).unique(),
 	displayUsername: text("display_username"),
 
+  // required fields for admin plug-in
+  
+  role: text("role"),
+	banned: boolean("banned"),
+	banReason: text("ban_reason"),
+	banExpires: timestamp("ban_expires", { precision: 6, withTimezone: true }),
 
   // custom fields for our app
   firstName: text("first_name").notNull(),
@@ -45,6 +51,9 @@ export const sessionsTable = pgTable("session", {
 	userAgent: text("user_agent"),
 	createdAt: timestamp("created_at", { precision: 6, withTimezone: true }).notNull(),
 	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
+
+  // required field for admin plug-in
+  impersonatedBy: text("impersonated_by"),
 });
 
 export const accountsTable = pgTable("account", {
@@ -72,6 +81,7 @@ export const verificationTable = pgTable("verification", {
 	createdAt: timestamp("created_at", { precision: 6, withTimezone: true }).notNull(),
 	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
 });
+
 
 
 //List of actions that can be logged in the system. Purpose niya lang is to be a list ng ilalagay sa logs tas nasa logs na yung
@@ -186,7 +196,7 @@ export const ordersTable = pgTable("order_tb", {
   expectedDeliveryDate: timestamp("expected_delivery_date"),
   actualDeliveryDate: timestamp("actual_delivery_date"),
   projectId: integer("project_id").references(() => projectsTable.projectId),
-  createdBy: text("created_by").references(() => usersTable.id),
+  createdBy: text("created_by").references(() => usersTable.id).notNull(),
   approvedBy: text("approved_by").references(() => usersTable.id),
 });
 

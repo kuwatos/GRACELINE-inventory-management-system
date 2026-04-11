@@ -4,6 +4,7 @@ import { itemsTable } from "../../db/schema";
 import { eq, lte, ilike, or, and, isNotNull, isNull } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import {createUserNotificationService} from "../user_notifications/user_notifications.service";
+import { validateSessionUser } from "../user/user.repository";
 
 // CREATE
 export async function createItem(data: {
@@ -19,6 +20,7 @@ export async function createItem(data: {
   measurement: string;
 }) {
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser();
     // 1. Insert Item
     const [newItem] = await tx.insert(itemsTable).values(data).returning();
 
@@ -28,6 +30,7 @@ export async function createItem(data: {
         // We only log if the value actually exists (not null/undefined)
         if (val !== null && val !== undefined) {
           await createLog({
+            userId: user.id,
             actionId: 8,                    // Added a New Inventory Item
             targetId: newItem.productId,
             columnName: key,                // Dynamic: productName, productCategory1, etc.
@@ -105,6 +108,7 @@ export async function updateItem(data: {
   const { id, remarks: globalRemarks, ...rest } = data;
 
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser() 
     const [existing] = await tx
       .select()
       .from(itemsTable)
@@ -142,6 +146,7 @@ export async function updateItem(data: {
       }
 
       await createLog({
+        userId: user.id,
         actionId,
         targetId: id,
         columnName: key,
@@ -169,6 +174,7 @@ export async function updateItem(data: {
 // DELETE
 export async function deleteItem(id: number) {
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser()
     const [item] = await tx 
       .select()
       .from(itemsTable)
@@ -182,6 +188,7 @@ export async function deleteItem(id: number) {
 
     // Log Deletion (Action ID 9)
     await createLog({
+      userId: user.id,
       actionId: 9,
       targetId: id,
       columnName: "product_name",

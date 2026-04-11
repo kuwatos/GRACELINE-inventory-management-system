@@ -7,8 +7,9 @@ import { eq, ilike, or, and } from "drizzle-orm";
 // logs.service.ts or similar
 export async function createLog(
   data: {
+    userId: string;
     actionId: number;
-    targetId: number;
+    targetId: number | string;
     columnName: string;
     prevValue?: string | null;
     newValue?: string | null;
@@ -19,7 +20,7 @@ export async function createLog(
 ) {
   // If 'tx' is provided, use it. Otherwise, use the standard 'db'.
   const client = tx || db; 
-  return client.insert(logsTable).values(data);
+  return  client.insert(logsTable).values(data);
 }
 
 //READ

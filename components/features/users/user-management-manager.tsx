@@ -30,7 +30,7 @@ export const UserManagementManager = ({ data = [] }: UserManagementManagerProps)
     const matchesSearch = 
       fullName.includes(searchLower) ||
       user.username.toLowerCase().includes(searchLower) ||
-      user.userId.toString().includes(searchLower) || // Changed from id to userId.toString()
+      user.id.toString().includes(searchLower) || // Changed from id to userId.toString()
       user.department.toLowerCase().includes(searchLower);
 
     // 2. Check if the dropdown matches the user's department
@@ -52,7 +52,7 @@ export const UserManagementManager = ({ data = [] }: UserManagementManagerProps)
     if (isConfirmed) {
       try {
         // 2. Send the ID across the bridge to your Robot Butler
-        const result = await deleteUserAction(user.userId);
+        const result = await deleteUserAction(user.id);
 
         if (!result.success) {
           console.error("Failed to delete user:", result.error);

@@ -25,6 +25,7 @@ export async function createOrder(data: {
       for (const [key, val] of Object.entries(newOrder)) {
         if (val !== null && val !== undefined) {
           await createLog({
+            userId: data.createdBy,
             actionId: 15,                  // Created a purchase order
             targetId: newOrder.orderId,
             columnName: key,
@@ -100,6 +101,7 @@ export async function searchOrders(filters: {
 
 // UPDATE
 export async function updateOrder(data: {
+  sessionUserId: string;
   id: number;
   orderDate?: Date;
   expectedDeliveryDate?: Date;
@@ -134,6 +136,7 @@ export async function updateOrder(data: {
         updates[key] = val;
 
         await createLog({
+          userId: data.sessionUserId,
           actionId: 16,                  // Edited a purchase order
           targetId: id,
           columnName: key,
@@ -159,6 +162,7 @@ export async function updateOrder(data: {
 
 // CHANGE STATUS
 export async function changeOrderStatus(data: {
+  sessionUserId: string;
   id: number;
   orderStatus: string;
 }) {
@@ -180,6 +184,7 @@ export async function changeOrderStatus(data: {
     if (updatedOrder) {
       // General status change log
       await createLog({
+        userId: data.sessionUserId,
         actionId: 16, // Edited (specifically the status)
         targetId: data.id,
         columnName: "orderStatus",
@@ -191,6 +196,7 @@ export async function changeOrderStatus(data: {
       // Special Log for Received orders
       if (data.orderStatus === "Delivered" || data.orderStatus === "Received") {
         await createLog({
+          userId: data.sessionUserId,
           actionId: 19,                  // Received an order
           targetId: data.id,
           columnName: "orderStatus",
@@ -224,6 +230,7 @@ export async function approveOrder(data: { id: number; approvedBy: string }) {
 
     if (updatedOrder) {
       await createLog({
+        userId: data.approvedBy,
         actionId: 18,                    // Approved a purchase order
         targetId: data.id,
         columnName: "approvedBy",

@@ -59,7 +59,7 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
 
     try {
       // 2. Send the ID and the new form values across the bridge
-      const result = await updateUserAction(user.userId, values);
+      const result = await updateUserAction(user.id, values);
 
       // 3. If the Robot Butler succeeds, close the modal
       if (result?.success) {
@@ -78,8 +78,8 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl">
         <DialogHeader className="px-8 py-8 border-b border-gray-100 flex justify-center items-center">
           <DialogTitle className="text-2xl font-medium text-gray-900">
-            {/* 3. Changed from user?.id to user?.userId */}
-            Edit User: {user?.userId} 
+            {/* 3. Changed from user?.userId to user?.username*/}
+            Edit User: {user?.username} 
           </DialogTitle>
         </DialogHeader>
 

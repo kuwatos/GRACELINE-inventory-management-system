@@ -35,7 +35,7 @@ export async function readPurchaseOrderHistory() {
       eq(ordersTable.projectId, projectsTable.projectId),
     )
     // Join Creator (User)
-    .innerJoin(creator, eq(ordersTable.createdBy, creator.userId))
+    .innerJoin(creator, eq(ordersTable.createdBy, creator.id))
     // Join Approver (User) - Left Join in case it's not approved yet
-    .leftJoin(approver, eq(ordersTable.approvedBy, approver.userId));
+    .leftJoin(approver, eq(ordersTable.approvedBy, approver.id));
 }
