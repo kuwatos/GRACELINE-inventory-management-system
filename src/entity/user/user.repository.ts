@@ -291,15 +291,15 @@ export async function signOut() {
 
 }
 
-export async function validateSessionUser(department?: string) {
+export async function validateSessionUser(requiredDepartment?: string) {
     const session = await auth.api.getSession({headers: await headers()}); // Better Auth session fetch
 
     if (!session || !session.user.active) {
         throw new Error("Unauthorized: Account inactive or session expired");
     }
 
-    if (department && session.user.department != department) { // continue later
-      
+    if (requiredDepartment && session.user.department !== requiredDepartment) {
+        throw new Error("Forbidden: Insufficient permissions");
     }
 
     console.log("Session valid for user:", session.user.username);
