@@ -97,7 +97,7 @@ export const logsTable = pgTable("log_tb", {
   logId: serial("log_id").primaryKey(),
   userId: text("user_id").references(() => usersTable.id),
   actionId: integer("action_id").references(() => actionsTable.actionId),
-  targetId: integer("target_id").notNull(),
+  targetId: text("target_id").notNull(),
   logDate: timestamp("log_date", { withTimezone: true })
     .notNull()
     .default(sql`timezone('Asia/Manila', now())`),

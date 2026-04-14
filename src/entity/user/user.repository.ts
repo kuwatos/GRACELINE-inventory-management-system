@@ -28,6 +28,7 @@ export async function createUser(data: {
 
   // 2. Create the user via the API
   try {
+    // console.log(session.user.department);
     const newUser = await auth.api.createUser({
         body: {
             name,
@@ -43,7 +44,6 @@ export async function createUser(data: {
               active: true, // Default status
             }
         },
-        headers: await headers()
     });
 
     if (newUser.user) {
@@ -51,7 +51,8 @@ export async function createUser(data: {
         // We only log if the value actually exists (not null/undefined)
         if (val !== null && val !== undefined) {
           await createLog({
-            userId: session?.user.id || "unknown", // Who performed the action
+            userId: session?.user.id, // Who performed the action
+            // userId: "user_001",
             actionId: 3,                    // Added a New Inventory Item
             targetId: newUser.user.id,
             columnName: key,                // Dynamic: productName, productCategory1, etc.

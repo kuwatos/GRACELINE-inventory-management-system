@@ -9,7 +9,7 @@ export async function createLog(
   data: {
     userId: string;
     actionId: number;
-    targetId: number | string;
+    targetId:  string;
     columnName: string;
     prevValue?: string | null;
     newValue?: string | null;
