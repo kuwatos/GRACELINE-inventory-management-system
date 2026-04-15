@@ -177,7 +177,7 @@ export const ordersTable = pgTable("order_tb", {
     .generatedAlwaysAsIdentity({ startWith: 3000001 })
     .primaryKey(),
   orderStatus: text("order_status").notNull(),
-  orderDate: timestamp("order_date").notNull().defaultNow(),
+  orderDate: timestamp("order_date"), //edited this because I made it to be the date that the order was made awaiting delivery, not when it was created
   supplierId: integer("supplier_id").references(() => suppliersTable.supplierId),
   expectedDeliveryDate: timestamp("expected_delivery_date"),
   actualDeliveryDate: timestamp("actual_delivery_date"),
@@ -194,7 +194,8 @@ export const orderProductsTable = pgTable("order_product_tb", {
     .primaryKey(),
   orderId: integer("order_id").references(() => ordersTable.orderId),
   productId: integer("product_id").references(() => itemsTable.productId),
-  orderProductQuantity: integer("order_product_quantity").notNull(),
+  expectedOrderProductQuantity: integer("expected_order_product_quantity").notNull(),
+  deliveredOrderProductQuantity: integer("delivered_order_product_quantity"),
 });
 
 // --- Notifications ---

@@ -4,17 +4,22 @@ import { ordersTable } from "../../db/schema";
 import { eq, count, and, or, ilike, isNotNull,sql } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { createUserNotificationService } from "../user_notifications/user_notifications.service";
+import { validateSessionUser } from "../user/user.repository";
+import { PgTransaction } from "drizzle-orm/pg-core";
+
+// Type definition for the transaction context
+type Transaction = PgTransaction<any, any, any>;
 
 // CREATE
 export async function createOrder(data: {
   orderStatus: string;
-  orderDate: Date;
+  orderDate: null;
   supplierId: number;
   expectedDeliveryDate: Date;
-  actualDeliveryDate?: Date;
+  actualDeliveryDate: null;
   projectId: number;
   createdBy: string;
-  approvedBy?: string;
+  approvedBy: null;
 }) {
   return await db.transaction(async (tx) => {
     // 1. Insert the new order
@@ -103,16 +108,14 @@ export async function searchOrders(filters: {
 export async function updateOrder(data: {
   sessionUserId: string;
   id: number;
-  orderDate?: Date;
   expectedDeliveryDate?: Date;
   actualDeliveryDate?: Date;
   projectId?: number;
-  createdBy?: number;
 }) {
   const { id, ...incomingFields } = data;
 
   return await db.transaction(async (tx) => {
-    // 1. Get existing state
+    // 1. Check if order exists
     const [existing] = await tx
       .select()
       .from(ordersTable)
@@ -134,22 +137,12 @@ export async function updateOrder(data: {
 
       if (val !== undefined && isDifferent) {
         updates[key] = val;
-
-        await createLog({
-          userId: data.sessionUserId,
-          actionId: 16,                  // Edited a purchase order
-          targetId: id,
-          columnName: key,
-          prevValue: oldValue instanceof Date ? oldValue.toISOString() : (oldValue?.toString() ?? null),
-          newValue: val instanceof Date ? val.toISOString() : val.toString(),
-          remarks: null,
-        }, tx);
       }
     }
 
     if (Object.keys(updates).length === 0) return { message: "No changes detected" };
 
-    // 3. Finalize update
+    // 2. Finalize update
     const [updatedOrder] = await tx
       .update(ordersTable)
       .set(updates)
@@ -165,8 +158,11 @@ export async function changeOrderStatus(data: {
   sessionUserId: string;
   id: number;
   orderStatus: string;
-}) {
-  return await db.transaction(async (tx) => {
+}, prevTx : Transaction) {
+  
+  const client = prevTx ?? db;
+
+  return await client.transaction(async (tx) => {
     const [existing] = await tx
       .select()
       .from(ordersTable)
@@ -182,19 +178,9 @@ export async function changeOrderStatus(data: {
       .returning();
 
     if (updatedOrder) {
-      // General status change log
-      await createLog({
-        userId: data.sessionUserId,
-        actionId: 16, // Edited (specifically the status)
-        targetId: data.id,
-        columnName: "orderStatus",
-        prevValue: existing.orderStatus,
-        newValue: data.orderStatus,
-        remarks: null
-      }, tx);
 
       // Special Log for Received orders
-      if (data.orderStatus === "Delivered" || data.orderStatus === "Received") {
+      if (data.orderStatus === "Completed" || data.orderStatus === "Delivered") {
         await createLog({
           userId: data.sessionUserId,
           actionId: 19,                  // Received an order
@@ -204,6 +190,28 @@ export async function changeOrderStatus(data: {
           newValue: data.orderStatus
         }, tx);
         await createUserNotificationService({ notifId: 6, targetId: data.id }, tx);
+      }
+
+      else if(data.orderStatus === "Awaiting Delivery") {
+        const [orderPlaced] = await tx
+          .update(ordersTable)
+          .set({ 
+            orderDate:  sql`now()`, // date when order was placed
+          })
+          .where(eq(ordersTable.orderId, data.id))
+          .returning();
+        
+        if(!orderPlaced) {
+          await createLog({
+            userId: data.sessionUserId,
+            actionId: 16,                  // Placed an order
+            targetId: data.id,
+            columnName: "orderStatus",
+            prevValue: existing.orderStatus,
+            newValue: data.orderStatus
+          }, tx);
+          await createUserNotificationService({ notifId: 8, targetId: data.id }, tx);
+        }
       }
     }
 
@@ -224,7 +232,9 @@ export async function approveOrder(data: { id: number; approvedBy: string }) {
 
     const [updatedOrder] = await tx
       .update(ordersTable)
-      .set({ approvedBy: data.approvedBy })
+      .set({ 
+        approvedBy: data.approvedBy,
+      })
       .where(eq(ordersTable.orderId, data.id))
       .returning();
 
@@ -265,4 +275,36 @@ export async function notifyArrivingOrders() {
     
     return { count: orders.length };
   });
+}
+
+export async function deleteOrder(orderId: number) {
+  return await db.transaction(async (tx) => {
+      const user = await validateSessionUser()
+      const [item] = await tx 
+        .select()
+        .from(ordersTable)
+        .where(eq(ordersTable.orderId, orderId))
+        .limit(1);
+        
+      if (!item) throw new Error("Item not found");
+  
+      // Perform Delete
+      await db
+          .delete(ordersTable)
+          .where(eq(ordersTable.orderId, orderId))
+          .returning();
+      
+      // Log Deletion (Action ID 17)
+      await createLog({
+        userId: user.id,
+        actionId: 17,
+        targetId: orderId,
+        columnName: "order_id",
+        prevValue: item.orderId.toString(),
+        newValue: null,
+      }, tx);
+  
+      return { success: true };
+    });
+  
 }

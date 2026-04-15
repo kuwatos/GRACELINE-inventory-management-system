@@ -120,19 +120,41 @@ export const editUserSchema = baseUserSchema.extend({
 
 // The rules for a single product line item
 const orderProductSchema = z.object({
-  productId: z.string().min(1, "Please select a product"),
-  qty: z.coerce.number<number>().int().min(1, "Quantity must be at least 1"),
+  productId: z.coerce
+    .number().int(),
+  unitPrice: z.coerce
+    .number()
+    .multipleOf(0.01) // Ensures max 2 decimal places
+    .positive("Price must be positive or only 2 decimal places"), // to be checked since there might be a need to use library for representation of decimals needed for computation
+  quantity: z.coerce.number<number>().int().min(1, "Quantity must be at least 1"), // check naming
 });
 
 // The base rules for a Purchase Order
 export const baseOrderSchema = z.object({
-  supplier: z.string().min(1, "Supplier is required"),
-  expected: z.string().min(1, "Delivery date is required"),
+  supplierId: z.coerce
+    .number()
+    .int()
+    .min(1, "Please select a supplier"),
+  projectId: z.coerce
+    .number()
+    .int()
+    .min(1, "Please select a project"),
+  deliveryDate: z.coerce.date().min(new Date(), "Choose a delivery date, and it cannot be in the past"),
   products: z.array(orderProductSchema).min(1, "You must add at least one product"),
 });
 
 export const newOrderSchema = baseOrderSchema;
-export const editOrderSchema = baseOrderSchema;
+export const editOrderSchema = baseOrderSchema.extend({
+  deliveryDate: z.date()
+  .min(new Date(), "Choose a delivery date, and it cannot be in the past")
+  .optional(),
+  
+  projectId: z.coerce
+      .number()
+      .int()
+      .min(0, "Quantity cannot be negative")
+      .optional(),
+});
 
 export const baseReportSchema = z.object({
   reportType: z.string().min(1, "Please select a report type"),

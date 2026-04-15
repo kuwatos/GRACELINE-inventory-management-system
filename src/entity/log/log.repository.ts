@@ -18,7 +18,7 @@ export async function createLog(
   tx?: any // Optional Transaction Client
 ) {
   // If 'tx' is provided, use it. Otherwise, use the standard 'db'.
-  const client = tx || db; 
+  const client = tx ?? db; 
   return  client.insert(logsTable).values(data);
 }
 

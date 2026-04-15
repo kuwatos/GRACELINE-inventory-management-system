@@ -43,7 +43,6 @@ export async function createUser(data: {
               active: true, // Default status
             }
         },
-        headers: await headers()
     });
 
     if (newUser.user) {
@@ -51,12 +50,12 @@ export async function createUser(data: {
         // We only log if the value actually exists (not null/undefined)
         if (val !== null && val !== undefined) {
           await createLog({
-            userId: session?.user.id || "unknown", // Who performed the action
+            userId: session?.user.id, // Who performed the action
             actionId: 3,                    // Added a New Inventory Item
             targetId: newUser.user.id,
             columnName: key,                // Dynamic: productName, productCategory1, etc.
             prevValue: null,                // It's a creation, so previous is always null
-            newValue: val.toString(),
+            newValue: val,
             remarks: null
           });
         }
@@ -254,9 +253,9 @@ export async function signIn(data: { username: string; password: string }) {
     });
     if (signInResult.user) {
       await createLog({
-        userId: signInResult.user.id || "unknown",
+        userId: signInResult.user.id,
         actionId: 1, // User Sign In
-        targetId: signInResult.user.id || "unknown",
+        targetId: signInResult.user.id,
         columnName: "none",
         prevValue: null,
         newValue: null,

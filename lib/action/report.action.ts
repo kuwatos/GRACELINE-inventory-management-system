@@ -1,23 +1,23 @@
 "use server";
 
-import { auth } from "@/auth"; // Your auth import
 import { createReport, deleteReport } from "@/src/entity/reports/reports.repository";
 import { baseReportSchema } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 import * as z from "zod";
+import { validateSessionUser } from "@/src/entity/user/user.repository";
 
 export async function generateReportAction(values: z.input<typeof baseReportSchema>) {
   try {
     // 1. Authenticate the user
-    const session = await auth();
-    if (!session?.user?.id) throw new Error("Unauthorized");
+    const user = await validateSessionUser()
+    if (!user) throw new Error("Unauthorized");
 
     // 2. Validate and Coerce strings to Dates
     const validated = baseReportSchema.parse(values);
 
     // 3. Call the Repository
     await createReport({
-      userId: session.user.id,
+      userId: user.id,
       reportType: validated.reportType,
       dateStart: validated.startDate,
       dateEnd: validated.endDate,
