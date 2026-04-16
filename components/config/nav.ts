@@ -66,7 +66,7 @@ export const sideBarNav: SideBarConfig = {
       href: "/admin/suppliers",
       icon: Truck
     },
-     {
+    {
       label: "Supplier Items",
       href: "/admin/supplier-items",
       icon: Hammer
@@ -116,6 +116,16 @@ export const sideBarNav: SideBarConfig = {
       label: "Supplier Items",
       href: "/purchasing/supplier-items",
       icon: Hammer
+    },
+    {
+      label: "Completed Orders",
+      href: "/purchasing/completed",
+      icon: PackageCheck
+    },
+    {
+      label: "Projects", 
+      href: "/purchasing/projects",
+      icon: FolderDot
     },
     {
       label: "Notifications",
