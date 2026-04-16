@@ -20,7 +20,7 @@ import { executeAction } from "@/lib/error.handler";
 interface EditOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  order: OrderRecord | null; // FIXED: Changed from orderData to match the manager
+  order: OrderRecord | null; 
 }
 
 export const EditOrderModal = ({ isOpen, onClose, order }: EditOrderModalProps) => {
@@ -40,17 +40,14 @@ export const EditOrderModal = ({ isOpen, onClose, order }: EditOrderModalProps) 
     name: "products",
   });
 
-  // Load data into the form when the modal opens
-  // Load data into the form when the modal opens
   useEffect(() => {
     if (isOpen && order) {
       form.reset({
         supplier: order.supplierName || "", 
         expected: order.expectedDelivery || "", 
-        
-        // Clean, type-safe data mapping!
+        // Maps expectedQty for the form
         products: order.products && order.products.length > 0 
-          ? order.products.map(p => ({ productId: p.productId, qty: p.qty }))
+          ? order.products.map(p => ({ productId: p.productId, qty: p.expectedQty }))
           : [{ productId: "", qty: 1 }],
       });
     }
@@ -165,7 +162,7 @@ export const EditOrderModal = ({ isOpen, onClose, order }: EditOrderModalProps) 
                         <div className="w-24">
                           <FormField control={form.control} name={`products.${index}.qty`} render={({ field: qtyField }) => (
                             <FormItem className="space-y-1.5">
-                              <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Qty</FormLabel>
+                              <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Expected Qty</FormLabel>
                               <FormControl>
                                 <Input {...qtyField} type="number" className="h-11 bg-white rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
                               </FormControl>
