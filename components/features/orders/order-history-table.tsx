@@ -1,8 +1,15 @@
 "use client";
 
-import { Eye, Download, Trash2, Edit, CheckCircle } from "lucide-react";
+import { Eye, Download, Trash2, Edit, CheckCircle, Truck, PackageCheck } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+
+export interface OrderProduct {
+  productId: string;
+  expectedQty: number;
+  unitPrice: number;
+  receivedQty?: number;
+}
 
 export interface OrderRecord {
   id: string;
@@ -10,92 +17,128 @@ export interface OrderRecord {
   supplierName: string;
   dateCreated: string;
   expectedDelivery: string;
-  status: "draft" | "official"; // <--- THE NEW STATUS TAG
-  totalAmount: string;
-  products?: { productId: string; qty: number }[]; // <--- ADD THIS NEW LINE!
+  dateReceived?: string;
+  status: "pending" | "official" | "awaiting" | "incomplete" | "complete";
+  products: OrderProduct[];
 }
 
 interface OrderHistoryTableProps {
   data: OrderRecord[];
-  viewMode: "draft" | "official"; // <--- TELLS THE TABLE WHICH BUTTONS TO SHOW
-  onView?: (order: OrderRecord) => void;
-  onDownload?: (order: OrderRecord) => void;
-  onEdit?: (order: OrderRecord) => void;
-  onDelete?: (id: string) => void;
-  onApprove?: (id: string) => void;
+  viewMode: OrderRecord["status"];
+  currentRole: "admin" | "warehouse";
+  onView: (order: OrderRecord) => void;
+  onReceive: (order: OrderRecord) => void;
+  onApprovePending: (id: string) => void;
+  onMoveToAwaiting: (id: string) => void;
+  onDelete: (id: string) => void;
+  onEdit?: (order: OrderRecord) => void; 
+  onDownload?: (order: OrderRecord) => void; 
 }
 
 export const OrderHistoryTable = ({ 
   data, 
   viewMode, 
+  currentRole, 
   onView, 
-  onDownload, 
-  onEdit, 
+  onReceive, 
+  onApprovePending, 
+  onMoveToAwaiting, 
   onDelete, 
-  onApprove 
+  onEdit,
+  onDownload 
 }: OrderHistoryTableProps) => {
   
-  if (data.length === 0) {
-    return (
-      <div className="p-8 text-center text-gray-500 border rounded-xl border-dashed bg-gray-50/30 m-6">
-        {viewMode === "draft" ? "No pending drafts." : "No official orders found."}
-      </div>
-    );
-  }
+  if (data.length === 0) return <div className="p-8 text-center text-gray-500 m-6">No orders found in this category.</div>;
 
   return (
     <div className="overflow-x-auto">
       <Table className="text-sm border-collapse w-full">
         <TableHeader>
-          <TableRow className="hover:bg-transparent bg-gray-50/50">
-            <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold">PO ID</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold">Supplier Name</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold">Date Created</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold">Total Amount</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold text-right">Actions</TableHead>
+          <TableRow className="bg-gray-50/50">
+            <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold text-center">PO ID</TableHead>
+            <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold text-center">Supplier</TableHead>
+            <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold text-center">Date</TableHead>
+            <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold text-center">Total Est. Cost</TableHead>
+            <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody className="divide-y divide-gray-50">
-          {data.map((order) => (
-            <TableRow key={order.id} className="hover:bg-gray-50/50 transition-colors">
-              <TableCell className="px-6 py-4 font-medium text-gray-900">{order.poId}</TableCell>
-              <TableCell className="px-6 py-4 text-gray-600">{order.supplierName}</TableCell>
-              <TableCell className="px-6 py-4 text-gray-600">{order.dateCreated}</TableCell>
-              <TableCell className="px-6 py-4 text-gray-600 font-medium">{order.totalAmount}</TableCell>
-              <TableCell className="px-6 py-4 text-right">
-                <div className="flex justify-end gap-2">
-                  
-                  {/* --- DRAFT BUTTONS --- */}
-                  {viewMode === "draft" && (
-                    <>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:bg-green-50 hover:text-green-700" onClick={() => onApprove?.(order.id)} title="Approve & Make Official">
-                        <CheckCircle className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50" onClick={() => onEdit?.(order)} title="Edit Draft">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50" onClick={() => onDelete?.(order.id)} title="Delete Draft">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </>
-                  )}
+          {data.map((order) => {
+            const totalCost = order.products.reduce((sum, p) => sum + (p.expectedQty * p.unitPrice), 0);
 
-                  {/* --- OFFICIAL BUTTONS --- */}
-                  {viewMode === "official" && (
-                    <>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-900 hover:bg-gray-100" onClick={() => onView?.(order)} title="View Details">
+            return (
+              <TableRow key={order.id} className="hover:bg-gray-50/50">
+                <TableCell className="px-6 py-4 font-bold text-gray-900 text-center">{order.poId}</TableCell>
+                <TableCell className="px-6 py-4 text-gray-600 text-center">{order.supplierName}</TableCell>
+                <TableCell className="px-6 py-4 text-gray-500 text-xs text-center">
+                  Created: {order.dateCreated} <br/> Exp: {order.expectedDelivery}
+                </TableCell>
+                <TableCell className="px-6 py-4 font-medium text-green-700 text-center">
+                  ${totalCost.toLocaleString(undefined, {minimumFractionDigits: 2})}
+                </TableCell>
+                <TableCell className="px-6 py-4 text-center">
+                  <div className="flex justify-center items-center gap-2">
+                    
+                    {/* --- PENDING ACTIONS --- */}
+                    {viewMode === "pending" && (
+                      <>
+                        <Button variant="ghost" size="icon" className="text-green-600 hover:bg-green-50" onClick={() => onApprovePending(order.id)} title="Approve to Official">
+                          <CheckCircle className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-blue-500 hover:bg-blue-50" onClick={() => onEdit?.(order)} title="Edit Draft">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-red-500 hover:bg-red-50" onClick={() => onDelete(order.id)} title="Delete">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
+
+                    {/* --- OFFICIAL ACTIONS --- */}
+                    {viewMode === "official" && (
+                      <>
+                        <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onView(order)} title="View">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onDownload?.(order)} title="Download PDF">
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-blue-600 hover:bg-blue-50" onClick={() => onMoveToAwaiting(order.id)} title="Send to Warehouse (Awaiting)">
+                          <Truck className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
+
+                    {/* --- AWAITING ACTIONS --- */}
+                    {viewMode === "awaiting" && (
+                      <>
+                        <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onView(order)} title="View">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onDownload?.(order)} title="Download PDF">
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        {/* WAREHOUSE SPECIFIC BUTTON */}
+                        {currentRole === "warehouse" && (
+                          <Button variant="outline" size="sm" className="bg-green-900 text-white hover:bg-green-800 gap-2 ml-1 transition-colors" onClick={() => onReceive(order)}>
+                            <PackageCheck className="w-4 h-4" /> Receive Items
+                          </Button>
+                        )}
+                      </>
+                    )}
+
+                    {/* --- COMPLETE / INCOMPLETE ACTIONS --- */}
+                    {(viewMode === "complete" || viewMode === "incomplete") && (
+                      <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onView(order)} title="View Audit">
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-900 hover:bg-gray-100" onClick={() => onDownload?.(order)} title="Download PDF">
-                        <Download className="w-4 h-4" />
-                      </Button>
-                    </>
-                  )}
+                    )}
 
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

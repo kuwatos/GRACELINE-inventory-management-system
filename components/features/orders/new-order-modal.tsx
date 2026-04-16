@@ -20,7 +20,7 @@ export const NewOrderModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
     defaultValues: {
       supplier: "",
       expected: "",
-      products: [{ productId: "", qty: 1 }], // Start with one empty product row
+      products: [{ productId: "", qty: 1 }], 
     },
   });
 
@@ -114,7 +114,7 @@ export const NewOrderModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                         <div className="w-24">
                           <FormField control={form.control} name={`products.${index}.qty`} render={({ field: qtyField }) => (
                             <FormItem className="space-y-1.5">
-                              <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Qty</FormLabel>
+                              <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Expected Qty</FormLabel>
                               <FormControl>
                                 <Input {...qtyField} type="number" className="h-11 bg-white rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
                               </FormControl>
