@@ -40,6 +40,7 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { updateItemAction } from "@/lib/action/inventory.action";
 import { executeAction } from "@/lib/error.handler";
+import { authClient } from "@/lib/auth-client";
 
 
 interface EditItemModalProps {
@@ -52,7 +53,9 @@ interface EditItemModalProps {
   isViewOnly?: boolean;
 }
 
-export const EditItemModal = ({ isOpen, onClose, item, categories, measurements, projects, isViewOnly = false }: EditItemModalProps) => {
+export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements, projects, isViewOnly = false }: EditItemModalProps) => {
+  const {data: session,isPending,error} =  authClient.useSession();
+  const user= session?.user; // Get the current user session (if needed for audit logs or permissions)
   const [openCombobox, setOpenCombobox] = useState(false);
   const [openCombobox2, setOpenCombobox2] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
