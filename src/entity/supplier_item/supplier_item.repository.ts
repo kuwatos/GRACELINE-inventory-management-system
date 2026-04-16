@@ -4,6 +4,7 @@ import { supplierItemsTable } from "../../db/schema";
 import { eq, and} from "drizzle-orm";
 import { createUserNotificationService } from "../user_notifications/user_notifications.service";
 import { createLog } from "../log/log.repository";
+import { validateSessionUser } from "../user/user.repository";
 
 //CREATE
 export async function createSupplierItem(data: {
@@ -12,6 +13,7 @@ export async function createSupplierItem(data: {
   unitPrice: string;
 }) {
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser();
     // 1. Insert the new link record
     const [newLink] = await tx.insert(supplierItemsTable).values(data).returning();
 
@@ -21,8 +23,9 @@ export async function createSupplierItem(data: {
         // Skip null/undefined values to keep logs clean
         if (val !== null && val !== undefined) {
           await createLog({
+            userId: user.id,    // Use the logged-in user's ID, or null for system actions
             actionId: 21,                   // [BLANK] - Fill in for "Link Supplier Item"
-            targetId: newLink.supplierItemId,
+            targetId: newLink.supplierItemId.toString(), // The ID of the new supplier-item link
             columnName: key,
             prevValue: null,
             newValue: val.toString(),
@@ -79,6 +82,7 @@ export async function updateSupplierItem(data: {
   supplierId?: number;
   unitPrice?: string;
 }) {
+  const user = await validateSessionUser();
   const { id, ...incomingFields } = data;
 
   return await db.transaction(async (tx) => {
@@ -101,6 +105,7 @@ export async function updateSupplierItem(data: {
         updates[key] = val;
 
         await createLog({
+          userId: user.id,    // Use the logged-in user's ID, or null for system actions
           actionId: 20, 
           targetId: id, // The ID of the specific supplier-item link
           columnName: key,
@@ -144,6 +149,7 @@ export async function restoreSupplierItem(data: {
   unitPrice: string;
 }) {
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser();
     const [restoredSupplierItem] = await tx
       .update(supplierItemsTable)
       .set({ 
@@ -159,6 +165,7 @@ export async function restoreSupplierItem(data: {
         // Skip null/undefined values to keep logs clean
         if (val !== null && val !== undefined) {
           await createLog({
+            userId: user.id,    // Use the logged-in user's ID, or null for system actions
             actionId: 21,                   // [BLANK] - Fill in for "Link Supplier Item"
             targetId: restoredSupplierItem.supplierItemId,
             columnName: key,

@@ -88,10 +88,10 @@ export const UserManagementManager = ({ data = [] }: UserManagementManagerProps)
                 className="appearance-none h-11 px-5 bg-[#E5E7EB] rounded-xl text-sm font-medium pr-10 focus:outline-none cursor-pointer"
               >
                 <option value="">All Roles</option>
-                <option value="Admin">Admin</option>
-                <option value="Finance">Finance</option>
-                <option value="Purchasing">Purchasing</option> {/* Fixed Typo */}
-                <option value="Warehouse">Warehouse</option>
+                <option value="admin">Admin</option>
+                <option value="finance">Finance</option>
+                <option value="purchasing">Purchasing</option> {/* Fixed Typo */}
+                <option value="warehouse">Warehouse</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
             </div>
