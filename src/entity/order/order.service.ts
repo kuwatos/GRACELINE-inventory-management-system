@@ -120,7 +120,7 @@ export async function recieveOrder(data: {
       await changeOrderStatus({
         sessionUserId: data.userId,
         id: data.orderId,
-        orderStatus: isOrderComplete ? "Complete" : "Delivered"
+        orderStatus: isOrderComplete ? "Complete" : "Incomplete"
       }, tx)
       
     return {success:true, message: "Items recieved successfully."};

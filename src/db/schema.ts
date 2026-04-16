@@ -162,7 +162,7 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
     .primaryKey(),
   supplierId: integer("supplier_id").references(() => suppliersTable.supplierId),
   productId: integer("product_id").references(() => itemsTable.productId),
-  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }),
+  unitPrice: text("unit_price"),
   lastUpdated: timestamp("last_updated")
     .defaultNow()
     .$onUpdate(() => new Date()),

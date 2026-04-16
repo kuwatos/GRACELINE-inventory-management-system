@@ -45,7 +45,7 @@ export const newItemSchema = baseItemSchema.extend({
     .int()
     .min(1, "Please select a supplier"),
 
-  unitPrice: z.coerce
+  unitPrice: z
     .number()
     .positive("Price must be greater than 0")
     .transform((val) => val.toFixed(2)),
@@ -79,8 +79,7 @@ const baseSupplierSchema = z.object({
     .optional(),
   supplierMobile: z
     .string()
-    .trim()
-    .optional(),
+    .trim(),
 });
 
 // Schema for New Supplier

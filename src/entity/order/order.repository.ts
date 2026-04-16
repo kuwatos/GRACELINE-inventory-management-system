@@ -48,6 +48,7 @@ export async function createOrder(data: {
 
 // READ
 export async function readOrder() {
+
   return db.select().from(ordersTable);
 }
 
@@ -159,7 +160,7 @@ export async function changeOrderStatus(data: {
   id: number;
   orderStatus: string;
 }, prevTx : Transaction) {
-  
+
   const client = prevTx ?? db;
 
   return await client.transaction(async (tx) => {
@@ -180,7 +181,7 @@ export async function changeOrderStatus(data: {
     if (updatedOrder) {
 
       // Special Log for Received orders
-      if (data.orderStatus === "Completed" || data.orderStatus === "Delivered") {
+      if (data.orderStatus === "Complete" || data.orderStatus === "Incomplete") {
         await createLog({
           userId: data.sessionUserId,
           actionId: 19,                  // Received an order

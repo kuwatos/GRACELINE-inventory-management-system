@@ -1,3 +1,5 @@
+"use server";
+
 import { revalidatePath } from "next/cache";
 import { createOrderService, updateOrderService } from "@/src/entity/order/order.service";
 import { createOrder, deleteOrder, updateOrder } from "@/src/entity/order/order.repository";

@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { User, LogOut } from "lucide-react"
+import { User, LogOut, Loader2 } from "lucide-react"
 
 // 👇 1. IMPORT YOUR CONFIG
 import { sideBarNav } from "./config/nav"
@@ -51,7 +51,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   setIsLoggingOut(true);
   await authClient.signOut({
     fetchOptions: {
-      onSuccess: () => router.push("/login"),
+      onSuccess: () => router.replace("/login"),
       onResponse: () => setIsLoggingOut(false) 
     },
   })
@@ -126,34 +126,40 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenuItem>
           <SidebarMenuButton
             size="lg"
-            onClick={handleLogout} // Whole bar is clickable
+            onClick={handleLogout}
+            disabled={isLoggingOut} // Prevent clicking twice
             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           >
             {/* 1. The Avatar Box */}
             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white text-black">
-              <User className="size-4" />
+              {/* Small loader inside the avatar box or replace the icon below */}
+              {isLoggingOut ? (
+                <Loader2 className="size-4 animate-spin" /> 
+              ) : (
+                <User className="size-4" />
+              )}
             </div>
 
             {/* 2. The Text Info */}
             <div className="grid flex-1 text-left text-sm leading-tight">
               {isLoading ? (
-                // You can replace these with Shadcn Skeleton components if you have them
                 <>
                   <div className="h-4 w-24 animate-pulse rounded bg-white/20" /> 
                   <div className="h-3 w-16 animate-pulse rounded bg-white/10" />
                 </>
               ) : (
                 <>
-                  <span className="truncate font-semibold">{user.name}</span>
+                  <span className="truncate font-semibold">
+                    {isLoggingOut ? "Signing out..." : user.name}
+                  </span>
                   <span className="truncate text-xs">{user.email}</span>
                 </>
               )}
             </div>
 
-            {/* 3. The Logout Icon (Pushed to the right) */}
-            {/* ml-auto = margin-left: auto (Pushes this element to the far right) */}
-            <LogOut className="ml-auto size-4" />
-            
+            {/* 3. The Logout Icon */}
+            {/* If we are logging out, we can hide the arrow or show a different state */}
+            {!isLoggingOut && <LogOut className="ml-auto size-4" />}
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>

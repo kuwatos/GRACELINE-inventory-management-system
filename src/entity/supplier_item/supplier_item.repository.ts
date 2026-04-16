@@ -4,6 +4,7 @@ import { supplierItemsTable } from "../../db/schema";
 import { eq, lte, ilike, or } from "drizzle-orm";
 import { createUserNotificationService } from "../user_notifications/user_notifications.service";
 import { createLog } from "../log/log.repository";
+import { validateSessionUser } from "../user/user.repository";
 
 //CREATE
 export async function createSupplierItem(data: {
@@ -40,6 +41,8 @@ export async function updateSupplierItem(data: {
   const { id, ...incomingFields } = data;
 
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser()
+
     // 1. Get the current link state
     const [existing] = await tx
       .select()
@@ -59,6 +62,7 @@ export async function updateSupplierItem(data: {
         updates[key] = val;
 
         await createLog({
+          userId: user.id,
           actionId: 12, 
           targetId: id, // The ID of the specific supplier-item link
           columnName: key,

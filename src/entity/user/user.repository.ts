@@ -19,7 +19,7 @@ export async function createUser(data: {
   const name = data.firstName + " " + data.lastName;
   const department = data.department.toLowerCase();
   const email = data.username + "@internal.local"; // placeholder only, not used for login
-  const role = data.department === "admin" ? "admin" : "user"; // Basic role assignment based on department
+  const role = data.department.toLowerCase() === "admin" ? "admin" : "user"; // Basic role assignment based on department
 
   // 1. Security Check: Only admins can do this
   if (session?.user.department.toLowerCase() !== "admin") {
@@ -269,26 +269,6 @@ export async function signIn(data: { username: string; password: string }) {
   }
 }
 
-export async function signOut() {
-  const session = await auth.api.getSession({ headers: await headers() });
-    try {
-      await auth.api.signOut();
-      await createLog({
-        userId: session?.user.id || "unknown",
-        actionId: 2, // User Sign Out
-        targetId: session?.user.id || "unknown",
-        columnName: "none",
-        prevValue: null,
-        newValue: null,
-        remarks: null
-      });
-      return { success: true };
-    }catch (error: any) {
-      console.error("User Sign Out Error:", error);
-      return { success: false, message: error.message || "Failed to sign out user." };
-  }
-
-}
 
 export async function validateSessionUser(requiredDepartment?: string) {
     const session = await auth.api.getSession({headers: await headers()}); // Better Auth session fetch

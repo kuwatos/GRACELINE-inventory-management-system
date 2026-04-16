@@ -27,3 +27,10 @@ export async function readItemsWithSupplier() {
     )
     .orderBy(suppliersTable.supplierName);
 }
+
+export async function getSupplierItems(supplierId: number) {
+  return await db
+  .select()
+  .from(supplierItemsTable)
+  .where(eq(supplierItemsTable.supplierId, supplierId))
+}
