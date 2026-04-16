@@ -88,10 +88,10 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Finance">Finance</SelectItem>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="Warehouse">Warehouse</SelectItem>
-                      <SelectItem value="Purchasing">Purchasing</SelectItem>
+                      <SelectItem value="finance">Finance</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="warehouse">Warehouse</SelectItem>
+                      <SelectItem value="purchasing">Purchasing</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage className="text-xs text-red-500 ml-1" />

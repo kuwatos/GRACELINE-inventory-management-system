@@ -7,6 +7,7 @@ import { createLog } from "../log/log.repository";
 import { auth, type User} from "@/lib/auth";
 import { headers } from "next/headers";
 import { id } from "zod/v4/locales";
+import { role } from "better-auth/plugins";
 
 export async function createUser(data: { 
   firstName: string; 
@@ -19,7 +20,7 @@ export async function createUser(data: {
   const name = data.firstName + " " + data.lastName;
   const department = data.department.toLowerCase();
   const email = data.username + "@internal.local"; // placeholder only, not used for login
-  const role = data.department === "admin" ? "admin" : "user"; // Basic role assignment based on department
+  const role = data.department.toLowerCase() === "admin" ? "admin" : "user"; // Basic role assignment based on department
 
   // 1. Security Check: Only admins can do this
   if (session?.user.department.toLowerCase() !== "admin") {
@@ -144,7 +145,8 @@ export async function updateUser(data: {
               username,
               firstName,
               lastName,
-              department
+              department,
+              role  : department.toLowerCase() === "admin" ? "admin" : "user", // Ensure role stays in sync with department
               }
             },
           headers: await headers(),

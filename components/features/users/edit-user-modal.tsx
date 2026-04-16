@@ -107,11 +107,10 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Warehouse">Warehouse</SelectItem>
-                      <SelectItem value="Sales">Sales</SelectItem>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="Purchasing">Purchasing</SelectItem>
-                      <SelectItem value="Finance">Finance</SelectItem>
+                      <SelectItem value="warehouse">Warehouse</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="purchasing">Purchasing</SelectItem>
+                      <SelectItem value="finance">Finance</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage className="text-xs text-red-500 ml-1" />
