@@ -25,7 +25,7 @@ export const usersTable = pgTable("user", {
 	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
   
   // required fields for username login plug-in
-  username: varchar("username", { length: 255 }).unique(),
+  username: varchar("username", { length: 255 }).unique().notNull(),
 	displayUsername: text("display_username"),
 
   // required fields for admin plug-in
@@ -39,7 +39,7 @@ export const usersTable = pgTable("user", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   department: text("department").notNull(),
-  active: boolean("active").default(true),
+  active: boolean("active").default(true).notNull(),
 });
 
 export const sessionsTable = pgTable("session", {

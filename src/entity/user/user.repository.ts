@@ -2,7 +2,7 @@
 "use server";
 import { db } from "../../index";
 import { usersTable } from "../../db/schema";
-import { and, or, ilike, eq } from "drizzle-orm";
+import { and, or, ilike, eq, ne } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { auth, type User} from "@/lib/auth";
 import { headers } from "next/headers";
@@ -71,8 +71,15 @@ export async function createUser(data: {
 }
 
 // READ
-export async function readUsers() {
-  return db.select().from(usersTable).where(eq(usersTable.active, true));
+export async function readUsers(sessionUserId: string) {
+  return db
+  .select()
+  .from(usersTable)
+  .where(
+    and(
+      eq(usersTable.active, true),
+      ne(usersTable.id, sessionUserId)
+  ));
 }
 
 // SEARCH
@@ -129,12 +136,6 @@ export async function updateUser(data: {
     if (session?.user.department!== "admin") {
           throw new Error("Unauthorized");
       }
-    console.log(id)
-    console.log(username)
-    console.log(password)
-    console.log(firstName)
-    console.log(lastName)
-    console.log(department)
     // 2. Update the user via the API
     try {
       await auth.api.adminUpdateUser({
@@ -284,6 +285,5 @@ export async function validateSessionUser(requiredDepartment?: string) {
         throw new Error("Forbidden: Insufficient permissions");
     }
 
-    console.log("Session valid for user:", session.user.username);
     return session.user;
 }
