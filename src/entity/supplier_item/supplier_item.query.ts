@@ -9,12 +9,16 @@ import { eq } from "drizzle-orm";
 export async function readItemsWithSupplier() {
   return await db
     .select({
+      supplierItemId: supplierItemsTable.supplierItemId,
+      supplierId: supplierItemsTable.supplierId,
       supplierName: suppliersTable.supplierName,
+      productId: supplierItemsTable.productId,
       productName: itemsTable.productName,
       category1: itemsTable.productCategory1,
       category2: itemsTable.productCategory2,
       unitPrice: supplierItemsTable.unitPrice,
       lastUpdated: supplierItemsTable.lastUpdated,
+      measurement: itemsTable.measurement
     })
     .from(supplierItemsTable)
     .innerJoin(
@@ -25,7 +29,8 @@ export async function readItemsWithSupplier() {
       suppliersTable,
       eq(supplierItemsTable.supplierId, suppliersTable.supplierId),
     )
-    .orderBy(suppliersTable.supplierName);
+    .orderBy(suppliersTable.supplierName)
+    .where(eq(supplierItemsTable.archived, false));
 }
 
 export async function getSupplierItems(supplierId: number) {

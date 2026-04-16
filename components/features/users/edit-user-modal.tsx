@@ -15,6 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { executeAction } from "@/lib/error.handler";
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -26,6 +27,8 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   const form = useForm<z.infer<typeof editUserSchema>>({
     resolver: zodResolver(editUserSchema),
@@ -55,23 +58,30 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
 
   async function onSubmit(values: z.infer<typeof editUserSchema>) {
     // 1. Safety check: make sure we actually have a user selected!
-    if (!user) return; 
+    setIsSubmitting(true);
 
-    try {
-      // 2. Send the ID and the new form values across the bridge
-      const result = await updateUserAction(user.id, values);
-
-      // 3. If the Robot Butler succeeds, close the modal
-      if (result?.success) {
-        handleClose();
-      } else {
-        console.error("Failed to update user:", result?.error);
-        alert("Failed to update user. Please try again.");
+    await executeAction(async () => {
+          if (!user) {
+            throw new Error("Missing user context. Please refresh and try again.");
+          } // Just a safety check
+          
+          // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
+          const validatedData = editUserSchema.parse(values);
+      
+          const res = await updateUserAction(user.id, validatedData);
+      
+          // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
+          if (!res.success) {
+            throw res; 
+          }
+          form.reset();
+          onClose();
+          return res;
+        }, "User updated successfully!");
+      
+        setIsSubmitting(false);
       }
-    } catch (error) {
-      console.error("Server error:", error);
-    }
-  }
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -97,11 +107,10 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Warehouse">Warehouse</SelectItem>
-                      <SelectItem value="Sales">Sales</SelectItem>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="Purchasing">Purchasing</SelectItem>
-                      <SelectItem value="Finance">Finance</SelectItem>
+                      <SelectItem value="warehouse">Warehouse</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="purchasing">Purchasing</SelectItem>
+                      <SelectItem value="finance">Finance</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage className="text-xs text-red-500 ml-1" />

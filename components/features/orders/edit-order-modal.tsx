@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect,useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { executeAction } from "@/lib/error.handler";
 
 interface EditOrderModalProps {
   isOpen: boolean;
@@ -23,6 +24,8 @@ interface EditOrderModalProps {
 }
 
 export const EditOrderModal = ({ isOpen, onClose, order }: EditOrderModalProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const form = useForm<z.infer<typeof editOrderSchema>>({
     resolver: zodResolver(editOrderSchema),
     defaultValues: {
@@ -58,9 +61,29 @@ export const EditOrderModal = ({ isOpen, onClose, order }: EditOrderModalProps) 
     onClose();
   };
 
-  function onSubmit(values: z.infer<typeof editOrderSchema>) {
-    console.log("Ready for Supabase Update:", values);
-    handleClose();
+  async function onSubmit(values: z.infer<typeof editOrderSchema>){
+    setIsSubmitting(true);
+    
+    await executeAction(async () => {
+      if (!item) {
+        throw new Error("Missing item context. Please refresh and try again.");
+      } // Just a safety check
+      
+      // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
+      const validatedData = editOrderSchema.parse(values);
+  
+      // const res = await updateItemAction(item.productId,validatedData);
+  
+      // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
+      if (!res.success) {
+        throw res; 
+      }
+      form.reset();
+      onClose();
+      return res;
+    }, "Item added successfully!");
+  
+    setIsSubmitting(false);
   }
 
   return (

@@ -1,5 +1,5 @@
 import { db } from "../../index";
-import { logsTable, usersTable, actionsTable } from "../../db/schema";
+import { logsTable, usersTable, actionsTable, projectsTable } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
 export async function readLogsWithUser() {
@@ -15,8 +15,10 @@ export async function readLogsWithUser() {
       next: logsTable.newValue,
       remarks: logsTable.remarks,
       column: logsTable.columnName,
+      project: projectsTable.projectName, 
     })
     .from(logsTable)
     .leftJoin(usersTable, eq(logsTable.userId, usersTable.id)) // 👈 Change to leftJoin
-    .leftJoin(actionsTable, eq(logsTable.actionId, actionsTable.actionId));
+    .leftJoin(actionsTable, eq(logsTable.actionId, actionsTable.actionId))
+    .leftJoin(projectsTable, eq(logsTable.projectId, projectsTable.projectId)) // 👈 Join with projectsTable for project info;
 }

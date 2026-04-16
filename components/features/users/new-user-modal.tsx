@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { executeAction } from "@/lib/error.handler";
 
 interface NewUserModalProps {
   isOpen: boolean;
@@ -22,6 +23,8 @@ interface NewUserModalProps {
 export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   const form = useForm<z.infer<typeof newUserSchema>>({
     resolver: zodResolver(newUserSchema),
@@ -43,22 +46,26 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
   };
 
   async function onSubmit(values: z.infer<typeof newUserSchema>) {
-    try {
-      const result = await createUserAction(values);
+    setIsSubmitting(true);
 
-      if (result.success) {
-        handleClose();
-      } else {
-        // If it fails, attach the error message directly to the username field!
-        form.setError("username", {
-          type: "manual",
-          message: result.error, // This prints the friendly message we wrote in the action
-        });
+    await executeAction(async () => {
+          
+          // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
+          const validatedData = newUserSchema.parse(values);
+      
+          const res = await createUserAction(validatedData);
+      
+          // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
+          if (!res.success) {
+            throw res; 
+          }
+          form.reset();
+          onClose();
+          return res;
+        }, "User added successfully!");
+      
+        setIsSubmitting(false);
       }
-    } catch (error) {
-      console.error("Server error:", error);
-    }
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -81,10 +88,10 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Finance">Finance</SelectItem>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="Warehouse">Warehouse</SelectItem>
-                      <SelectItem value="Purchasing">Purchasing</SelectItem>
+                      <SelectItem value="finance">Finance</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="warehouse">Warehouse</SelectItem>
+                      <SelectItem value="purchasing">Purchasing</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage className="text-xs text-red-500 ml-1" />

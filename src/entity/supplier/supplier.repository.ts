@@ -144,3 +144,43 @@ export async function deleteSupplier(id: number) {
     return { success: true };
   });
 }
+
+export async function findExistingSupplier(name:string) {
+  return db.select().from(suppliersTable).where(ilike(suppliersTable.supplierName, name)).limit(1);
+}
+
+export async function restoreSupplier(
+  id:number,
+  data: {
+    supplierName: string;
+    supplierLandline?: string;
+    supplierEmail?: string;
+    supplierMobile: string;
+  }) {
+  return await db.transaction(async (tx) => {
+    // Restore the supplier
+    const [restoredSupplier] = await tx.update(suppliersTable)
+      .set({ ...data, active: true })
+      .where(eq(suppliersTable.supplierId, id))
+      .returning();
+
+    if (restoredSupplier) {
+      // Loop through every field in the newly created supplier
+      for (const [key, val] of Object.entries(restoredSupplier)) {
+        // Log every column that has a value
+        if (val !== null && val !== undefined) {
+          await createLog({
+            actionId: 12,                  // Added a New Supplier
+            targetId: restoredSupplier.supplierId,
+            columnName: key,               // Dynamic: supplierName, supplierEmail, etc.
+            prevValue: null,
+            newValue: val.toString(),
+            remarks: null
+          }, tx);
+        }
+      }
+      await createUserNotificationService({ notifId: 3, targetId: restoredSupplier.supplierId }, tx);
+    }
+
+    return restoredSupplier;
+  })}

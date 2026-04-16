@@ -1,7 +1,7 @@
 // CRUD lives here
 import { db } from "../../index";
 import { supplierItemsTable } from "../../db/schema";
-import { eq, lte, ilike, or } from "drizzle-orm";
+import { eq, and} from "drizzle-orm";
 import { createUserNotificationService } from "../user_notifications/user_notifications.service";
 import { createLog } from "../log/log.repository";
 import { validateSessionUser } from "../user/user.repository";
@@ -11,9 +11,38 @@ export async function createSupplierItem(data: {
   supplierId: number;
   productId: number;
   unitPrice: string;
-  //   lastUpdated not included because it is defaulted as Now() in the schema, so it is not included in the input
 }) {
-  return db.insert(supplierItemsTable).values(data).returning();
+  return await db.transaction(async (tx) => {
+    const user = await validateSessionUser();
+    // 1. Insert the new link record
+    const [newLink] = await tx.insert(supplierItemsTable).values(data).returning();
+
+    if (newLink) {
+      // 2. Iterate through the record to generate logs for every field
+      for (const [key, val] of Object.entries(newLink)) {
+        // Skip null/undefined values to keep logs clean
+        if (val !== null && val !== undefined) {
+          await createLog({
+            userId: user.id,    // Use the logged-in user's ID, or null for system actions
+            actionId: 21,                   // [BLANK] - Fill in for "Link Supplier Item"
+            targetId: newLink.supplierItemId.toString(), // The ID of the new supplier-item link
+            columnName: key,
+            prevValue: null,
+            newValue: val.toString(),
+            remarks: null
+          }, tx);
+        }
+      }
+
+      // 3. Trigger the notification service
+      await createUserNotificationService({ 
+        notifId: 8,                        // [BLANK] - Fill in for "New Item Linked"
+        targetId: newLink.supplierItemId 
+      }, tx);
+    }
+
+    return newLink;
+  });
 }
 
 //READ GROUPED BY SUPPLIER
@@ -32,12 +61,28 @@ export async function readSupplierItemByItem() {
     .groupBy(supplierItemsTable.productId);
 }
 
+//FIND EXISTING LINK
+export async function findSupplierItemLink(supplierId: number, productId: number) {
+  return db
+      .select()
+      .from(supplierItemsTable)
+      .where(
+        and(
+          eq(supplierItemsTable.supplierId, supplierId),
+          eq(supplierItemsTable.productId, productId),
+        )
+      )
+      .limit(1);
+}
+
+
 //UPDATE
 export async function updateSupplierItem(data: {
   id: number; // 👈 This is the supplierItemId
   supplierId?: number;
   unitPrice?: string;
 }) {
+  const user = await validateSessionUser();
   const { id, ...incomingFields } = data;
 
   return await db.transaction(async (tx) => {
@@ -62,8 +107,8 @@ export async function updateSupplierItem(data: {
         updates[key] = val;
 
         await createLog({
-          userId: user.id,
-          actionId: 12, 
+          userId: user.id,    // Use the logged-in user's ID, or null for system actions
+          actionId: 20, 
           targetId: id, // The ID of the specific supplier-item link
           columnName: key,
           prevValue: oldValue?.toString() || null,
@@ -91,7 +136,7 @@ export async function updateSupplierItem(data: {
 }
 
 //DELETE
-export async function deleteItem(id: number) {
+export async function deleteSupplierItem(id: number) {
   await db
     .update(supplierItemsTable)
     .set({ archived: true })
@@ -99,3 +144,48 @@ export async function deleteItem(id: number) {
     .returning();
   return { success: true };
 }
+
+export async function restoreSupplierItem(data: {
+  id: number; // 👈 This is the supplierItemId
+  supplierId: number;
+  unitPrice: string;
+}) {
+  return await db.transaction(async (tx) => {
+    const user = await validateSessionUser();
+    const [restoredSupplierItem] = await tx
+      .update(supplierItemsTable)
+      .set({ 
+        archived: false,
+        supplierId: data.supplierId,
+        unitPrice: data.unitPrice
+       })
+      .where(eq(supplierItemsTable.supplierItemId, data.id))
+      .returning();
+
+    if (restoredSupplierItem) {
+      for (const [key, val] of Object.entries(restoredSupplierItem)) {
+        // Skip null/undefined values to keep logs clean
+        if (val !== null && val !== undefined) {
+          await createLog({
+            userId: user.id,    // Use the logged-in user's ID, or null for system actions
+            actionId: 21,                   // [BLANK] - Fill in for "Link Supplier Item"
+            targetId: restoredSupplierItem.supplierItemId,
+            columnName: key,
+            prevValue: null,
+            newValue: val.toString(),
+            remarks: null
+          }, tx);
+        }
+      }
+
+      // 3. Trigger the notification service
+      await createUserNotificationService({ 
+        notifId: 8,                        // [BLANK] - Fill in for "New Item Linked"
+        targetId: restoredSupplierItem.supplierItemId 
+      }, tx);
+    }
+
+    return restoredSupplierItem;
+  })
+}
+

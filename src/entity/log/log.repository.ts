@@ -9,11 +9,12 @@ export async function createLog(
   data: {
     userId: string;
     actionId: number;
-    targetId: number | string;
+    targetId:  string;
     columnName: string;
     prevValue?: string | null;
     newValue?: string | null;
     remarks?: string | null;
+    projectId?: number | null; // Optional projectId for future use
   },
   tx?: any // Optional Transaction Client
 ) {

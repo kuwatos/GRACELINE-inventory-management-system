@@ -39,17 +39,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { updateItemAction } from "@/lib/action/inventory.action";
+import { executeAction } from "@/lib/error.handler";
+import { authClient } from "@/lib/auth-client";
+
 
 interface EditItemModalProps {
   isOpen: boolean;
   onClose: () => void;
   item: InventoryItem | null;
   categories: { name: string }[];
+  measurements: { name: string }[];
+  projects: { id: number; name: string }[];
   isViewOnly?: boolean;
 }
 
-export const EditItemModal = ({ isOpen, onClose, item, categories, isViewOnly = false }: EditItemModalProps) => {
-   const [openCombobox, setOpenCombobox] = useState(false);
+export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements, projects, isViewOnly = false }: EditItemModalProps) => {
+  const {data: session,isPending,error} =  authClient.useSession();
+  const user= session?.user; // Get the current user session (if needed for audit logs or permissions)
+  const [openCombobox, setOpenCombobox] = useState(false);
+  const [openCombobox2, setOpenCombobox2] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // 1. Setup React Hook Form with your editItemSchema
@@ -67,32 +75,39 @@ export const EditItemModal = ({ isOpen, onClose, item, categories, isViewOnly = 
       productDesc: item?.productDesc || "",
       productQuantity: item?.productQuantity || 0,
       reorderLevel: item?.reorderLevel || 0,
-      reason: "Initial adjustment", 
+      measurement: item?.measurement || "",
+      reason: "Initial edit", 
+      projectId: undefined,
     },
   });
-
+  // Place this right after your useForm hook
+  const watchReason = form.watch("reason");
 
   // 2. The function that runs when you click Submit
   async function onSubmit(data: z.input<typeof editItemSchema>) {
-    // 1. Safety check: make sure we actually have a supplier selected!
-          if (!item) return; 
+    setIsSubmitting(true);
+    
+    await executeAction(async () => {
+      if (!item) {
+        throw new Error("Missing item context. Please refresh and try again.");
+      } // Just a safety check
       
-          try {
-            const validatedData = editItemSchema.parse(data);
-            // 2. Send the ID and the new form values across the bridge
-            const result = await updateItemAction(item.productId, validatedData);
-      
-            // 3. If the Robot Butler succeeds, close the modal
-            if (result?.success) {
-              onClose();
-            } else {
-              console.error("Failed to update item:", result?.error);
-              alert("Failed to update item. Please try again.");
-            }
-          } catch (error) {
-            console.error("Server error:", error);
-          }
-        }
+      // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
+      const validatedData = editItemSchema.parse(data);
+  
+      const res = await updateItemAction(item.productId,validatedData);
+  
+      // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
+      if (!res.success) {
+        throw res; 
+      }
+      form.reset();
+      onClose();
+      return res;
+    }, "Item added successfully!");
+  
+    setIsSubmitting(false);
+  }
 
   if (!item) return null;
 
@@ -184,6 +199,64 @@ export const EditItemModal = ({ isOpen, onClose, item, categories, isViewOnly = 
                 </div>
               </div>
 
+            {/* Unit of Measurement Combobox */}
+            <FormField control={form.control} name="measurement" render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel className="font-bold text-gray-700">Unit of Measurement</FormLabel>
+                <Popover open={openCombobox2} onOpenChange={setOpenCombobox2}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          "h-11 justify-between rounded-xl font-normal border-gray-200",
+                          !field.value && "text-gray-400"
+                        )}
+                      >
+                        {/* Display the current value from the form (which defaults to item.measurement) */}
+                        {field.value || "Select or type unit..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[630px] p-0" align="start">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Search units (e.g., kg, pcs, box)..." 
+                        onValueChange={(val) => field.onChange(val)} // Allows typing new units
+                      />
+                      <CommandList>
+                        <CommandEmpty>No matching unit. Type to create "{field.value}"</CommandEmpty>
+                        <CommandGroup>
+                          {measurements.map((unit) => (
+                            <CommandItem
+                              key={unit.name}
+                              value={unit.name}
+                              onSelect={() => {
+                                form.setValue("measurement", unit.name);
+                                setOpenCombobox2(false);
+                              }}
+                            >
+                              <Check 
+                                className={cn(
+                                  "mr-2 h-4 w-4", 
+                                  unit.name === field.value ? "opacity-100" : "opacity-0"
+                                )} 
+                              />
+                              {unit.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )} />
+            
+
             {/* SECTION: DESCRIPTION */}
             <FormField control={form.control} name="productDesc" render={({ field }) => (
               <FormItem>
@@ -233,26 +306,61 @@ export const EditItemModal = ({ isOpen, onClose, item, categories, isViewOnly = 
                 )} />
               </div>
 
-              {/* Reason for change */}
-              <FormField control={form.control} name="reason" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-bold text-gray-700 text-xs">Reason for Adjustment</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-11 rounded-xl bg-white">
-                        <SelectValue placeholder="Why is this changing?" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="audit">Inventory Audit</SelectItem>
-                      <SelectItem value="damage">Damaged / Expired</SelectItem>
-                      <SelectItem value="restock">Manual Restock</SelectItem>
-                      <SelectItem value="correction">Typo Correction</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )} />
+              <div className="grid grid-cols-3 gap-4">
+    {/* ... Current Stock, Adjusted Stock, and Reorder Level fields remain the same ... */}
+  </div>
+
+            {/* NEW: Reason & Project Row */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="reason" render={({ field }) => (
+                  <FormItem className={watchReason === "project" ? "col-span-1" : "col-span-2"}>
+                    <FormLabel className="font-bold text-gray-700 text-xs">Reason for Adjustment</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-11 rounded-xl bg-white">
+                          <SelectValue placeholder="Why is this changing?" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="project">Used for a Project</SelectItem>
+                        <SelectItem value="audit">Inventory Audit</SelectItem>
+                        <SelectItem value="damage">Damaged / Expired</SelectItem>
+                        <SelectItem value="manual restock">Manual Restock</SelectItem>
+                        <SelectItem value="correction">Typo Correction</SelectItem>
+                        <SelectItem value="returned">Returned to Supplier</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
+                {/* Project Dropdown - Only visible when reason is 'project' */}
+                {watchReason === "project" && (
+                  <FormField control={form.control} name="projectId" render={({ field }) => (
+                    <FormItem className="col-span-1 animate-in fade-in slide-in-from-left-2 duration-300">
+                      <FormLabel className="font-bold text-gray-700 text-xs">Target Project</FormLabel>
+                      <Select 
+                        onValueChange={(v) => field.onChange(Number(v))} 
+                        value={field.value?.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-11 rounded-xl bg-white border-blue-200">
+                            <SelectValue placeholder="Choose project..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {projects.map((p) => (
+                            <SelectItem key={p.id} value={p.id.toString()}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                )}
+              </div>
             </div>
           </div>
 

@@ -18,6 +18,7 @@ export const baseItemSchema = z.object({
   category3: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
   category4: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
   category5: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
+  measurement: z.string().min(1, "Please select a unit of measurement"),
 
   productDesc: z
     .string()
@@ -52,17 +53,19 @@ export const newItemSchema = baseItemSchema.extend({
 });
 
 // 3. EDIT ITEM (Essentials + Identity + Adjustments)
-export const editItemSchema = baseItemSchema
-  .extend({
-    
-    newQuantity: z.coerce
-      .number()
-      .int()
-      .min(0, "Quantity cannot be negative")
-      .optional(),
-      
-    reason: z.string().trim().optional(),
-  });
+export const editItemSchema = baseItemSchema.extend({
+  reason: z.string().min(1, "Please provide a reason"),
+  projectId: z.coerce.number().int().optional(),
+}).superRefine((data, ctx) => {
+  // If reason is project, but no valid projectId is provided
+  if (data.reason === "project" && (!data.projectId || data.projectId <= 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Please select a target project",
+      path: ["projectId"], // This puts the red error message under the project dropdown
+    });
+  }
+});
 
 //=============== SUPPLIER =================
 // The base rules for a supplier
@@ -71,15 +74,21 @@ const baseSupplierSchema = z.object({
   supplierLandline: z
     .string()
     .trim()
-    .optional(),
+    .min(7, "Landline number must be at least 7 digits")
+    .max(15, "Landline number must be at most 15 digits")
+    .optional()
+    .or(z.literal("")), // Allow empty string as well
   supplierEmail: z
     .string()
     .trim()
     .email("Please enter a valid email address")
-    .optional(),
+    .optional()
+    .or(z.literal("")), // Allow empty string as well
   supplierMobile: z
     .string()
-    .trim(),
+    .trim().min(7, "Mobile number must be at least 7 digits")
+    .max(15, "Mobile number must be at most 15 digits")
+
 });
 
 // Schema for New Supplier
@@ -156,9 +165,10 @@ export const editOrderSchema = baseOrderSchema.extend({
 });
 
 export const baseReportSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
   reportType: z.string().min(1, "Please select a report type"),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
+  dateStart: z.coerce.date(),
+  dateEnd: z.coerce.date(),
 });
 //Project Form Validation
 export const projectFormSchema = z.object({
@@ -166,3 +176,27 @@ export const projectFormSchema = z.object({
 });
 
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;
+
+
+export const baseSupplierItemSchema = z.object({
+  supplierId: z.coerce.number().int().min(1, "Please select a valid supplier"),
+  unitPrice: z
+    .string()
+    .trim()
+    .min(1, "Price is required")
+    .regex(
+      /^\d+(\.\d{1,2})?$/,
+      "Invalid price format (e.g., 1450.00)"
+    )
+    .refine((val) => {
+      const num = parseFloat(val);
+      return num >= 0.01;
+    }, "Price must be at least 0.01")
+    .refine((val) => {
+      const num = parseFloat(val);
+      return num <= 9999999.99;
+    }, "Price exceeds the maximum limit of 9,999,999.99"),
+  productId: z.coerce.number().int().min(1, "Please select a valid product")
+});
+export const newSupplierItemSchema = baseSupplierItemSchema;
+export const editSupplierItemSchema = baseSupplierItemSchema;

@@ -64,7 +64,8 @@ export async function executeAction(
 ) {
   try {
     const result = await action();
-    if (successMessage) toast.success(successMessage);
+    const message = result?.message || successMessage;
+    if (message) toast.success(message);
     return result;
   } catch (error) {
     handleError(error);
@@ -72,4 +73,4 @@ export async function executeAction(
 }
 
 // Usage in your component:
-//const onSubmit = () => executeAction(() => createItem(data), "Saved!");
+//const onSubmit = () => executeAction(() => createItem(data), "Saved!");   

@@ -1,6 +1,7 @@
 "use server";
 
 import { createReport, deleteReport } from "@/src/entity/reports/reports.repository";
+import { generateMonthlyAudit } from "@/src/entity/reports/reports.query";
 import { baseReportSchema } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 import * as z from "zod";
@@ -9,18 +10,18 @@ import { validateSessionUser } from "@/src/entity/user/user.repository";
 export async function generateReportAction(values: z.input<typeof baseReportSchema>) {
   try {
     // 1. Authenticate the user
-    const user = await validateSessionUser()
-    if (!user) throw new Error("Unauthorized");
+    // const session = await auth();
+    // if (!session?.user?.id) throw new Error("Unauthorized");
 
     // 2. Validate and Coerce strings to Dates
     const validated = baseReportSchema.parse(values);
 
     // 3. Call the Repository
     await createReport({
-      userId: user.id,
+      userId: "user_001",
       reportType: validated.reportType,
-      dateStart: validated.startDate,
-      dateEnd: validated.endDate,
+      dateStart: validated.dateStart,
+      dateEnd: validated.dateEnd,
     });
 
     // 4. Refresh the history table
@@ -45,5 +46,15 @@ export async function deleteReportAction(reportId: number) {
   } catch (error) {
     console.error("Failed to delete report:", error);
     return { success: false, error: "Something went wrong" };
+  }
+}
+
+export async function getMonthlyReportAction(startDate: string, endDate: string) {
+  try {
+    const data = await generateMonthlyAudit(new Date(startDate), new Date(endDate));
+    return { success: true, data };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: "Failed to generate audit." };
   }
 }

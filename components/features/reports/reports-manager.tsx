@@ -7,51 +7,90 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { ReportsHistoryTable, ReportRecord } from "./reports-history-table";
+import { ReportsHistoryTable, Report } from "./reports-history-table";
 import { ReportViewerModal } from "./report-viewer-modal";
 import { PrintableReport } from "./printable-report";
+import { deleteReportAction, generateReportAction, getMonthlyReportAction } from "@/lib/action/report.action";
 
-export const ReportsManager = () => {
-  const [reports, setReports] = useState<ReportRecord[]>([
-    { reportId: 1, reportType: "Month-End Report", dateGenerated: new Date("2026-03-31"), generatedBy: "John Carlo", startDate: new Date("2026-03-01"), endDate: new Date("2026-03-31") },
-  ]);
+interface ReportsManagerProps {
+  data: Report[];
+}
+
+export const ReportsManager = ({ data=[] }: ReportsManagerProps) => {
+  const [reports, setReports] = useState<Report[]>(data);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedReport, setSelectedReport] = useState<ReportRecord | null>(null);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
   
   const printRef = useRef<HTMLDivElement>(null);
+
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: `GraceLine-MonthEnd-${selectedReport?.dateGenerated || "Report"}`,
+    documentTitle: `GraceLine-MonthEnd-${selectedReport?.dateCreated || "Report"}`,
   });
 
-  const handleGenerateClick = () => {
+  const [auditData, setAuditData] = useState<any>(null);
+
+  const handleGenerateClick = async () => {
     if (!startDate || !endDate) return;
     setIsGenerating(true);
     
-    // Simulate generation delay
-    setTimeout(() => {
-      const newReport: ReportRecord = {
-        reportId: 232323, // Random ID for demo
-        reportType: "Month-End Report",
-        dateGenerated: new Date(),
-        generatedBy: "John Carlo",
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-      };
-      setReports([newReport, ...reports]);
-      setIsGenerating(false);
-      setStartDate("");
-      setEndDate("");
-    }, 1000);
-  };
+    const res = await getMonthlyReportAction(startDate, endDate);
+  
+  if (res.success) {
+    setAuditData(res.data); // Store the results
+    setSelectedReport({ 
+      reportId: Date.now(), 
+      reportType: "Live Generated Audit",
+      username: "Current User",
+      dateCreated: new Date(),
+      dateStart: new Date(startDate),
+      dateEnd: new Date(endDate)
+    });
+    await generateReportAction({
+      userId: "user_001",
+      reportType: "Live Generated Audit",
+      dateStart: new Date(startDate),
+      dateEnd: new Date(endDate)
+    });
+    setIsViewerOpen(true); // Open the modal automatically
+  }
+  
+  setIsGenerating(false);
+};
+
+const handleViewReport = async (report: Report) => {
+  setIsGenerating(true); // Show a loader while fetching historical numbers
+
+  // Fetch the actual audit numbers based on the saved report's dates
+  const res = await getMonthlyReportAction(
+    report.dateStart.toString(), 
+    report.dateEnd.toString()
+  );
+
+  if (res.success) {
+    setAuditData(res.data); // Fill the gap!
+    setSelectedReport(report);
+    setIsViewerOpen(true);
+  } else {
+    // Handle error (e.g., toast.error("Failed to load report data"))
+    console.error(res.error);
+  }
+
+  setIsGenerating(false);
+};
+
+const handleDeleteReport = (report: Report) => {
+  setSelectedReport(report);
+  const result = deleteReportAction(report.reportId);
+}
 
   const filteredData = reports.filter((r) => 
-    r.dateGenerated?.toLocaleString().includes(searchQuery) || r.generatedBy?.toLowerCase().includes(searchQuery.toLowerCase())
+    r.dateCreated?.toLocaleString().includes(searchQuery) || r.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -103,13 +142,13 @@ export const ReportsManager = () => {
 
         <ReportsHistoryTable 
           data={filteredData} 
-          onView={(r: any) => { setSelectedReport(r); setIsViewerOpen(true); }} 
+          onView={handleViewReport} 
           onDownload={(r: any) => { setSelectedReport(r); setTimeout(() => handlePrint(), 100); }} 
-          onDelete={async (id: number) => setReports(reports.filter(r => r.reportId !== id))} 
+          onDelete={handleDeleteReport} 
         />
       </Card>
 
-      <ReportViewerModal isOpen={isViewerOpen} onClose={() => setIsViewerOpen(false)} reportData={selectedReport} />
+      <ReportViewerModal isOpen={isViewerOpen} onClose={() => setIsViewerOpen(false)} reportData={selectedReport} auditResults={auditData} />
       <PrintableReport ref={printRef} reportData={selectedReport} />
     </div>
   );

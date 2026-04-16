@@ -27,11 +27,11 @@ import { useRouter } from "next/navigation"
 const formSchema = z.object({
   username: z
     .string()
-    .min(8, "Username must be at least 8 characters")
+    .min(6, "Username must be at least 6 characters")
     .max(20, "Username must be at most 20 characters"),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters") // Fixed typo here (added 's')
+    .min(6, "Password must be at least 6 characters")
     .max(30, "Password must be at most 30 characters")
 })
 

@@ -13,6 +13,7 @@ export async function createItemService(data: {
   reorderLevel?: number;
   supplierId: number;
   unitPrice: string;
+  measurement: string;
 }) {
   const item = await createItem({
     productName: data.productName,
@@ -24,6 +25,7 @@ export async function createItemService(data: {
     productDesc: data.productDesc,
     productQuantity: data.productQuantity,
     reorderLevel: data.reorderLevel,
+    measurement: data.measurement,
   });
 
   const itemId = item.productId;
@@ -40,21 +42,30 @@ export async function updateItemService(data: {
   supplierItemId: number; // 👈 NECESSARY: The specific link ID
   productName?: string;
   productCategory1?: string;
-  // ... (other categories)
+  productCategory2?: string;
+  productCategory3?: string;
+  productCategory4?: string;
+  productCategory5?: string;
   productDesc?: string;
   productQuantity?: number;
   reorderLevel?: number;
   supplierId?: number; 
   unitPrice?: string;  
+  measurement?: string;
 }) {
   // 1. Update the Item details
   await updateItem({
     id: data.productId,
     productName: data.productName,
     productCategory1: data.productCategory1,
-    // ... rest of item fields
+    productCategory2: data.productCategory2,
+    productCategory3: data.productCategory3,
+    productCategory4: data.productCategory4,
+    productCategory5: data.productCategory5,
+    productDesc: data.productDesc,
     productQuantity: data.productQuantity,
     reorderLevel: data.reorderLevel,
+    measurement: data.measurement,
   });
 
   // 2. Update the specific Supplier/Price link

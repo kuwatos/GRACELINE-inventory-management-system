@@ -7,6 +7,7 @@ import { createLog } from "../log/log.repository";
 import { auth, type User} from "@/lib/auth";
 import { headers } from "next/headers";
 import { id } from "zod/v4/locales";
+import { role } from "better-auth/plugins";
 
 export async function createUser(data: { 
   firstName: string; 
@@ -28,6 +29,7 @@ export async function createUser(data: {
 
   // 2. Create the user via the API
   try {
+    // console.log(session.user.department);
     const newUser = await auth.api.createUser({
         body: {
             name,
@@ -142,7 +144,8 @@ export async function updateUser(data: {
               username,
               firstName,
               lastName,
-              department
+              department,
+              role  : department.toLowerCase() === "admin" ? "admin" : "user", // Ensure role stays in sync with department
               }
             },
           headers: await headers(),

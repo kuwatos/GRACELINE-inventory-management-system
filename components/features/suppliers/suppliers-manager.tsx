@@ -49,8 +49,8 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
   };
 
   const handleDeleteClick = (supplier: Supplier) => {
-    // Simple console log to avoid "missing file" errors
-    console.log("Delete requested for ID:", supplier.supplierId);
+    setSelectedSupplier(supplier);
+    const result = deleteSupplierAction(supplier.supplierId);
   };
 
   return (
