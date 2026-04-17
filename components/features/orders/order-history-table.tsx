@@ -20,6 +20,7 @@ export interface OrderRecord {
   dateReceived?: string;
   status: "pending" | "official" | "awaiting" | "incomplete" | "complete";
   products: OrderProduct[];
+  projectName?: string;
 }
 
 interface OrderHistoryTableProps {
