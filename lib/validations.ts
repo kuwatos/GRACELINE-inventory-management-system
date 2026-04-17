@@ -94,6 +94,7 @@ export const baseOrderSchema = z.object({
   supplier: z.string().min(1, "Supplier is required"),
   expected: z.string().min(1, "Delivery date is required"),
   products: z.array(orderProductSchema).min(1, "You must add at least one product"),
+  projectName: z.string().optional(),
 });
 
 export const newOrderSchema = baseOrderSchema;
@@ -105,3 +106,4 @@ export const projectFormSchema = z.object({
 });
 
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;
+
