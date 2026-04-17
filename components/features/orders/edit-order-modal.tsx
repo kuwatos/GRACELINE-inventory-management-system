@@ -8,13 +8,13 @@ import { Plus, Trash2 } from "lucide-react";
 import { editOrderSchema } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 import { OrderRecord } from "./order-history-table";
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ProjectCombobox } from "./project-combobox";
 
 interface EditOrderModalProps {
   isOpen: boolean;
@@ -28,6 +28,7 @@ export const EditOrderModal = ({ isOpen, onClose, order }: EditOrderModalProps) 
     defaultValues: {
       supplier: "",
       expected: "",
+      projectName: "", // added projectName to default values
       products: [{ productId: "", qty: 1 }],
     },
   });
@@ -42,6 +43,7 @@ export const EditOrderModal = ({ isOpen, onClose, order }: EditOrderModalProps) 
       form.reset({
         supplier: order.supplierName || "", 
         expected: order.expectedDelivery || "", 
+        projectName: order.projectName || "", // Pre-fill the saved project name
         // Maps expectedQty for the form
         products: order.products && order.products.length > 0 
           ? order.products.map(p => ({ productId: p.productId, qty: p.expectedQty }))
@@ -103,6 +105,19 @@ export const EditOrderModal = ({ isOpen, onClose, order }: EditOrderModalProps) 
                       <FormMessage className="text-xs text-red-500 ml-1" />
                     </FormItem>
                   )} />
+
+                  {/* ADDED: Assigned Project Combobox (Spans both columns) */}
+                  <div className="col-span-2">
+                    <FormField control={form.control} name="projectName" render={({ field }) => (
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Assigned Project</FormLabel>
+                        <FormControl>
+                          <ProjectCombobox value={field.value || ""} onChange={field.onChange} />
+                        </FormControl>
+                        <FormMessage className="text-xs text-red-500 ml-1" />
+                      </FormItem>
+                    )} />
+                  </div>
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-gray-100">
