@@ -308,3 +308,7 @@ export async function validateSessionUser(requiredDepartment?: string) {
     console.log("Session valid for user:", session.user.username);
     return session.user;
 }
+
+export async function findExistingUser(username:string) {
+  return db.select().from(usersTable).where(ilike(usersTable.username, username)).limit(1);
+}
