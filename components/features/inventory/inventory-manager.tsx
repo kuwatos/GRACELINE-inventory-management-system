@@ -10,6 +10,7 @@ import { NewItemModal } from "./new-item-modal";
 import { EditItemModal } from "./edit-item-modal";
 import { deleteItem } from "@/src/entity/item/item.repository";
 import { deleteItemAction } from "@/lib/action/inventory.action";
+import { authClient } from "@/lib/auth-client";
 
 interface InventoryManagerProps {
   data?: InventoryItem[];
@@ -27,6 +28,10 @@ export const InventoryManager = ({ data = [], suppliers = [], categories = [], m
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
+
+  const session = authClient.useSession();
+  const userDept = session.data?.user?.department?.toLowerCase(); // Assuming the field is 'dept'
+  const isWarehouse = userDept === "warehouse";
 
   const filteredData = data.filter((item) => {
     const searchLower = searchQuery.toLowerCase();
@@ -88,13 +93,15 @@ export const InventoryManager = ({ data = [], suppliers = [], categories = [], m
             </div>
 
             {/* Your custom slate color is applied here! */}
-            <Button 
+            {!isWarehouse && (
+              <Button 
               onClick={() => setIsNewModalOpen(true)}
               className="bg-[#0f172a] text-white hover:bg-[#0f172a]/70 h-11 px-6 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-black/10 gap-2"
             >
               <Plus className="w-4 h-4" />
               Add New Inventory Item
             </Button>
+            )}
           </div>
         </div>
 

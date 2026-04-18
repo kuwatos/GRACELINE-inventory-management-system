@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Edit3,Trash2 } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 
 // 1. Define exactly what a row of data looks like
@@ -40,6 +41,9 @@ interface InventoryTableProps {
 export const InventoryTable = ({ data, onEdit, onDelete }: InventoryTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
+  const session = authClient.useSession();
+  const userDept = session.data?.user?.department?.toLowerCase(); // Assuming the field is 'dept'
+  const isWarehouse = userDept === "warehouse";
   
   // 1. THE FIX: Put the safety check FIRST before any math happens!
   if (!data || !Array.isArray(data) || data.length === 0) {
@@ -148,7 +152,9 @@ export const InventoryTable = ({ data, onEdit, onDelete }: InventoryTableProps) 
                 <TableCell className="px-6 py-6 text-right">
                 <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => onEdit(item)} className="text-zinc-400 hover:text-white transition-colors"><Edit3 className="w-4 h-4" /></button>
+                  {!isWarehouse && (
                   <button onClick={() => onDelete(item)} className="text-zinc-400 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                  )}
                 </div>
               </TableCell>
               </TableRow>

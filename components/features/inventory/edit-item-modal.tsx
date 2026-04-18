@@ -59,7 +59,10 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
   const [openCombobox, setOpenCombobox] = useState(false);
   const [openCombobox2, setOpenCombobox2] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
+  const userDept = user?.department?.toLowerCase(); // Assuming the field is 'dept'
+  const isWarehouse = userDept === "warehouse";
+  const isPurchasing = userDept === "purchasing";
   // 1. Setup React Hook Form with your editItemSchema
   const form = useForm<z.input<typeof editItemSchema>>({
     resolver: zodResolver(editItemSchema),
@@ -124,6 +127,8 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="p-8 space-y-6 max-h-[75vh] overflow-y-auto">
             
+            {!isWarehouse && (
+              <>
             {/* SECTION: BASIC INFO */}
             <div className="grid grid-cols-1 gap-4">
               <FormField control={form.control} name="productName" render={({ field }) => (
@@ -267,9 +272,13 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                 <FormMessage />
               </FormItem>
             )} />
+              </>
+            )}
 
             {/* SECTION: STOCK & ADJUSTMENTS */}
-            <div className="bg-blue-50/30 p-6 rounded-2xl border border-blue-100 space-y-4">
+            
+            {!isPurchasing && (
+              <div className="bg-blue-50/30 p-6 rounded-2xl border border-blue-100 space-y-4">
               <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wider">Inventory Adjustment</h3>
               
               <div className="grid grid-cols-3 gap-4">
@@ -306,11 +315,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                 )} />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-    {/* ... Current Stock, Adjusted Stock, and Reorder Level fields remain the same ... */}
-  </div>
-
-            {/* NEW: Reason & Project Row */}
+              {/* NEW: Reason & Project Row */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="reason" render={({ field }) => (
                   <FormItem className={watchReason === "project" ? "col-span-1" : "col-span-2"}>
@@ -362,6 +367,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                 )}
               </div>
             </div>
+                        )}
           </div>
 
           <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 gap-3">
