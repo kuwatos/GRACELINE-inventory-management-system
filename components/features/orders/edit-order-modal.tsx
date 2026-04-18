@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import Big from "big.js";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface EditOrderModalProps {
   isOpen: boolean;
@@ -63,6 +64,16 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
     name: "products",
   });
 
+  const watchedProducts = form.watch("products");
+
+  const selectedProductIds = watchedProducts
+    .map((p) => Number(p.productId))
+    .filter(Boolean);
+
+  const hasAvailableProducts = availableProducts.some(
+    (p) => !selectedProductIds.includes(p.productId)
+  );
+
   useEffect(() => {
     if (isOpen && order) {
       form.reset({
@@ -79,8 +90,6 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
       });
     }
   }, [isOpen, order, form]);
-
-   const watchedProducts = form.watch("products");
 
   const getRowTotal = (index: number): string => {
     const row = watchedProducts?.[index];
@@ -129,6 +138,7 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       {/* SCROLL FIX: same flex col + max-h pattern */}
       <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden border-none shadow-2xl flex flex-col h-[90vh] max-h-[90vh]">
+        <LoadingOverlay isLoading={isSubmitting} message="Saving changes..." />
         <DialogHeader className="px-8 py-8 border-b border-gray-100 flex justify-center items-center shrink-0">
           <DialogTitle className="text-2xl font-medium text-gray-900">Edit Order: {order?.poId}</DialogTitle>
         </DialogHeader>
@@ -207,7 +217,19 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
                         {fields.map((field, index) => {
                           const selectedProductId = form.watch(`products.${index}.productId`);
                           const selectedProduct = availableProducts.find((p) => p.productId === Number(selectedProductId));
-                        
+                          
+                          // IDs selected in OTHER rows — this row can still show its own current value
+                          const selectedInOtherRows = form
+                            .watch("products")
+                            .filter((_, i) => i !== index)
+                            .map((p) => Number(p.productId))
+                            .filter(Boolean);
+
+                          // Products available for this row's dropdown
+                          const dropdownOptions = availableProducts.filter(
+                            (p) => !selectedInOtherRows.includes(p.productId)
+                          );
+                          
                         return (
                           <div key={field.id} className="flex gap-3 items-end bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
                             <div className="flex-1">
@@ -224,7 +246,7 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                      {availableProducts.map((p) => (
+                                      {dropdownOptions.map((p) => (
                                         <SelectItem key={p.productId} value={String(p.productId)}>
                                           {p.productName}
                                         </SelectItem>
@@ -283,9 +305,11 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
                     type="button"
                     variant="outline"
                     onClick={() => append({ productId: 0, unitPrice: "", quantity: 1 })}
-                    className="w-full h-12 border-dashed border-2 border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 rounded-xl transition-all font-bold"
+                    disabled={!hasAvailableProducts}
+                    className="w-full h-12 border-dashed border-2 border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 rounded-xl transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Plus className="w-4 h-4 mr-2" /> Add Product Row
+                    <Plus className="w-4 h-4 mr-2" />
+                    {hasAvailableProducts ? "Add Product Row" : "All products added"}
                   </Button>
                   {/* After the Add Product Row button: */}
                   <div className="flex justify-end pt-2">

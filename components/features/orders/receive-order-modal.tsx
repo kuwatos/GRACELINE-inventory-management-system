@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { OrderRecord } from "./order-history-table";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface ReceiveOrderModalProps {
   isOpen: boolean;
@@ -20,12 +21,16 @@ export const ReceiveOrderModal = ({ isOpen, onClose, orderData, onSubmitReceipt 
   const handleInputChange = (orderProductId: number, value: string) => {
     setCounts(prev => ({ ...prev, [orderProductId]: parseInt(value) || 0 }));
   };
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const handleSubmit = () => {
     if (!orderData) return;
+    setIsSubmitting(true);
+    // Call first, THEN clear — order matters
     onSubmitReceipt(orderData.poId, counts);
-    setCounts({}); 
     onClose();
+    setCounts({});  // clear last, after data is handed off
+    setIsSubmitting(false);
   };
 
   if (!orderData) return null;
@@ -33,6 +38,7 @@ export const ReceiveOrderModal = ({ isOpen, onClose, orderData, onSubmitReceipt 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] p-0 border-none shadow-2xl rounded-3xl bg-white">
+        <LoadingOverlay isLoading={isSubmitting} message="Confirming receipt..." />
         <DialogHeader className="px-8 py-6 bg-black text-white rounded-t-3xl text-center">
           <DialogTitle className="text-xl">Warehouse Receipt: {orderData.poId}</DialogTitle>
           <p className="text-xs text-gray-400">Perform a blind count of incoming items.</p>

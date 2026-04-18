@@ -85,16 +85,29 @@ export const ViewOrderModal = ({ isOpen, onClose, orderData }: ViewOrderModalPro
             </div>
 
             {/* Dates row */}
-            <div className="grid grid-cols-2 gap-6 bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
-              <div>
-                <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Date Created</Label>
-                <p className="font-medium mt-1">{orderData.dateCreated}</p>
-              </div>
-              <div>
-                <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Expected Delivery</Label>
-                <p className="font-medium mt-1">{orderData.expectedDelivery}</p>
-              </div>
+            <div className={`grid gap-6 bg-gray-50/50 p-6 rounded-2xl border border-gray-100 ${isAudited ? "grid-cols-3" : "grid-cols-2"}`}>
+            <div>
+              <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Date Created</Label>
+              <p className="font-medium mt-1">{orderData.dateCreated}</p>
             </div>
+            <div>
+              <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Expected Delivery</Label>
+              <p className="font-medium mt-1">{orderData.expectedDelivery}</p>
+            </div>
+            {/* Only shown for Complete and Incomplete */}
+            {isAudited && (
+              <div>
+                <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Actual Delivery</Label>
+                <p className={`font-medium mt-1 ${
+                  orderData.dateReceived && new Date(orderData.dateReceived) < new Date(orderData.expectedDelivery) 
+                    ? "text-green-600" // On time or Early: Show Green
+                    : "text-red-400" // Late: Show Red
+                }`}>
+                  {orderData.dateReceived ?? "—"}
+                </p>
+              </div>
+            )}
+          </div>
 
             {/* Products Table */}
             <div className="overflow-x-auto rounded-xl border border-gray-100">
@@ -112,7 +125,7 @@ export const ViewOrderModal = ({ isOpen, onClose, orderData }: ViewOrderModalPro
                         <TableHead className="font-bold text-right">Unit Price</TableHead>
                         <TableHead className="font-bold text-right text-blue-600">Expected Qty</TableHead>
                         {isAudited && (
-                          <TableHead className="font-bold text-right text-purple-600">Actual Rcvd</TableHead>
+                          <TableHead className="font-bold text-right text-purple-600">Actual Received</TableHead>
                         )}
                         <TableHead className="font-bold text-right">Row Total</TableHead>
                       </>
@@ -161,15 +174,6 @@ export const ViewOrderModal = ({ isOpen, onClose, orderData }: ViewOrderModalPro
               </Table>
             </div>
 
-            {/* Grand total footer — only for non-warehouse */}
-            {canSeePrices && (
-              <div className="flex justify-end">
-                <div className="flex items-center gap-4 bg-gray-900 text-white px-6 py-3 rounded-xl">
-                  <span className="text-sm font-semibold">Order Total</span>
-                  <span className="text-lg font-bold">₱{grandTotal}</span>
-                </div>
-              </div>
-            )}
 
           </div>
         </ScrollArea>

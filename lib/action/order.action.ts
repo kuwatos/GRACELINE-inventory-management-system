@@ -34,6 +34,12 @@ export async function createOrderAction(values: z.infer<typeof newOrderSchema>) 
         
       } catch (error: any) { 
         console.error("Order Creation Error:", error);
+
+         // Catch the Postgres unique constraint violation specifically
+        if (error?.cause?.code === "23505" || error?.code === "23505") {
+          return { success: false, error: "Duplicate product detected. Each product can only appear once per order." };
+        }
+
         return { success: false, error: "Failed to create order." };
       }
 }
@@ -57,6 +63,11 @@ export async function updateOrderAction(orderId: number, values: z.infer<typeof 
         
       } catch (error: any) { 
         console.error("Order Update Error:", error);
+
+         if (error?.cause?.code === "23505" || error?.code === "23505") {
+          return { success: false, error: "Duplicate product detected. Each product can only appear once per order." };
+        }
+
         return { success: false, error: "Failed to update order." };
       }
 }

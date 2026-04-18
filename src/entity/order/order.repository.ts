@@ -183,14 +183,24 @@ export async function changeOrderStatus(data: {
 
       // Special Log for Received orders
       if (data.orderStatus === "Complete" || data.orderStatus === "Incomplete") {
-        await createLog({
-          userId: user.id,
-          actionId: 19,                  // Received an order
-          targetId: data.id,
-          columnName: "orderStatus",
-          prevValue: existing.orderStatus,
-          newValue: data.orderStatus
-        }, tx);
+        const [orderRecieved] = await tx
+          .update(ordersTable)
+          .set({ 
+            actualDeliveryDate:  sql`now()`, // date when order was placed
+          })
+          .where(eq(ordersTable.orderId, data.id))
+          .returning();
+        
+        if(!orderRecieved) {
+          await createLog({
+            userId: user.id,
+            actionId: 19,                  // Received an order
+            targetId: data.id,
+            columnName: "orderStatus",
+            prevValue: existing.orderStatus,
+            newValue: data.orderStatus
+          }, tx);
+        }
         await createUserNotificationService({ notifId: 6, targetId: data.id }, tx);
       }
 

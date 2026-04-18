@@ -15,6 +15,7 @@ import { useTransition } from "react";
 import { handleError } from "@/lib/error.handler";
 import { approveOrderAction, changeOrderStatusAction, deleteOrderAction, receiveOrderAction } from "@/lib/action/order.action";
 import { SupplierOption, SupplierProduct, ProjectOption } from "@/lib/action/order.action";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 
 export type Role = "admin" | "warehouse" | "purchasing" | "finance";
@@ -105,28 +106,28 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, proj
     orderId: number,
     receivedCounts: Record<number, number>
   ) => {
-    // Find the full order so we have the complete product list
     const order = orders.find((o) => o.poId === orderId);
     if (!order) return;
 
+    // Build payload BEFORE startTransition — captures receivedCounts synchronously
+    const payload = {
+      products: order.products.map((p) => ({
+        productId: p.orderProductId,
+        quantity: receivedCounts[p.orderProductId] ?? 0,
+      })),
+    };
+
     startTransition(async () => {
-      const payload = {
-        // Map ALL products in the order, not just the ones the user typed in
-        // Ones left blank default to 0 instead of being omitted
-        products: order.products.map((p) => ({
-          productId: p.orderProductId,
-          quantity: receivedCounts[p.productId] ?? 0,
-        })),
-      };
-      await receiveOrderAction(Number(orderId), payload);
+      await receiveOrderAction(orderId, payload);
     });
   };
+  
   return (
     <div className="space-y-6">
       
       {/* MAIN ENCLOSING CARD (Matched to InventoryManager) */}
-      <Card className="shadow-sm border-gray-200 p-8">
-        
+      <Card className="shadow-sm border-gray-200 p-8 relative">
+         <LoadingOverlay isLoading={isPending} message="Updating Orders..." />
         {/* HEADER SECTION (Matched to InventoryManager) */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>

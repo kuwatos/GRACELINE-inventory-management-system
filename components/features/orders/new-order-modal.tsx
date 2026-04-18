@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Big from "big.js";
 import { ProjectOption, SupplierOption, SupplierProduct } from "@/lib/action/order.action";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 
 interface NewOrderModalProps {
@@ -52,7 +53,6 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
       products: [{ productId: 0, unitPrice: "", quantity: 1 }],
     },
   });
-  const watchedProducts = form.watch("products");
 
   const getRowTotal = (index: number): string => {
     const row = watchedProducts?.[index];
@@ -84,7 +84,15 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
     control: form.control,
     name: "products",
   });
+  const watchedProducts = form.watch("products");
 
+  const selectedProductIds = watchedProducts
+    .map((p) => Number(p.productId))
+    .filter(Boolean);
+
+  const hasAvailableProducts = availableProducts.some(
+    (p) => !selectedProductIds.includes(p.productId)
+  );
   const handleClose = () => {
     form.reset();
     setSelectedSupplierId(null);
@@ -114,6 +122,7 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden border-none shadow-2xl flex flex-col h-[90vh] max-h-[90vh]">
+        <LoadingOverlay isLoading={isSubmitting} message="Creating order..." />
         <DialogHeader className="px-8 py-8 border-b border-gray-100 flex justify-center items-center shrink-0">
           <DialogTitle className="text-2xl font-medium text-gray-900">Create New Purchase Order</DialogTitle>
         </DialogHeader>
@@ -213,6 +222,19 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                             const selectedProductId = form.watch(`products.${index}.productId`);
                             const selectedProduct = availableProducts.find((p) => p.productId === Number(selectedProductId));
                             const rowTotal = getRowTotal(index);
+                            
+                            // IDs selected in OTHER rows — this row can still show its own current value
+                            const selectedInOtherRows = form
+                              .watch("products")
+                              .filter((_, i) => i !== index)
+                              .map((p) => Number(p.productId))
+                              .filter(Boolean);
+
+                            // Products available for this row's dropdown
+                            const dropdownOptions = availableProducts.filter(
+                              (p) => !selectedInOtherRows.includes(p.productId)
+                            );
+
 
                             return (
                               <div key={field.id} className="flex gap-3 items-end bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
@@ -230,8 +252,10 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                                           </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                          {availableProducts.map((p) => (
-                                            <SelectItem key={p.productId} value={String(p.productId)}>{p.productName}</SelectItem>
+                                          {dropdownOptions.map((p) => (
+                                            <SelectItem key={p.productId} value={String(p.productId)}>
+                                              {p.productName}
+                                            </SelectItem>
                                           ))}
                                         </SelectContent>
                                       </Select>
@@ -290,9 +314,11 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                         type="button"
                         variant="outline"
                         onClick={() => append({ productId: 0, unitPrice: "", quantity: 1 })}
-                        className="w-full h-12 border-dashed border-2 border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 rounded-xl transition-all font-bold"
+                        disabled={!hasAvailableProducts}
+                        className="w-full h-12 border-dashed border-2 border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 rounded-xl transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <Plus className="w-4 h-4 mr-2" /> Add Product Row
+                        <Plus className="w-4 h-4 mr-2" />
+                        {hasAvailableProducts ? "Add Product Row" : "All products added"}
                       </Button>
 
                       {/* Grand Total */}
@@ -311,7 +337,7 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
             <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3 shrink-0">
               <Button type="button" variant="outline" onClick={handleClose} className="px-8 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">Cancel</Button>
               <Button type="submit" disabled={isSubmitting} className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/70">
-                {isSubmitting ? "Submitting..." : "Submit Order"}
+                {isSubmitting ? "Submitting..." : "Create Draft"}
               </Button>
             </DialogFooter>
           </form>

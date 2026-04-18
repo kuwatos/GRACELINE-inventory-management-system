@@ -63,7 +63,9 @@ export const OrderHistoryTable = ({
             <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold text-center">PO ID</TableHead>
             <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold text-center">Supplier</TableHead>
             <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold text-center">Date</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold text-center">Total Est. Cost</TableHead>
+            {(currentRole === "admin" || currentRole === "purchasing") && (
+              <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold text-center">Total Cost</TableHead>
+            )}
             <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -76,11 +78,22 @@ export const OrderHistoryTable = ({
                 <TableCell className="px-6 py-4 font-bold text-gray-900 text-center">{order.poId}</TableCell>
                 <TableCell className="px-6 py-4 text-gray-600 text-center">{order.supplierName}</TableCell>
                 <TableCell className="px-6 py-4 text-gray-500 text-xs text-center">
-                  Created: {order.dateCreated} <br/> Exp: {order.expectedDelivery}
+                  <div className="space-y-0.5">
+                    <div>Placed: {order.dateCreated}</div>
+                    <div>Expected: {order.expectedDelivery}</div>
+                    {/* Only show for completed/incomplete orders */}
+                    {(order.status === "Complete" || order.status === "Incomplete") && (
+                      <div className={order.dateReceived && (new Date(order.dateReceived) < new Date(order.expectedDelivery)) ? "text-green-600" : "text-red-400" }>
+                        Recieved: {order.dateReceived ?? "—"}
+                      </div>
+                    )}
+                  </div>
                 </TableCell>
-                <TableCell className="px-6 py-4 font-medium text-green-700 text-center">
-                  ${totalCost.toLocaleString(undefined, {minimumFractionDigits: 2})}
-                </TableCell>
+                {(currentRole === "admin" || currentRole === "purchasing") && (
+                  <TableCell className="px-6 py-4 font-medium text-green-700 text-center">
+                    ₱{totalCost.toLocaleString(undefined, {minimumFractionDigits: 2})}
+                  </TableCell>
+                )}
                 <TableCell className="px-6 py-4 text-center">
                   <div className="flex justify-center items-center gap-2">
                     
@@ -111,15 +124,16 @@ export const OrderHistoryTable = ({
                         <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onView(order)} title="View">
                           <Eye className="w-4 h-4" />
                         </Button>
+                        {/* ADMIN SPECIFIC BUTTON */}
+                          {currentRole === "admin" && (
+                          <Button variant="ghost" size="icon" className="text-blue-600 hover:bg-blue-50" onClick={() => onMoveToAwaiting(order.poId)} title="Send to Warehouse (Awaiting Delivery)">
+                            <Truck className="w-4 h-4" />
+                          </Button>
+                          )}
                         <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onDownload?.(order)} title="Download PDF">
                           <Download className="w-4 h-4" />
                         </Button>
-                        {/* ADMIN SPECIFIC BUTTON */}
-                        {currentRole === "admin" && (
-                        <Button variant="ghost" size="icon" className="text-blue-600 hover:bg-blue-50" onClick={() => onMoveToAwaiting(order.poId)} title="Send to Warehouse (Awaiting Delivery)">
-                          <Truck className="w-4 h-4" />
-                        </Button>
-                        )}
+                        
                       </>
                     )}
 
