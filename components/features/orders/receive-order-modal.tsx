@@ -11,19 +11,19 @@ interface ReceiveOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   orderData: OrderRecord | null;
-  onSubmitReceipt: (orderId: string, receivedCounts: Record<number, number>) => void;
+  onSubmitReceipt: (orderId: number, receivedCounts: Record<number, number>) => void;
 }
 
 export const ReceiveOrderModal = ({ isOpen, onClose, orderData, onSubmitReceipt }: ReceiveOrderModalProps) => {
   const [counts, setCounts] = useState<Record<number, number>>({});
 
-  const handleInputChange = (productId: number, value: string) => {
-    setCounts(prev => ({ ...prev, [productId]: parseInt(value) || 0 }));
+  const handleInputChange = (orderProductId: number, value: string) => {
+    setCounts(prev => ({ ...prev, [orderProductId]: parseInt(value) || 0 }));
   };
 
   const handleSubmit = () => {
     if (!orderData) return;
-    onSubmitReceipt(orderData.id, counts);
+    onSubmitReceipt(orderData.poId, counts);
     setCounts({}); 
     onClose();
   };
@@ -47,16 +47,16 @@ export const ReceiveOrderModal = ({ isOpen, onClose, orderData, onSubmitReceipt 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orderData.products.map((item, i) => (
-                <TableRow key={i}>
+              {orderData.products.map((item) => (
+                <TableRow key={item.orderProductId}>
                   <TableCell className="font-medium text-lg">{item.productName}</TableCell>
                   <TableCell className="text-right">
                     <Input 
                       type="number" 
                       min="0"
                       placeholder="0"
-                      value={counts[item.productId] || ""}
-                      onChange={(e) => handleInputChange(item.productId, e.target.value)}
+                      value={counts[item.orderProductId] || ""}
+                      onChange={(e) => handleInputChange(item.orderProductId, e.target.value)}
                       className="h-12 w-32 ml-auto text-xl font-bold text-center border-gray-300 focus:border-black focus:ring-black" 
                     />
                   </TableCell>

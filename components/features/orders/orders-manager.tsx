@@ -2,7 +2,7 @@
 
 import { Plus, UserCircle, Search } from "lucide-react"; 
 import { Input } from "@/components/ui/input"; 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { OrderHistoryTable, OrderRecord } from "./order-history-table";
@@ -14,7 +14,7 @@ import { authClient } from "@/lib/auth-client";
 import { useTransition } from "react";
 import { handleError } from "@/lib/error.handler";
 import { approveOrderAction, changeOrderStatusAction, deleteOrderAction, receiveOrderAction } from "@/lib/action/order.action";
-import { SupplierOption, SupplierProduct } from "@/lib/action/order.action";
+import { SupplierOption, SupplierProduct, ProjectOption } from "@/lib/action/order.action";
 
 
 export type Role = "admin" | "warehouse" | "purchasing" | "finance";
@@ -23,12 +23,14 @@ interface OrdersManagerProps {
   initialOrders: OrderRecord[];
   suppliers: SupplierOption[];
   supplierProducts: SupplierProduct[];
+  projects: ProjectOption[];           // ADD
 }
-export const OrdersManager = ({ initialOrders, suppliers, supplierProducts }: OrdersManagerProps) => {
+
+export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, projects }: OrdersManagerProps) => {
   
   // --- AUTH ---
-  const user = authClient.useSession().data?.user
-  const role  = user?.department;
+  const { data: session, isPending:isSessionPending } = authClient.useSession();
+  const role = session?.user.department;
   
   // --- STATE ---
   const [isPending, startTransition] = useTransition();
@@ -36,11 +38,18 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts }: Or
   const [searchQuery, setSearchQuery] = useState(""); 
   const [orders, setOrders] = useState<OrderRecord[]>(initialOrders);
   
+  useEffect(() => {
+    setOrders(initialOrders);
+  }, [initialOrders]);
+  
+
   // MODAL STATES
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<OrderRecord | null>(null);
   const [viewingOrder, setViewingOrder] = useState<OrderRecord | null>(null);
   const [receivingOrder, setReceivingOrder] = useState<OrderRecord | null>(null);
+
+  
 
   // --- FILTERING ---
   const currentTab = role === "warehouse" ? "Awaiting Delivery" : activeTab;
@@ -56,6 +65,15 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts }: Or
       return matchesTab && matchesSearch;
     });
   }, [orders, currentTab, searchQuery]);
+  
+  // Loading Display
+  if (isSessionPending) {
+    return (
+      <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
+        Loading...
+      </div>
+    );
+  }
 
   // --- DATABASE READY ACTIONS ---
   const handleApprovePending = (poId: number, ) => {
@@ -84,14 +102,20 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts }: Or
 
   // Blind Receiving Logic
   const handleProcessReceipt = async (
-    orderId: string,
-    receivedCounts: Record<string, number>
+    orderId: number,
+    receivedCounts: Record<number, number>
   ) => {
+    // Find the full order so we have the complete product list
+    const order = orders.find((o) => o.poId === orderId);
+    if (!order) return;
+
     startTransition(async () => {
       const payload = {
-        products: Object.entries(receivedCounts).map(([productId, quantity]) => ({
-          productId: Number(productId),
-          quantity,
+        // Map ALL products in the order, not just the ones the user typed in
+        // Ones left blank default to 0 instead of being omitted
+        products: order.products.map((p) => ({
+          productId: p.orderProductId,
+          quantity: receivedCounts[p.productId] ?? 0,
         })),
       };
       await receiveOrderAction(Number(orderId), payload);
@@ -178,12 +202,14 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts }: Or
         onClose={() => setIsNewModalOpen(false)}
         suppliers={suppliers}
         supplierProducts={supplierProducts}
+        projects={projects}             // ADD
       />
       <EditOrderModal
         order={editingOrder}
         isOpen={!!editingOrder}
         onClose={() => setEditingOrder(null)}
         supplierProducts={supplierProducts}
+        projects={projects}             // ADD
       />
       <ViewOrderModal orderData={viewingOrder} isOpen={!!viewingOrder} onClose={() => setViewingOrder(null)} />
       <ReceiveOrderModal orderData={receivingOrder} isOpen={!!receivingOrder} onClose={() => setReceivingOrder(null)} onSubmitReceipt={handleProcessReceipt} />

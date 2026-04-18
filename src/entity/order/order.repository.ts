@@ -17,7 +17,7 @@ export async function createOrder(data: {
   supplierId: number;
   expectedDeliveryDate: Date;
   actualDeliveryDate: null;
-  projectId: number;
+  projectId?: number;
   createdBy: string;
   approvedBy: null;
 }) {
@@ -225,7 +225,7 @@ export async function changeOrderStatus(data: {
 export async function approveOrder(data: { id: number; }) {
   return await db.transaction(async (tx) => {
     const user = await validateSessionUser()
-    
+
     const [existing] = await tx
       .select()
       .from(ordersTable)
@@ -238,6 +238,7 @@ export async function approveOrder(data: { id: number; }) {
       .update(ordersTable)
       .set({ 
         approvedBy: user.id,
+        orderStatus: "Official"
       })
       .where(eq(ordersTable.orderId, data.id))
       .returning();
@@ -253,7 +254,6 @@ export async function approveOrder(data: { id: number; }) {
       }, tx);
       await createUserNotificationService({ notifId: 5, targetId: data.id }, tx);
     }
-
     return updatedOrder;
   });
 }
@@ -283,14 +283,16 @@ export async function notifyArrivingOrders() {
 
 export async function deleteOrder(orderId: number) {
   return await db.transaction(async (tx) => {
+
+
       const user = await validateSessionUser()
-      const [item] = await tx 
+      const [order] = await tx 
         .select()
         .from(ordersTable)
         .where(eq(ordersTable.orderId, orderId))
         .limit(1);
         
-      if (!item) throw new Error("Item not found");
+      if (!order) throw new Error("Order not found");
   
       // Perform Delete
       await db
@@ -304,7 +306,7 @@ export async function deleteOrder(orderId: number) {
         actionId: 17,
         targetId: orderId,
         columnName: "order_id",
-        prevValue: item.orderId.toString(),
+        prevValue: order.orderId.toString(),
         newValue: null,
       }, tx);
   

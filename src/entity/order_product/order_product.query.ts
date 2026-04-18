@@ -5,6 +5,7 @@ import { eq, and } from "drizzle-orm";
 export async function readOrderProducts(data: { id: number }) {
   return db
     .select({
+      orderProductId: orderProductsTable.orderProductId,   // ADD
       productId: orderProductsTable.productId,
       productName: itemsTable.productName,         // for display in modals
       expectedQty: orderProductsTable.expectedOrderProductQuantity,

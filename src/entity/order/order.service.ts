@@ -1,14 +1,15 @@
-import { changeOrderStatus, createOrder, updateOrder } from "./order.repository";
+import { changeOrderStatus, createOrder, deleteOrder, updateOrder } from "./order.repository";
 import { inputDeliveredItemQuantity, createOrderProducts, deleteOrderProducts, readOrderProducts, verifyDeliveryCompletion } from "../order_product/order_product.repository";
 import { db } from "../../index";
 import { ordersTable } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import { updateItem } from "../item/item.repository";
+import { success } from "zod";
 
 export async function createOrderService(data: {
   supplierId: number;
   expectedDeliveryDate: Date;
-  projectId: number;
+  projectId?: number;
   createdBy: string;
   items: {
     productId: number;
@@ -61,9 +62,9 @@ export async function updateOrderService( data: {
     projectId: data.projectId,
 })
 
-  const deleted = deleteOrderProducts(orderId)
+  const deleted =  await deleteOrderProducts(orderId)
   
-  if((await deleted).success)
+  if(deleted.success)
   {
     await Promise.all(
     data.items.map(async (item) => {
@@ -77,6 +78,18 @@ export async function updateOrderService( data: {
   }
   
 }
+
+export async function deleteOrderService(orderId:number) {
+  
+  const deleted =  await deleteOrderProducts(orderId)
+
+  if(deleted.success)
+  {
+    await deleteOrder(orderId)
+  }
+  return {success:true}
+}
+
 
 export async function recieveOrder(data: {
   orderId: number,

@@ -35,7 +35,7 @@ export async function readOrderProducts(data: { id: number }, prevTx: Transactio
 export async function deleteOrderProducts(id: number) {
   await db
     .delete(orderProductsTable)
-    .where(eq(orderProductsTable.orderProductId, id))
+    .where(eq(orderProductsTable.orderId, id))
     .returning();
   return {success:true}
 }
@@ -86,7 +86,7 @@ export async function inputDeliveredItemQuantity(data : {
     if(addedOrderProductQuantity && addedInventoryQuantity) {
       await createLog({
         userId: data.userId,
-        actionId: 19, // Edited (specifically the delivered)
+        actionId: 19, // Edited (specifically delivered)
         targetId: "order_product_id",
         columnName: "deliveredOrderProductQuantity",
         prevValue: null,

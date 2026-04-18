@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createOrderService, recieveOrder, updateOrderService } from "@/src/entity/order/order.service";
-import { approveOrder, changeOrderStatus, createOrder, deleteOrder, updateOrder } from "@/src/entity/order/order.repository";
+import { createOrderService, deleteOrderService, recieveOrder, updateOrderService } from "@/src/entity/order/order.service";
+import { approveOrder, changeOrderStatus } from "@/src/entity/order/order.repository";
 import { editOrderSchema, newOrderSchema, receiveOrderSchema } from "../validations";
 import * as z from "zod";
 import { validateSessionUser } from "@/src/entity/user/user.repository";
@@ -12,6 +12,7 @@ import { readPurchaseOrderHistory } from "@/src/entity/order/order.query";
 import { readOrderProducts } from "@/src/entity/order_product/order_product.query";
 import { readSuppliersAndIdHavingProducts } from "@/src/entity/supplier/supplier.query";
 import { readSupplierProducts } from "@/src/entity/supplier_item/supplier_item.query";
+import { readProjecstNameAndId } from "@/src/entity/projects/projects.repository";
 
 export async function createOrderAction(values: z.infer<typeof newOrderSchema>) {
     try {
@@ -84,7 +85,7 @@ export async function receiveOrderAction(orderId :number, values: z.infer<typeof
 
 export async function approveOrderAction(orderId: number) {
     try {
-        // Tell the Robot Butler to deactivate this user
+        // Tell the Robot Butler to approve this user
         await approveOrder({id: orderId});
     
         // Refresh the page so they disappear from the table instantly
@@ -92,8 +93,8 @@ export async function approveOrderAction(orderId: number) {
         
         return { success: true };
       } catch (error) {
-        console.error("Order Deletion Error:", error);
-        return { success: false, error: "Failed to delete order" };
+        console.error("Order Aprrove Error:", error);
+        return { success: false, error: "Failed to approve order" };
       }
 }
 
@@ -116,8 +117,8 @@ export async function changeOrderStatusAction(orderId: number, orderStatus: stri
 
 export async function deleteOrderAction(orderId: number) {
     try {
-        // Tell the Robot Butler to deactivate this user
-        await deleteOrder(orderId);
+        // Tell the Robot Butler to deactivate this order
+        await deleteOrderService(orderId);
     
         // Refresh the page so they disappear from the table instantly
         revalidatePath("/orders");
@@ -143,6 +144,7 @@ export async function getOrdersAction(): Promise<OrderRecord[]> {
           poId: order.poId,
           supplierId: order.supplierId,
           projectId: order.projectId ?? undefined,
+          projectName: order.projectName ?? undefined,   // ADD
           supplierName: order.supplierName,
           dateCreated: order.dateCreated
             ? new Date(order.dateCreated).toLocaleDateString()
@@ -155,6 +157,7 @@ export async function getOrdersAction(): Promise<OrderRecord[]> {
             : undefined,
           status: order.status as OrderRecord["status"],
           products: products.map((p) => ({
+            orderProductId: p.orderProductId,
             productId: p.productId!,
             productName: p.productName,
             expectedQty: p.expectedQty,
@@ -197,6 +200,17 @@ export async function getSupplierProductsAction(): Promise<SupplierProduct[]> {
       productName: r.productName,
       unitPrice: r.unitPrice ?? "0.00",
     }));
+  } catch {
+    return [];
+  }
+}
+
+
+export type ProjectOption = { projectId: number; projectName: string };
+
+export async function getProjectsAction(): Promise<ProjectOption[]> {
+  try {
+    return await readProjecstNameAndId();
   } catch {
     return [];
   }

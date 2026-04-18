@@ -13,6 +13,16 @@ export async function readProjects() {
   return db.select().from(projectsTable).where(eq(projectsTable.archived, false));
 }
 
+export async function readProjecstNameAndId() {
+  return db
+    .select({
+      projectId: projectsTable.projectId,
+      projectName: projectsTable.projectName,
+    })
+    .from(projectsTable)
+    .where(eq(projectsTable.archived, false));
+}
+
 //SEARCH
 export async function searchProjects(filters: { keyword: string }) {
   return db

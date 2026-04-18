@@ -5,8 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 
 export interface OrderProduct {
+  orderProductId: number;  // ADD
   productId: number;
-  productName: string;   // ADD — so modals can display the name, not just the ID
+  productName: string;
   expectedQty: number;
   unitPrice: number;
   receivedQty?: number;
@@ -17,6 +18,7 @@ export interface OrderRecord {
   poId: number;
   supplierId: number;     // ADD
   projectId?: number;     // ADD
+  projectName?: string;     // ADD
   supplierName: string;
   dateCreated: string;
   expectedDelivery: string;
@@ -70,7 +72,7 @@ export const OrderHistoryTable = ({
             const totalCost = order.products.reduce((sum, p) => sum + (p.expectedQty * p.unitPrice), 0);
 
             return (
-              <TableRow className="hover:bg-gray-50/50">
+              <TableRow key={order.poId} className="hover:bg-gray-50/50">
                 <TableCell className="px-6 py-4 font-bold text-gray-900 text-center">{order.poId}</TableCell>
                 <TableCell className="px-6 py-4 text-gray-600 text-center">{order.supplierName}</TableCell>
                 <TableCell className="px-6 py-4 text-gray-500 text-xs text-center">
@@ -82,9 +84,12 @@ export const OrderHistoryTable = ({
                 <TableCell className="px-6 py-4 text-center">
                   <div className="flex justify-center items-center gap-2">
                     
-                    {/* --- PENDING ACTIONS --- */}
+                    {/* --- DRAFT ACTIONS --- */}
                     {viewMode === "Draft" && (
                       <>
+                         <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onView(order)} title="View">
+                          <Eye className="w-4 h-4" />
+                        </Button>
                         {/* ADMIN SPECIFIC BUTTON */}
                         {currentRole === "admin" && (
                           <Button variant="ghost" size="icon" className="text-green-600 hover:bg-green-50" onClick={() => onApprovePending(order.poId)} title="Approve to Official">

@@ -8,7 +8,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { editOrderSchema } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 import { OrderRecord } from "./order-history-table";
-import { SupplierProduct, updateOrderAction } from "@/lib/action/order.action";
+import { ProjectOption, SupplierProduct, updateOrderAction } from "@/lib/action/order.action";
 import { executeAction } from "@/lib/error.handler";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -18,14 +18,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+import Big from "big.js";
+
 interface EditOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   order: OrderRecord | null;
-  supplierProducts: SupplierProduct[]; // ADD
+  supplierProducts: SupplierProduct[];
+  projects: ProjectOption[];            // ADD
 }
-
-export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts }: EditOrderModalProps) => {
+export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, projects }: EditOrderModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Products for this specific order's supplier — fixed, never changes
@@ -78,6 +80,34 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts }: Edi
     }
   }, [isOpen, order, form]);
 
+   const watchedProducts = form.watch("products");
+
+  const getRowTotal = (index: number): string => {
+    const row = watchedProducts?.[index];
+    const product = availableProducts.find((p) => p.productId === Number(row?.productId));
+    if (!product || !row?.quantity) return "—";
+    try {
+      return new Big(product.unitPrice).times(new Big(row.quantity as number)).toFixed(2);
+    } catch {
+      return "—";
+    }
+  };
+
+  const grandTotal = (): string => {
+    if (!watchedProducts?.length) return "0.00";
+    try {
+      return watchedProducts
+        .reduce((acc, row) => {
+          const product = availableProducts.find((p) => p.productId === Number(row?.productId));
+          if (!product || !row?.quantity) return acc;
+          return acc.plus(new Big(product.unitPrice).times(new Big(row.quantity as number)));
+        }, new Big(0))
+        .toFixed(2);
+    } catch {
+      return "0.00";
+    }
+  };
+
   const handleClose = () => {
     form.reset();
     onClose();
@@ -98,14 +128,14 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts }: Edi
    return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       {/* SCROLL FIX: same flex col + max-h pattern */}
-      <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden border-none shadow-2xl flex flex-col max-h-[90vh]">
+      <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden border-none shadow-2xl flex flex-col h-[90vh] max-h-[90vh]">
         <DialogHeader className="px-8 py-8 border-b border-gray-100 flex justify-center items-center shrink-0">
           <DialogTitle className="text-2xl font-medium text-gray-900">Edit Order: {order?.poId}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden min-h-0">
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 h-0">
               <div className="p-8 space-y-8">
                 <div className="grid grid-cols-2 gap-5">
 
@@ -116,6 +146,8 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts }: Edi
                       {order?.supplierName}
                     </p>
                   </div>
+
+                  
 
                   {/* Delivery Date — unchanged */}
                   <FormField control={form.control} name="deliveryDate" render={({ field }) => (
@@ -134,6 +166,33 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts }: Edi
                   )} />
                 </div>
 
+                  {/* Project (optional) — add this after the grid */}
+                  <FormField control={form.control} name="projectId" render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="text-sm font-semibold text-gray-700 ml-1">
+                        Project <span className="text-gray-400 font-normal">(optional)</span>
+                      </FormLabel>
+                      <Select
+                        onValueChange={(val) => field.onChange(val === "none" ? undefined : Number(val))}
+                        value={field.value ? String(field.value as number) : "none"}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-11 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0">
+                            <SelectValue placeholder="Select project..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">No project</SelectItem>
+                          {projects.map((p) => (
+                            <SelectItem key={p.projectId} value={String(p.projectId)}>{p.projectName}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-xs text-red-500 ml-1" />
+                    </FormItem>
+                  )} />
+
+
                 {/* Products — same pattern as new modal */}
                 <div className="space-y-4 pt-4 border-t border-gray-100">
                   <div className="flex items-center justify-between">
@@ -143,75 +202,83 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts }: Edi
                     </FormMessage>
                   </div>
 
-                  <div className="space-y-3">
-                    {fields.map((field, index) => {
-                      const selectedProductId = form.watch(`products.${index}.productId`);
-                      const selectedProduct = availableProducts.find((p) => p.productId === Number(selectedProductId));
-
-                      return (
-                        <div key={field.id} className="flex gap-3 items-end bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
-                          <div className="flex-1">
-                            <FormField control={form.control} name={`products.${index}.productId`} render={({ field: f }) => (
-                              <FormItem className="space-y-1.5">
-                                <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Product {index + 1}</FormLabel>
-                                <Select
-                                  onValueChange={(val) => handleProductSelect(index, Number(val))}
-                                  value={f.value ? String(f.value as number) : ""}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger className="h-11 bg-white rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0">
-                                      <SelectValue placeholder="Select product..." />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {availableProducts.map((p) => (
-                                      <SelectItem key={p.productId} value={String(p.productId)}>
-                                        {p.productName}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage className="text-xs text-red-500 ml-1" />
-                              </FormItem>
-                            )} />
-                          </div>
-
-                          {/* Unit price display only */}
-                          <div className="w-28">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1.5">Unit Price</p>
-                            <div className="h-11 flex items-center px-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 text-sm font-medium">
-                              {selectedProduct ? `₱${selectedProduct.unitPrice}` : "—"}
+                  <div className="overflow-x-auto pb-1">
+                    <div className="space-y-3 min-w-[560px]">
+                        {fields.map((field, index) => {
+                          const selectedProductId = form.watch(`products.${index}.productId`);
+                          const selectedProduct = availableProducts.find((p) => p.productId === Number(selectedProductId));
+                        
+                        return (
+                          <div key={field.id} className="flex gap-3 items-end bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                            <div className="flex-1">
+                              <FormField control={form.control} name={`products.${index}.productId`} render={({ field: f }) => (
+                                <FormItem className="space-y-1.5">
+                                  <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Product {index + 1}</FormLabel>
+                                  <Select
+                                    onValueChange={(val) => handleProductSelect(index, Number(val))}
+                                    value={f.value ? String(f.value as number) : ""}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger className="h-11 bg-white rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0">
+                                        <SelectValue placeholder="Select product..." />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {availableProducts.map((p) => (
+                                        <SelectItem key={p.productId} value={String(p.productId)}>
+                                          {p.productName}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage className="text-xs text-red-500 ml-1" />
+                                </FormItem>
+                              )} />
                             </div>
-                          </div>
 
-                          <div className="w-24">
-                            <FormField control={form.control} name={`products.${index}.quantity`} render={({ field: f }) => (
-                              <FormItem className="space-y-1.5">
-                                <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Qty</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    name={f.name}
-                                    ref={f.ref}
-                                    value={f.value as number}
-                                    onChange={f.onChange}
-                                    onBlur={f.onBlur}
-                                    className="h-11 bg-white rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0"
-                                  />
-                                </FormControl>
-                                <FormMessage className="text-xs text-red-500 ml-1" />
-                              </FormItem>
-                            )} />
-                          </div>
+                            {/* Unit price display only */}
+                            <div className="w-28">
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1.5">Unit Price</p>
+                              <div className="h-11 flex items-center px-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 text-sm font-medium">
+                                {selectedProduct ? `₱${selectedProduct.unitPrice}` : "—"}
+                              </div>
+                            </div>
 
-                          <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="h-11 w-11 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      );
-                    })}
+                            <div className="w-24">
+                              <FormField control={form.control} name={`products.${index}.quantity`} render={({ field: f }) => (
+                                <FormItem className="space-y-1.5">
+                                  <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Qty</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      name={f.name}
+                                      ref={f.ref}
+                                      value={f.value as number}
+                                      onChange={f.onChange}
+                                      onBlur={f.onBlur}
+                                      className="h-11 bg-white rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0"
+                                    />
+                                  </FormControl>
+                                  <FormMessage className="text-xs text-red-500 ml-1" />
+                                </FormItem>
+                              )} />
+                            </div>
+
+                            <div className="w-28">
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1.5">Total</p>
+                              <div className="h-11 flex items-center px-3 rounded-xl border border-gray-200 bg-gray-50 text-green-700 text-sm font-bold">
+                                {getRowTotal(index) !== "—" ? `₱${getRowTotal(index)}` : "—"}
+                              </div>
+                            </div>
+
+                            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="h-11 w-11 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-
                   <Button
                     type="button"
                     variant="outline"
@@ -220,6 +287,14 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts }: Edi
                   >
                     <Plus className="w-4 h-4 mr-2" /> Add Product Row
                   </Button>
+                  {/* After the Add Product Row button: */}
+                  <div className="flex justify-end pt-2">
+                    <div className="flex items-center gap-4 bg-gray-900 text-white px-6 py-3 rounded-xl">
+                      <span className="text-sm font-semibold">Order Total</span>
+                      <span className="text-lg font-bold">₱{grandTotal()}</span>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </ScrollArea>

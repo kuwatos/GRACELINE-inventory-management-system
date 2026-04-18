@@ -178,7 +178,7 @@ export const baseOrderSchema = z.object({
     .number()
     .int()
     .optional(),
-  deliveryDate: z.coerce.date().min(new Date(), "Choose a delivery date, and it cannot be in the past"),
+  deliveryDate: z.coerce.date().min(new Date(new Date().setHours(0, 0, 0, 0)), "Choose a delivery date, and it must be at least today"),
   products: z.array(orderProductSchema).min(1, "You must add at least one product"),
 });
 
@@ -187,7 +187,7 @@ export const editOrderSchema = z.object({
   supplierId: z.coerce.number().int().min(1, "Please select a supplier"),
   projectId: z.coerce.number().int().min(0).optional(),
   deliveryDate: z.coerce.date()
-    .min(new Date(), "Choose a delivery date, and it cannot be in the past")
+    .min(new Date(new Date().setHours(0, 0, 0, 0)), "Choose a delivery date, and it must be at least today")
     .optional(),
   products: z.array(
     z.object({
