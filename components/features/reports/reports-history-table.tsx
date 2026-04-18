@@ -8,14 +8,14 @@ export interface Report {
   reportId: number;
   reportType: string;
   dateCreated: Date ;
-  username: string;
+  username?: string;
   dateStart: Date;
   dateEnd: Date;
 }
 
 const formatDate = (date: Date | string | null) => {
     if (!date) return '-';
-    return new Date(date).toISOString().replace('T', ' ').slice(0, 16)
+    return new Date(date).toLocaleString()
    
   };
 
@@ -47,7 +47,7 @@ export const ReportsHistoryTable = ({ data, onView, onDelete, onDownload }: any)
                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button variant="ghost" size="icon" onClick={() => onView(report)} className="text-white hover:bg-white/20"><Eye className="w-4 h-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => onDownload(report)} className="text-white hover:bg-white/20"><Download className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => onDelete(report.reportId)} className="text-red-400 hover:bg-red-500/20"><Trash2 className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => onDelete(report)} className="text-red-400 hover:bg-red-500/20"><Trash2 className="w-4 h-4" /></Button>
                 </div>
               </TableCell>
             </TableRow>

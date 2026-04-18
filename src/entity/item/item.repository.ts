@@ -265,6 +265,7 @@ export async function restoreItem(
   measurement: string;
 }) {
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser()
     const [restoredItem] = await tx
       .update(itemsTable)
       .set({ ...data, archived: false })
@@ -276,6 +277,7 @@ export async function restoreItem(
         // We only log if the value actually exists (not null/undefined)
         if (val !== null && val !== undefined) {
           await createLog({
+            userId: user.id,
             actionId: 8,                    // Added a New Inventory Item
             targetId: restoredItem.productId,
             columnName: key,                // Dynamic: productName, productCategory1, etc.

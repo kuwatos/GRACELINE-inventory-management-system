@@ -78,7 +78,7 @@ export async function generateMonthlyAudit(startDate: Date, endDate: Date) {
       // Get qty at the very start of the month
       const startLog = await tx.query.logsTable.findFirst({
         where: and(
-          eq(logsTable.targetId, item.productId),
+          eq(logsTable.targetId, item.productId.toString()),
           eq(logsTable.columnName, 'product_quantity'),
           lte(logsTable.logDate, startDate)
         ),
@@ -88,7 +88,7 @@ export async function generateMonthlyAudit(startDate: Date, endDate: Date) {
       // Get qty at the very end of the month
       const endLog = await tx.query.logsTable.findFirst({
         where: and(
-          eq(logsTable.targetId, item.productId),
+          eq(logsTable.targetId, item.productId.toString()),
           eq(logsTable.columnName, 'product_quantity'),
           lte(logsTable.logDate, endDate)
         ),
