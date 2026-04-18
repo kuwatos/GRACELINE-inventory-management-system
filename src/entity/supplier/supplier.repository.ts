@@ -158,6 +158,8 @@ export async function restoreSupplier(
     supplierMobile: string;
   }) {
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser()
+
     // Restore the supplier
     const [restoredSupplier] = await tx.update(suppliersTable)
       .set({ ...data, active: true })
@@ -170,6 +172,7 @@ export async function restoreSupplier(
         // Log every column that has a value
         if (val !== null && val !== undefined) {
           await createLog({
+            userId: user.id,
             actionId: 12,                  // Added a New Supplier
             targetId: restoredSupplier.supplierId,
             columnName: key,               // Dynamic: supplierName, supplierEmail, etc.

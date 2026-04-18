@@ -5,7 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 
 export interface OrderProduct {
-  productId: string;
+  productId: number;
+  productName: string;   // ADD — so modals can display the name, not just the ID
   expectedQty: number;
   unitPrice: number;
   receivedQty?: number;
@@ -13,24 +14,26 @@ export interface OrderProduct {
 
 export interface OrderRecord {
   id: string;
-  poId: string;
+  poId: number;
+  supplierId: number;     // ADD
+  projectId?: number;     // ADD
   supplierName: string;
   dateCreated: string;
   expectedDelivery: string;
   dateReceived?: string;
-  status: "pending" | "official" | "awaiting" | "incomplete" | "complete";
+  status: "Draft" | "Official" | "Awaiting Delivery" | "Incomplete" | "Complete";
   products: OrderProduct[];
 }
 
 interface OrderHistoryTableProps {
   data: OrderRecord[];
   viewMode: OrderRecord["status"];
-  currentRole: "admin" | "warehouse";
+  currentRole: "admin" | "warehouse" | "purchasing" | "finance";
   onView: (order: OrderRecord) => void;
   onReceive: (order: OrderRecord) => void;
-  onApprovePending: (id: string) => void;
-  onMoveToAwaiting: (id: string) => void;
-  onDelete: (id: string) => void;
+  onApprovePending: (id: number) => void;
+  onMoveToAwaiting: (id: number) => void;
+  onDelete: (id: number) => void;
   onEdit?: (order: OrderRecord) => void; 
   onDownload?: (order: OrderRecord) => void; 
 }
@@ -67,7 +70,7 @@ export const OrderHistoryTable = ({
             const totalCost = order.products.reduce((sum, p) => sum + (p.expectedQty * p.unitPrice), 0);
 
             return (
-              <TableRow key={order.id} className="hover:bg-gray-50/50">
+              <TableRow className="hover:bg-gray-50/50">
                 <TableCell className="px-6 py-4 font-bold text-gray-900 text-center">{order.poId}</TableCell>
                 <TableCell className="px-6 py-4 text-gray-600 text-center">{order.supplierName}</TableCell>
                 <TableCell className="px-6 py-4 text-gray-500 text-xs text-center">
@@ -80,22 +83,25 @@ export const OrderHistoryTable = ({
                   <div className="flex justify-center items-center gap-2">
                     
                     {/* --- PENDING ACTIONS --- */}
-                    {viewMode === "pending" && (
+                    {viewMode === "Draft" && (
                       <>
-                        <Button variant="ghost" size="icon" className="text-green-600 hover:bg-green-50" onClick={() => onApprovePending(order.id)} title="Approve to Official">
-                          <CheckCircle className="w-4 h-4" />
-                        </Button>
+                        {/* ADMIN SPECIFIC BUTTON */}
+                        {currentRole === "admin" && (
+                          <Button variant="ghost" size="icon" className="text-green-600 hover:bg-green-50" onClick={() => onApprovePending(order.poId)} title="Approve to Official">
+                            <CheckCircle className="w-4 h-4" />
+                          </Button>
+                         )}
                         <Button variant="ghost" size="icon" className="text-blue-500 hover:bg-blue-50" onClick={() => onEdit?.(order)} title="Edit Draft">
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-red-500 hover:bg-red-50" onClick={() => onDelete(order.id)} title="Delete">
+                        <Button variant="ghost" size="icon" className="text-red-500 hover:bg-red-50" onClick={() => onDelete(order.poId)} title="Delete">
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </>
                     )}
 
                     {/* --- OFFICIAL ACTIONS --- */}
-                    {viewMode === "official" && (
+                    {viewMode === "Official" && (
                       <>
                         <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onView(order)} title="View">
                           <Eye className="w-4 h-4" />
@@ -103,21 +109,27 @@ export const OrderHistoryTable = ({
                         <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onDownload?.(order)} title="Download PDF">
                           <Download className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-blue-600 hover:bg-blue-50" onClick={() => onMoveToAwaiting(order.id)} title="Send to Warehouse (Awaiting)">
+                        {/* ADMIN SPECIFIC BUTTON */}
+                        {currentRole === "admin" && (
+                        <Button variant="ghost" size="icon" className="text-blue-600 hover:bg-blue-50" onClick={() => onMoveToAwaiting(order.poId)} title="Send to Warehouse (Awaiting Delivery)">
                           <Truck className="w-4 h-4" />
                         </Button>
+                        )}
                       </>
                     )}
 
                     {/* --- AWAITING ACTIONS --- */}
-                    {viewMode === "awaiting" && (
+                    {viewMode === "Awaiting Delivery" && (
                       <>
                         <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onView(order)} title="View">
                           <Eye className="w-4 h-4" />
                         </Button>
+                        {/* ADMIN AND PURCHASING SPECIFIC BUTTON */}
+                        {(currentRole === "admin" || currentRole === "purchasing") && (
                         <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onDownload?.(order)} title="Download PDF">
                           <Download className="w-4 h-4" />
                         </Button>
+                        )}
                         {/* WAREHOUSE SPECIFIC BUTTON */}
                         {currentRole === "warehouse" && (
                           <Button variant="outline" size="sm" className="bg-green-900 text-white hover:bg-green-800 gap-2 ml-1 transition-colors" onClick={() => onReceive(order)}>
@@ -128,7 +140,7 @@ export const OrderHistoryTable = ({
                     )}
 
                     {/* --- COMPLETE / INCOMPLETE ACTIONS --- */}
-                    {(viewMode === "complete" || viewMode === "incomplete") && (
+                    {(viewMode === "Complete" || viewMode === "Incomplete") && (
                       <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onView(order)} title="View Audit">
                         <Eye className="w-4 h-4" />
                       </Button>

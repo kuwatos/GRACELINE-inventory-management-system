@@ -1,15 +1,21 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createOrderService, updateOrderService } from "@/src/entity/order/order.service";
-import { createOrder, deleteOrder, updateOrder } from "@/src/entity/order/order.repository";
-import { editOrderSchema, newOrderSchema } from "../validations";
+import { createOrderService, recieveOrder, updateOrderService } from "@/src/entity/order/order.service";
+import { approveOrder, changeOrderStatus, createOrder, deleteOrder, updateOrder } from "@/src/entity/order/order.repository";
+import { editOrderSchema, newOrderSchema, receiveOrderSchema } from "../validations";
 import * as z from "zod";
 import { validateSessionUser } from "@/src/entity/user/user.repository";
 
+import { OrderRecord } from "@/components/features/orders/order-history-table";
+import { readPurchaseOrderHistory } from "@/src/entity/order/order.query";
+import { readOrderProducts } from "@/src/entity/order_product/order_product.query";
+import { readSuppliersAndIdHavingProducts } from "@/src/entity/supplier/supplier.query";
+import { readSupplierProducts } from "@/src/entity/supplier_item/supplier_item.query";
+
 export async function createOrderAction(values: z.infer<typeof newOrderSchema>) {
     try {
-
+        console.log("creating.....")
         const user = await validateSessionUser()
         const validData = newOrderSchema.parse(values);
        
@@ -54,6 +60,60 @@ export async function updateOrderAction(orderId: number, values: z.infer<typeof 
       }
 }
 
+export async function receiveOrderAction(orderId :number, values: z.infer<typeof receiveOrderSchema>) {
+  try {
+    const user = await validateSessionUser()
+    const validData = receiveOrderSchema.parse(values);
+
+    await recieveOrder({
+            orderId: orderId,
+            userId: user.id,
+            items: validData.products,
+        });
+    
+        revalidatePath("/orders"); 
+        return { success: true };
+        
+      } catch (error: any) { 
+        console.error("Order Receive Error:", error);
+        return { success: false, error: "Failed to recieve order." };
+      }
+}
+
+
+
+export async function approveOrderAction(orderId: number) {
+    try {
+        // Tell the Robot Butler to deactivate this user
+        await approveOrder({id: orderId});
+    
+        // Refresh the page so they disappear from the table instantly
+        revalidatePath("/orders");
+        
+        return { success: true };
+      } catch (error) {
+        console.error("Order Deletion Error:", error);
+        return { success: false, error: "Failed to delete order" };
+      }
+}
+
+
+export async function changeOrderStatusAction(orderId: number, orderStatus: string) {
+    try {
+        // Tell the Robot Butler to deactivate this user
+        await changeOrderStatus({id: orderId, orderStatus: orderStatus});
+    
+        // Refresh the page so they disappear from the table instantly
+        revalidatePath("/orders");
+        
+        return { success: true };
+      } catch (error) {
+        console.error("Order Status Change Error:", error);
+        return { success: false, error: "Failed to change order status" };
+      }
+}
+
+
 export async function deleteOrderAction(orderId: number) {
     try {
         // Tell the Robot Butler to deactivate this user
@@ -67,4 +127,77 @@ export async function deleteOrderAction(orderId: number) {
         console.error("Order Deletion Error:", error);
         return { success: false, error: "Failed to delete order" };
       }
+}
+
+
+export async function getOrdersAction(): Promise<OrderRecord[]> {
+  try {
+    const orders = await readPurchaseOrderHistory();
+
+    const ordersWithProducts = await Promise.all(
+      orders.map(async (order) => {
+        const products = await readOrderProducts({ id: order.poId });
+
+        return {
+          id: String(order.poId),
+          poId: order.poId,
+          supplierId: order.supplierId,
+          projectId: order.projectId ?? undefined,
+          supplierName: order.supplierName,
+          dateCreated: order.dateCreated
+            ? new Date(order.dateCreated).toLocaleDateString()
+            : "—",
+          expectedDelivery: order.expectedDelivery
+            ? new Date(order.expectedDelivery).toLocaleDateString()
+            : "—",
+          dateReceived: order.actualDelivery
+            ? new Date(order.actualDelivery).toLocaleDateString()
+            : undefined,
+          status: order.status as OrderRecord["status"],
+          products: products.map((p) => ({
+            productId: p.productId!,
+            productName: p.productName,
+            expectedQty: p.expectedQty,
+            unitPrice: p.unitPrice ? parseFloat(p.unitPrice) : 0,
+            receivedQty: p.receivedQty ?? undefined,
+          })),
+        };
+      })
+    );
+
+    return ordersWithProducts;
+  } catch (error) {
+    console.error("Failed to fetch orders:", error);
+    return [];
+  }
+}
+
+export type SupplierOption = { supplierId: number; supplierName: string };
+export type SupplierProduct = {
+  supplierId: number;
+  productId: number;
+  productName: string;
+  unitPrice: string;
+};
+
+export async function getSuppliersAction(): Promise<SupplierOption[]> {
+  try {
+    return await readSuppliersAndIdHavingProducts();
+  } catch {
+    return [];
+  }
+}
+
+export async function getSupplierProductsAction(): Promise<SupplierProduct[]> {
+  try {
+    const rows = await readSupplierProducts();
+    return rows.map((r) => ({
+      supplierId: r.supplierId!,
+      productId: r.productId!,
+      productName: r.productName,
+      unitPrice: r.unitPrice ?? "0.00",
+    }));
+  } catch {
+    return [];
+  }
 }

@@ -158,7 +158,7 @@ export const itemsTable = pgTable("item_tb", {
   productCategory5: text("product_category5"),
   productDesc: text("product_desc"),
   measurement: text("measurement").notNull(),
-  productQuantity: integer("product_quantity").default(0),
+  productQuantity: integer("product_quantity").default(0).notNull(),
   reorderLevel: integer("reorder_level"),
   archived: boolean("archived").default(false),
 });
@@ -169,7 +169,7 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
     .generatedAlwaysAsIdentity({ startWith: 6000001 })
     .primaryKey(),
   supplierId: integer("supplier_id").references(() => suppliersTable.supplierId),
-  productId: integer("product_id").references(() => itemsTable.productId),
+  productId: integer("product_id").references(() => itemsTable.productId).notNull(),
   unitPrice: text("unit_price"),
   lastUpdated: timestamp("last_updated")
     // 1. For the initial insert (replaces defaultNow)

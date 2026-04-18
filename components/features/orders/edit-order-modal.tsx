@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -8,6 +8,8 @@ import { Plus, Trash2 } from "lucide-react";
 import { editOrderSchema } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 import { OrderRecord } from "./order-history-table";
+import { SupplierProduct, updateOrderAction } from "@/lib/action/order.action";
+import { executeAction } from "@/lib/error.handler";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -15,23 +17,42 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { executeAction } from "@/lib/error.handler";
 
 interface EditOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  order: OrderRecord | null; 
+  order: OrderRecord | null;
+  supplierProducts: SupplierProduct[]; // ADD
 }
 
-export const EditOrderModal = ({ isOpen, onClose, order }: EditOrderModalProps) => {
+export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts }: EditOrderModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const form = useForm<z.infer<typeof editOrderSchema>>({
+
+  // Products for this specific order's supplier — fixed, never changes
+  const availableProducts = supplierProducts.filter(
+    (p) => p.supplierId === order?.supplierId
+  );
+
+  const handleProductSelect = (index: number, productId: number) => {
+    form.setValue(`products.${index}.productId`, productId);
+    const match = availableProducts.find((p) => p.productId === productId);
+    if (match) {
+      form.setValue(`products.${index}.unitPrice`, match.unitPrice);
+    }
+  };
+
+  // AFTER — tell react-hook-form: "track input types internally, submit output types"
+  const form = useForm<
+    z.input<typeof editOrderSchema>,   // what the form fields hold internally
+    any,
+    z.output<typeof editOrderSchema>   // what onSubmit receives after Zod transforms
+  >({
     resolver: zodResolver(editOrderSchema),
     defaultValues: {
-      supplier: "",
-      expected: "",
-      products: [{ productId: "", qty: 1 }],
+      supplierId: 0,
+      projectId: undefined,
+      deliveryDate: undefined,
+      products: [{ productId: 0, unitPrice: "", quantity: 1 }],
     },
   });
 
@@ -43,12 +64,16 @@ export const EditOrderModal = ({ isOpen, onClose, order }: EditOrderModalProps) 
   useEffect(() => {
     if (isOpen && order) {
       form.reset({
-        supplier: order.supplierName || "", 
-        expected: order.expectedDelivery || "", 
-        // Maps expectedQty for the form
-        products: order.products && order.products.length > 0 
-          ? order.products.map(p => ({ productId: p.productId, qty: p.expectedQty }))
-          : [{ productId: "", qty: 1 }],
+        supplierId: order.supplierId,
+        projectId: order.projectId,
+        deliveryDate: order.expectedDelivery ? new Date(order.expectedDelivery) : undefined,
+        products: order.products.length > 0
+          ? order.products.map((p) => ({
+              productId: p.productId,
+              unitPrice: String(p.unitPrice),
+              quantity: p.expectedQty,
+            }))
+          : [{ productId: 0, unitPrice: "", quantity: 1 }],
       });
     }
   }, [isOpen, order, form]);
@@ -58,76 +83,58 @@ export const EditOrderModal = ({ isOpen, onClose, order }: EditOrderModalProps) 
     onClose();
   };
 
-  async function onSubmit(values: z.infer<typeof editOrderSchema>){
+  async function onSubmit(values: z.output<typeof editOrderSchema>) {
+    if (!order) return;
     setIsSubmitting(true);
-    
     await executeAction(async () => {
-      if (!item) {
-        throw new Error("Missing item context. Please refresh and try again.");
-      } // Just a safety check
-      
-      // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
-      const validatedData = editOrderSchema.parse(values);
-  
-      // const res = await updateItemAction(item.productId,validatedData);
-  
-      // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
-      if (!res.success) {
-        throw res; 
-      }
-      form.reset();
-      onClose();
+      const res = await updateOrderAction(order.poId, values);
+      if (!res.success) throw res;
+      handleClose();
       return res;
-    }, "Item added successfully!");
-  
+    }, "Order updated successfully!");
     setIsSubmitting(false);
   }
 
-  return (
+   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden border-none shadow-2xl">
-        <DialogHeader className="px-8 py-8 border-b border-gray-100 flex justify-center items-center">
-          <DialogTitle className="text-2xl font-medium text-gray-900">
-            Edit Order: {order?.id}
-          </DialogTitle>
+      {/* SCROLL FIX: same flex col + max-h pattern */}
+      <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden border-none shadow-2xl flex flex-col max-h-[90vh]">
+        <DialogHeader className="px-8 py-8 border-b border-gray-100 flex justify-center items-center shrink-0">
+          <DialogTitle className="text-2xl font-medium text-gray-900">Edit Order: {order?.poId}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <ScrollArea className="max-h-[65vh]">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden min-h-0">
+            <ScrollArea className="flex-1">
               <div className="p-8 space-y-8">
                 <div className="grid grid-cols-2 gap-5">
-                  <FormField control={form.control} name="supplier" render={({ field }) => (
-                    <FormItem className="space-y-1.5">
-                      <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger className={cn("h-11 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0", !field.value && "text-gray-400")}>
-                            <SelectValue placeholder="Select supplier..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Office Supplies Co.">Office Supplies Co.</SelectItem>
-                          <SelectItem value="Furniture Plus">Furniture Plus</SelectItem>
-                          <SelectItem value="TechSupply Co.">TechSupply Co.</SelectItem>
-                          <SelectItem value="GlobalParts Ltd">GlobalParts Ltd</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="text-xs text-red-500 ml-1" />
-                    </FormItem>
-                  )} />
 
-                  <FormField control={form.control} name="expected" render={({ field }) => (
+                  {/* Supplier: read-only, no select */}
+                  <div className="space-y-1.5">
+                    <p className="text-sm font-semibold text-gray-700 ml-1">Supplier</p>
+                    <p className="h-11 flex items-center px-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-sm">
+                      {order?.supplierName}
+                    </p>
+                  </div>
+
+                  {/* Delivery Date — unchanged */}
+                  <FormField control={form.control} name="deliveryDate" render={({ field }) => (
                     <FormItem className="space-y-1.5">
                       <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Expected Delivery</FormLabel>
                       <FormControl>
-                        <Input {...field} type="date" className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                        <Input
+                          type="date"
+                          value={field.value ? new Date(field.value as Date).toISOString().split("T")[0] : ""}
+                          onChange={(e) => field.onChange(new Date(e.target.value))}
+                          className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0"
+                        />
                       </FormControl>
                       <FormMessage className="text-xs text-red-500 ml-1" />
                     </FormItem>
                   )} />
                 </div>
 
+                {/* Products — same pattern as new modal */}
                 <div className="space-y-4 pt-4 border-t border-gray-100">
                   <div className="flex items-center justify-between">
                     <FormLabel className="text-lg font-bold text-gray-800 ml-1">Products</FormLabel>
@@ -137,60 +144,90 @@ export const EditOrderModal = ({ isOpen, onClose, order }: EditOrderModalProps) 
                   </div>
 
                   <div className="space-y-3">
-                    {fields.map((field, index) => (
-                      <div key={field.id} className="flex gap-3 items-end bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
-                        <div className="flex-1">
-                          <FormField control={form.control} name={`products.${index}.productId`} render={({ field: productField }) => (
-                            <FormItem className="space-y-1.5">
-                              <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Product {index + 1}</FormLabel>
-                              <Select onValueChange={productField.onChange} value={productField.value}>
-                                <FormControl>
-                                  <SelectTrigger className="h-11 bg-white rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0">
-                                    <SelectValue placeholder="Select product..." />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="PROD-001">Office Chair - Ergonomic</SelectItem>
-                                  <SelectItem value="PROD-002">Wireless Mouse</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage className="text-xs text-red-500 ml-1" />
-                            </FormItem>
-                          )} />
-                        </div>
-                        
-                        <div className="w-24">
-                          <FormField control={form.control} name={`products.${index}.qty`} render={({ field: qtyField }) => (
-                            <FormItem className="space-y-1.5">
-                              <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Expected Qty</FormLabel>
-                              <FormControl>
-                                <Input {...qtyField} type="number" className="h-11 bg-white rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
-                              </FormControl>
-                              <FormMessage className="text-xs text-red-500 ml-1" />
-                            </FormItem>
-                          )} />
-                        </div>
+                    {fields.map((field, index) => {
+                      const selectedProductId = form.watch(`products.${index}.productId`);
+                      const selectedProduct = availableProducts.find((p) => p.productId === Number(selectedProductId));
 
-                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="h-11 w-11 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
+                      return (
+                        <div key={field.id} className="flex gap-3 items-end bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                          <div className="flex-1">
+                            <FormField control={form.control} name={`products.${index}.productId`} render={({ field: f }) => (
+                              <FormItem className="space-y-1.5">
+                                <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Product {index + 1}</FormLabel>
+                                <Select
+                                  onValueChange={(val) => handleProductSelect(index, Number(val))}
+                                  value={f.value ? String(f.value as number) : ""}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger className="h-11 bg-white rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0">
+                                      <SelectValue placeholder="Select product..." />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {availableProducts.map((p) => (
+                                      <SelectItem key={p.productId} value={String(p.productId)}>
+                                        {p.productName}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage className="text-xs text-red-500 ml-1" />
+                              </FormItem>
+                            )} />
+                          </div>
+
+                          {/* Unit price display only */}
+                          <div className="w-28">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1.5">Unit Price</p>
+                            <div className="h-11 flex items-center px-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 text-sm font-medium">
+                              {selectedProduct ? `₱${selectedProduct.unitPrice}` : "—"}
+                            </div>
+                          </div>
+
+                          <div className="w-24">
+                            <FormField control={form.control} name={`products.${index}.quantity`} render={({ field: f }) => (
+                              <FormItem className="space-y-1.5">
+                                <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Qty</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    name={f.name}
+                                    ref={f.ref}
+                                    value={f.value as number}
+                                    onChange={f.onChange}
+                                    onBlur={f.onBlur}
+                                    className="h-11 bg-white rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0"
+                                  />
+                                </FormControl>
+                                <FormMessage className="text-xs text-red-500 ml-1" />
+                              </FormItem>
+                            )} />
+                          </div>
+
+                          <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="h-11 w-11 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  <Button type="button" variant="outline" onClick={() => append({ productId: "", qty: 1 })} className="w-full h-12 border-dashed border-2 border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 rounded-xl transition-all font-bold">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => append({ productId: 0, unitPrice: "", quantity: 1 })}
+                    className="w-full h-12 border-dashed border-2 border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 rounded-xl transition-all font-bold"
+                  >
                     <Plus className="w-4 h-4 mr-2" /> Add Product Row
                   </Button>
                 </div>
               </div>
             </ScrollArea>
 
-            <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3">
-              <Button type="button" variant="outline" onClick={handleClose} className="px-8 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
-                Cancel
-              </Button>
-              <Button type="submit" className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/70">
-                Save Changes
+            <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3 shrink-0">
+              <Button type="button" variant="outline" onClick={handleClose} className="px-8 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">Cancel</Button>
+              <Button type="submit" disabled={isSubmitting} className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/70">
+                {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>

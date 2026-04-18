@@ -39,3 +39,19 @@ export async function getSupplierItems(supplierId: number) {
   .from(supplierItemsTable)
   .where(eq(supplierItemsTable.supplierId, supplierId))
 }
+
+
+
+// Get all supplier-product links with prices and names, for Orders
+export async function readSupplierProducts() {
+  return db
+    .select({
+      supplierId: supplierItemsTable.supplierId,
+      productId: supplierItemsTable.productId,
+      productName: itemsTable.productName,
+      unitPrice: supplierItemsTable.unitPrice,
+    })
+    .from(supplierItemsTable)
+    .innerJoin(itemsTable, eq(supplierItemsTable.productId, itemsTable.productId))
+    .where(eq(supplierItemsTable.archived, false));
+}

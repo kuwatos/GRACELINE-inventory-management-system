@@ -3,6 +3,7 @@ import { inputDeliveredItemQuantity, createOrderProducts, deleteOrderProducts, r
 import { db } from "../../index";
 import { ordersTable } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
+import { updateItem } from "../item/item.repository";
 
 export async function createOrderService(data: {
   supplierId: number;
@@ -12,7 +13,7 @@ export async function createOrderService(data: {
   items: {
     productId: number;
     quantity: number;
-    unitPrice: number; // to be changed because needed for addition and stuff
+    unitPrice: string;
   }[];
 }) {
   const order = await createOrder({
@@ -47,7 +48,7 @@ export async function updateOrderService( data: {
   items: {
     productId: number;
     quantity: number;
-    unitPrice: number;
+    unitPrice: string;
   }[];
 }) {
 
@@ -81,8 +82,8 @@ export async function recieveOrder(data: {
   orderId: number,
   userId: string,
   items: {
-    orderProductId: number;
-    recievedQuantity: number;
+    productId: number;
+    quantity: number;
   }[];
 
 }) {
@@ -90,16 +91,18 @@ export async function recieveOrder(data: {
       const results = await Promise.all(
             data.items.map(async (item) => {
               const result = await inputDeliveredItemQuantity({
-                orderProductId: item.orderProductId,
-                quantity: item.recievedQuantity,
+                orderId: data.orderId,
+                orderProductId: item.productId,
+                quantity: item.quantity,
                 userId: data.userId,
               }, tx); // Ensuring 'tx' is passed here
               
-              if (!result) throw new Error(`Failed to update item ${item.orderProductId}`);
+              if (!result) throw new Error(`Failed to update item ${item.productId}`);
+
               return result;
             }),
           );
-    
+      
       
       if(results.length !== data.items.length) throw new Error("Failed to add all delivered items, changes not saved.");
 
@@ -118,7 +121,6 @@ export async function recieveOrder(data: {
       const isOrderComplete = verificationResults.every(result => result.isFullyDelivered === true);
 
       await changeOrderStatus({
-        sessionUserId: data.userId,
         id: data.orderId,
         orderStatus: isOrderComplete ? "Complete" : "Incomplete"
       }, tx)

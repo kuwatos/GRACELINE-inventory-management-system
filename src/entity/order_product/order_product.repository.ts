@@ -1,9 +1,10 @@
 // CRUD lives here
 import { db } from "../../index";
-import { orderProductsTable, ordersTable } from "../../db/schema";
+import { itemsTable, orderProductsTable, ordersTable } from "../../db/schema";
 import { eq, ilike, and } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { PgTransaction } from "drizzle-orm/pg-core";
+import { updateItem } from "../item/item.repository";
 
 
 // Type definition for the transaction context
@@ -41,6 +42,7 @@ export async function deleteOrderProducts(id: number) {
 
 //ADD DELIVERY ITEMS
 export async function inputDeliveredItemQuantity(data : {
+  orderId: number
   orderProductId: number, 
   quantity: number, 
   userId: string, 
@@ -57,13 +59,31 @@ export async function inputDeliveredItemQuantity(data : {
 
     if(!orderProduct) throw new Error("Order product not found");
 
-    const [addedOrderProduct] = await tx
+    const [addedOrderProductQuantity] = await tx
       .update(orderProductsTable)
       .set({ deliveredOrderProductQuantity: data.quantity})
       .where(eq(orderProductsTable.orderProductId, data.orderProductId))
       .returning();
 
-    if(addedOrderProduct) {
+    if (!orderProduct.productId) {
+    // Handle the error or return early
+    throw new Error("Product ID is missing for this item, changes not saved.");
+}
+    const [inventoryItem] = await tx
+      .select()
+      .from(itemsTable)
+      .where(eq(itemsTable.productId, orderProduct.productId))
+      .limit(1)
+
+    const newInventoryQuantity = inventoryItem.productQuantity + data.quantity
+
+    const addedInventoryQuantity = await updateItem({
+      id: inventoryItem.productId,
+      productQuantity: newInventoryQuantity,
+      remarks: "Recieved from Order:" + data.orderId.toString()
+    }, tx);
+
+    if(addedOrderProductQuantity && addedInventoryQuantity) {
       await createLog({
         userId: data.userId,
         actionId: 19, // Edited (specifically the delivered)
@@ -74,7 +94,7 @@ export async function inputDeliveredItemQuantity(data : {
         remarks: null
       }, tx);
     }
-    return addedOrderProduct;
+    return addedOrderProductQuantity;
   });
 }
 

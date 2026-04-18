@@ -156,14 +156,15 @@ export async function updateOrder(data: {
 
 // CHANGE STATUS
 export async function changeOrderStatus(data: {
-  sessionUserId: string;
   id: number;
   orderStatus: string;
-}, prevTx : Transaction) {
+}, prevTx? : Transaction) {
 
   const client = prevTx ?? db;
 
   return await client.transaction(async (tx) => {
+    const user = await validateSessionUser()
+
     const [existing] = await tx
       .select()
       .from(ordersTable)
@@ -183,7 +184,7 @@ export async function changeOrderStatus(data: {
       // Special Log for Received orders
       if (data.orderStatus === "Complete" || data.orderStatus === "Incomplete") {
         await createLog({
-          userId: data.sessionUserId,
+          userId: user.id,
           actionId: 19,                  // Received an order
           targetId: data.id,
           columnName: "orderStatus",
@@ -204,7 +205,7 @@ export async function changeOrderStatus(data: {
         
         if(!orderPlaced) {
           await createLog({
-            userId: data.sessionUserId,
+            userId: user.id,
             actionId: 16,                  // Placed an order
             targetId: data.id,
             columnName: "orderStatus",
@@ -221,8 +222,10 @@ export async function changeOrderStatus(data: {
 }
 
 // APPROVE ORDER
-export async function approveOrder(data: { id: number; approvedBy: string }) {
+export async function approveOrder(data: { id: number; }) {
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser()
+    
     const [existing] = await tx
       .select()
       .from(ordersTable)
@@ -234,19 +237,19 @@ export async function approveOrder(data: { id: number; approvedBy: string }) {
     const [updatedOrder] = await tx
       .update(ordersTable)
       .set({ 
-        approvedBy: data.approvedBy,
+        approvedBy: user.id,
       })
       .where(eq(ordersTable.orderId, data.id))
       .returning();
 
     if (updatedOrder) {
       await createLog({
-        userId: data.approvedBy,
+        userId: user.id,
         actionId: 18,                    // Approved a purchase order
         targetId: data.id,
         columnName: "approvedBy",
         prevValue: existing.approvedBy?.toString() ?? null,
-        newValue: data.approvedBy.toString(),
+        newValue: user.id.toString(),
       }, tx);
       await createUserNotificationService({ notifId: 5, targetId: data.id }, tx);
     }

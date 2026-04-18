@@ -11,13 +11,13 @@ interface ReceiveOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   orderData: OrderRecord | null;
-  onSubmitReceipt: (orderId: string, receivedCounts: Record<string, number>) => void;
+  onSubmitReceipt: (orderId: string, receivedCounts: Record<number, number>) => void;
 }
 
 export const ReceiveOrderModal = ({ isOpen, onClose, orderData, onSubmitReceipt }: ReceiveOrderModalProps) => {
-  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [counts, setCounts] = useState<Record<number, number>>({});
 
-  const handleInputChange = (productId: string, value: string) => {
+  const handleInputChange = (productId: number, value: string) => {
     setCounts(prev => ({ ...prev, [productId]: parseInt(value) || 0 }));
   };
 
@@ -49,7 +49,7 @@ export const ReceiveOrderModal = ({ isOpen, onClose, orderData, onSubmitReceipt 
             <TableBody>
               {orderData.products.map((item, i) => (
                 <TableRow key={i}>
-                  <TableCell className="font-medium text-lg">{item.productId}</TableCell>
+                  <TableCell className="font-medium text-lg">{item.productName}</TableCell>
                   <TableCell className="text-right">
                     <Input 
                       type="number" 
