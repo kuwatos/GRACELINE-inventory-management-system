@@ -12,7 +12,6 @@ import { NewOrderModal } from "./new-order-modal";
 import { EditOrderModal } from "./edit-order-modal"; 
 import { authClient } from "@/lib/auth-client";
 import { useTransition } from "react";
-import { handleError } from "@/lib/error.handler";
 import { approveOrderAction, changeOrderStatusAction, deleteOrderAction, receiveOrderAction } from "@/lib/action/order.action";
 import { SupplierOption, SupplierProduct, ProjectOption } from "@/lib/action/order.action";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
@@ -193,7 +192,6 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, proj
           onApprovePending={handleApprovePending}
           onMoveToAwaiting={handleMoveToAwaiting}
           onDelete={handleDelete}
-          onDownload={(order) => console.log("Download PDF", order)}
         />
       </Card>
 

@@ -3,6 +3,7 @@
 import { Eye, Download, Trash2, Edit, CheckCircle, Truck, PackageCheck } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { DownloadOrderButton } from "./download-order-button";
 
 export interface OrderProduct {
   orderProductId: number;  // ADD
@@ -37,7 +38,6 @@ interface OrderHistoryTableProps {
   onMoveToAwaiting: (id: number) => void;
   onDelete: (id: number) => void;
   onEdit?: (order: OrderRecord) => void; 
-  onDownload?: (order: OrderRecord) => void; 
 }
 
 export const OrderHistoryTable = ({ 
@@ -50,7 +50,6 @@ export const OrderHistoryTable = ({
   onMoveToAwaiting, 
   onDelete, 
   onEdit,
-  onDownload 
 }: OrderHistoryTableProps) => {
   
   if (data.length === 0) return <div className="p-8 text-center text-gray-500 m-6">No orders found in this category.</div>;
@@ -130,14 +129,12 @@ export const OrderHistoryTable = ({
                             <Truck className="w-4 h-4" />
                           </Button>
                           )}
-                        <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onDownload?.(order)} title="Download PDF">
-                          <Download className="w-4 h-4" />
-                        </Button>
+                        <DownloadOrderButton order={order} />
                         
                       </>
                     )}
 
-                    {/* --- AWAITING ACTIONS --- */}
+                    {/* --- AWAITING DELIVERY ACTIONS --- */}
                     {viewMode === "Awaiting Delivery" && (
                       <>
                         <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onView(order)} title="View">
@@ -145,9 +142,7 @@ export const OrderHistoryTable = ({
                         </Button>
                         {/* ADMIN AND PURCHASING SPECIFIC BUTTON */}
                         {(currentRole === "admin" || currentRole === "purchasing") && (
-                        <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onDownload?.(order)} title="Download PDF">
-                          <Download className="w-4 h-4" />
-                        </Button>
+                         <DownloadOrderButton order={order} />
                         )}
                         {/* WAREHOUSE SPECIFIC BUTTON */}
                         {currentRole === "warehouse" && (
