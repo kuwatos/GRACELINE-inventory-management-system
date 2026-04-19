@@ -49,23 +49,23 @@ export function LoginForm({
   })
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
-    await executeAction(
-      async () => {
-        // 1. Perform the action
-      const result = await signIn(data);
+  // 1. Capture the returned result from executeAction
+  const result = await executeAction(
+    async () => {
+      // The action must return the response so executeAction can access result.message
+      return await signIn(data);
+    },
+    "Logging you in..." // Optional: explicitly pass a successMessage
+  );
 
-      // 2. Handle the specific "Expected" Login Logic
-      if (result.success) {
-        const user = await validateSessionUser()
-        const path = await redirectToDashboard(user.department);
-        window.location.href = path
-      } else {
-        // If it's a known validation error, we still set it on the form
-        form.setError("root", { message: "Server error, please contact support." });
-        }
-      },
-    );
+  // 2. Handle specific "Expected" Login Logic (Navigation)
+  // We check result?.success because executeAction returns undefined if it catches an error
+  if (result?.success) {
+    const user = await validateSessionUser();
+    const path = await redirectToDashboard(user.department);
+    window.location.href = path;
   }
+}
   const company = "Graceline";
 
   return (
@@ -121,11 +121,6 @@ export function LoginForm({
                 )}
               />
               
-              {form.formState.errors.root && (
-                <p className="text-sm font-medium text-destructive text-center">
-                  {form.formState.errors.root.message}
-                </p>
-              )}
 
               <Button 
                 type="submit" 

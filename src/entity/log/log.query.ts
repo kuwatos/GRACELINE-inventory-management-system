@@ -1,6 +1,6 @@
 import { db } from "../../index";
 import { logsTable, usersTable, actionsTable, projectsTable } from "../../db/schema";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 export async function readLogsWithUser() {
   return await db
@@ -21,4 +21,5 @@ export async function readLogsWithUser() {
     .leftJoin(usersTable, eq(logsTable.userId, usersTable.id)) // 👈 Change to leftJoin
     .leftJoin(actionsTable, eq(logsTable.actionId, actionsTable.actionId))
     .leftJoin(projectsTable, eq(logsTable.projectId, projectsTable.projectId)) // 👈 Join with projectsTable for project info;
+    .orderBy(desc(logsTable.logDate)); // 👈 newest first
 }

@@ -96,7 +96,22 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, proj
     // We wrap the call in startTransition so Next.js knows to 
     // refresh the server data (revalidatePath) after it finishes.
     startTransition(async () => {
-      await deleteOrderAction(poId);
+      // 1. Ask for confirmation so they don't accidentally delete
+        const isConfirmed = window.confirm(`Are you sure you want to delete draft: ${poId}?`);
+        
+        if (isConfirmed) {
+          try {
+            // 2. Send the ID across the bridge to your Robot Butler
+            const result = await deleteOrderAction(poId);;
+    
+            if (!result.success) {
+              console.error("Failed to delete order:", result.error);
+              alert("Failed to delete order. Please try again.");
+            }
+          } catch (error) {
+            console.error("Server error during deletion:", error);
+          }
+        }
     });
   };
 

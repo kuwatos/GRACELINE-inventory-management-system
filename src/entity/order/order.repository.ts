@@ -17,7 +17,7 @@ export async function createOrder(data: {
   supplierId: number;
   expectedDeliveryDate: Date;
   actualDeliveryDate: null;
-  projectId?: number;
+  projectId: number | null;
   createdBy: string;
   approvedBy: null;
 }) {

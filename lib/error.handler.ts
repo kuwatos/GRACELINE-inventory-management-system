@@ -64,10 +64,21 @@ export async function executeAction(
 ) {
   try {
     const result = await action();
+
+    // 1. If the action returned a failure object (e.g., success: false)
+    // Route it to handleError to trigger a red toast
+    if (result?.success === false) {
+      handleError(result.error || result.message || "Action failed");
+      return result;
+    }
+
+    // 2. Only show success toast if we are actually successful
     const message = result?.message || successMessage;
     if (message) toast.success(message);
+    
     return result;
   } catch (error) {
+    // 3. Handles thrown exceptions and redirects
     handleError(error);
   }
 }

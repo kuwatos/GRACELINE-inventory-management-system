@@ -48,7 +48,7 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
     resolver: zodResolver(newOrderSchema),
     defaultValues: {
       supplierId: 0,
-      projectId: 0,
+      projectId: undefined,
       deliveryDate: undefined,
       products: [{ productId: 0, unitPrice: "", quantity: 1 }],
     },

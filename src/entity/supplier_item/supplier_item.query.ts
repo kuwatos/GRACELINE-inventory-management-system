@@ -47,7 +47,7 @@ export async function readSupplierProducts() {
   return db
     .select({
       supplierId: supplierItemsTable.supplierId,
-      productId: supplierItemsTable.productId,
+      productId: supplierItemsTable.productId, // change to supplierItemId
       productName: itemsTable.productName,
       unitPrice: supplierItemsTable.unitPrice,
     })

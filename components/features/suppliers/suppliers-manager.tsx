@@ -48,9 +48,24 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteClick = (supplier: Supplier) => {
+  const handleDeleteClick = async (supplier: Supplier) => {
     setSelectedSupplier(supplier);
-    const result = deleteSupplierAction(supplier.supplierId);
+    // 1. Ask for confirmation so they don't accidentally delete
+    const isConfirmed = window.confirm(`Are you sure you want to archive supplier: ${supplier.supplierName}?`);
+    
+    if (isConfirmed) {
+      try {
+        // 2. Send the ID across the bridge to your Robot Butler
+        const result =  await deleteSupplierAction(supplier.supplierId)
+
+        if (!result.success) {
+          console.error("Failed to delete order:", result.error);
+          alert("Failed to delete order. Please try again.");
+        }
+      } catch (error) {
+        console.error("Server error during deletion:", error);
+      }
+    }
   };
 
   return (

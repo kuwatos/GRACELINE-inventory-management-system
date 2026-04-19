@@ -87,7 +87,7 @@ export const ViewOrderModal = ({ isOpen, onClose, orderData }: ViewOrderModalPro
             {/* Dates row */}
             <div className={`grid gap-6 bg-gray-50/50 p-6 rounded-2xl border border-gray-100 ${isAudited ? "grid-cols-3" : "grid-cols-2"}`}>
             <div>
-              <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Date Created</Label>
+              <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Date Placed</Label>
               <p className="font-medium mt-1">{orderData.dateCreated}</p>
             </div>
             <div>

@@ -179,7 +179,9 @@ export const baseOrderSchema = z.object({
   projectId: z.coerce
     .number()
     .int()
-    .optional(),
+    .optional()               // ADD optional
+    .nullable()               // ADD nullable
+    .transform((val) => (val === 0 || val === null) ? undefined : val), // strip 0
   deliveryDate: z.coerce.date().min(new Date(new Date().setHours(0, 0, 0, 0)), "Choose a delivery date, and it must be at least today"),
   products: z.array(orderProductSchema).min(1, "You must add at least one product"),
 });

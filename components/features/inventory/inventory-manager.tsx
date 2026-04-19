@@ -50,9 +50,23 @@ export const InventoryManager = ({ data = [], suppliers = [], categories = [], m
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteClick = (item: InventoryItem) => {
+  const handleDeleteClick = async (item: InventoryItem) => {
     setSelectedItem(item);
-    const result = deleteItemAction(item.productId);
+    const isConfirmed = window.confirm(`Are you sure you want to delete inventory item: ${item.productName}?`);
+            
+            if (isConfirmed) {
+              try {
+                // 2. Send the ID across the bridge to your Robot Butler
+                const result = await deleteItemAction(item.productId);
+        
+                if (!result.success) {
+                  console.error("Failed to delete item:", result.error);
+                  alert("Failed to delete order. Please try again.");
+                }
+              } catch (error) {
+                console.error("Server error during deletion:", error);
+              }
+            }
   };
 
   return (

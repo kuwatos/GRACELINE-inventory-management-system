@@ -23,7 +23,7 @@ export async function createOrderService(data: {
     supplierId: data.supplierId,
     expectedDeliveryDate: data.expectedDeliveryDate,
     actualDeliveryDate: null,
-    projectId: data.projectId,
+    projectId: data.projectId ?? null,
     createdBy: data.createdBy,
     approvedBy: null,
   });
