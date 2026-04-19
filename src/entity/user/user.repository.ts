@@ -2,7 +2,7 @@
 "use server";
 import { db } from "../../index";
 import { usersTable } from "../../db/schema";
-import { and, or, ilike, eq } from "drizzle-orm";
+import { and, or, ilike, eq, ne } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { auth, type User} from "@/lib/auth";
 import { headers } from "next/headers";
@@ -53,12 +53,11 @@ export async function createUser(data: {
         if (val !== null && val !== undefined) {
           await createLog({
             userId: session?.user.id, // Who performed the action
-            // userId: "user_001",
             actionId: 3,                    // Added a New Inventory Item
             targetId: newUser.user.id,
             columnName: key,                // Dynamic: productName, productCategory1, etc.
             prevValue: null,                // It's a creation, so previous is always null
-            newValue: val.toString(),
+            newValue: val,
             remarks: null
           });
         }
@@ -72,8 +71,15 @@ export async function createUser(data: {
 }
 
 // READ
-export async function readUsers() {
-  return db.select().from(usersTable).where(eq(usersTable.active, true));
+export async function readUsers(sessionUserId: string) {
+  return db
+  .select()
+  .from(usersTable)
+  .where(
+    and(
+      eq(usersTable.active, true),
+      ne(usersTable.id, sessionUserId)
+  ));
 }
 
 // SEARCH
@@ -130,12 +136,6 @@ export async function updateUser(data: {
     if (session?.user.department!== "admin") {
           throw new Error("Unauthorized");
       }
-    console.log(id)
-    console.log(username)
-    console.log(password)
-    console.log(firstName)
-    console.log(lastName)
-    console.log(department)
     // 2. Update the user via the API
     try {
       await auth.api.adminUpdateUser({
@@ -257,9 +257,9 @@ export async function signIn(data: { username: string; password: string }) {
     });
     if (signInResult.user) {
       await createLog({
-        userId: signInResult.user.id || "unknown",
+        userId: signInResult.user.id,
         actionId: 1, // User Sign In
-        targetId: signInResult.user.id || "unknown",
+        targetId: signInResult.user.id,
         columnName: "none",
         prevValue: null,
         newValue: null,
@@ -273,26 +273,6 @@ export async function signIn(data: { username: string; password: string }) {
   }
 }
 
-export async function signOut() {
-  const session = await auth.api.getSession({ headers: await headers() });
-    try {
-      await auth.api.signOut();
-      await createLog({
-        userId: session?.user.id || "unknown",
-        actionId: 2, // User Sign Out
-        targetId: session?.user.id || "unknown",
-        columnName: "none",
-        prevValue: null,
-        newValue: null,
-        remarks: null
-      });
-      return { success: true };
-    }catch (error: any) {
-      console.error("User Sign Out Error:", error);
-      return { success: false, message: error.message || "Failed to sign out user." };
-  }
-
-}
 
 export async function validateSessionUser(requiredDepartment?: string) {
     const session = await auth.api.getSession({headers: await headers()}); // Better Auth session fetch
@@ -305,7 +285,6 @@ export async function validateSessionUser(requiredDepartment?: string) {
         throw new Error("Forbidden: Insufficient permissions");
     }
 
-    console.log("Session valid for user:", session.user.username);
     return session.user;
 }
 

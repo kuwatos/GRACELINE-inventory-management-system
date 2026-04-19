@@ -5,6 +5,7 @@ import { generateMonthlyAudit } from "@/src/entity/reports/reports.query";
 import { baseReportSchema } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 import * as z from "zod";
+import { validateSessionUser } from "@/src/entity/user/user.repository";
 
 export async function generateReportAction(values: z.input<typeof baseReportSchema>) {
   try {

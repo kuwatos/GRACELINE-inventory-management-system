@@ -165,6 +165,11 @@ export const sideBarNav: SideBarConfig = {
       icon: FolderDot
     },
     {
+      label: "Orders", // 👈 Added to Warehouse
+      href: "/warehouse/orders",
+      icon: ShoppingBag
+    },
+    {
       label: "Inventory",
       href: "/warehouse/inventory",
       icon: ClipboardList

@@ -25,7 +25,7 @@ export const usersTable = pgTable("user", {
 	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
   
   // required fields for username login plug-in
-  username: varchar("username", { length: 255 }).unique(),
+  username: varchar("username", { length: 255 }).unique().notNull(),
 	displayUsername: text("display_username"),
 
   // required fields for admin plug-in
@@ -39,7 +39,7 @@ export const usersTable = pgTable("user", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   department: text("department").notNull(),
-  active: boolean("active").default(true),
+  active: boolean("active").default(true).notNull(),
 });
 
 export const sessionsTable = pgTable("session", {
@@ -158,7 +158,7 @@ export const itemsTable = pgTable("item_tb", {
   productCategory5: text("product_category5"),
   productDesc: text("product_desc"),
   measurement: text("measurement").notNull(),
-  productQuantity: integer("product_quantity").default(0),
+  productQuantity: integer("product_quantity").default(0).notNull(),
   reorderLevel: integer("reorder_level"),
   archived: boolean("archived").default(false),
 });
@@ -168,7 +168,7 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
   supplierItemId: integer("supplier_item_id")
     .generatedAlwaysAsIdentity({ startWith: 6000001 })
     .primaryKey(),
-  supplierId: integer("supplier_id").references(() => suppliersTable.supplierId).notNull(),
+  supplierId: integer("supplier_id").references(() => suppliersTable.supplierId),
   productId: integer("product_id").references(() => itemsTable.productId).notNull(),
   unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
   lastUpdated: timestamp("last_updated", { withTimezone: true })
@@ -208,7 +208,8 @@ export const orderProductsTable = pgTable("order_product_tb", {
     .primaryKey(),
   orderId: integer("order_id").references(() => ordersTable.orderId),
   productId: integer("product_id").references(() => itemsTable.productId),
-  orderProductQuantity: integer("order_product_quantity").notNull(),
+  expectedOrderProductQuantity: integer("expected_order_product_quantity").notNull(),
+  deliveredOrderProductQuantity: integer("delivered_order_product_quantity"),
 }, (table) => ({
   unqOrderProduct: uniqueIndex("unique_order_product_idx").on(table.orderId, table.productId),
 }));

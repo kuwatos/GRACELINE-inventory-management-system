@@ -14,10 +14,7 @@ import { admin } from "better-auth/plugins"
 import { customSession } from "better-auth/plugins";
 import { createLog } from "@/src/entity/log/log.repository";
 import { openAPI } from "better-auth/plugins"
-
-
-
-
+import { eq } from "drizzle-orm";
 
 
 // betterAuth instance configuration
@@ -76,6 +73,9 @@ const options = {
     },
 
     session: {
+        expiresIn: 60 * 60 * 24 * 7, // expires in 7 days
+        updateAge: 60 * 60 * 24, // checks in 1 day, then extends session validity with the value of expiresIn
+
         additionalFields: {
             impersonatedBy: {
                 type: "string",
@@ -109,6 +109,12 @@ const options = {
                             message: "Your account is inactive. Please contact your administrator.",
                         });
                     }
+
+                    // 3. Delete all other existing sessions for the user
+                    await db
+                        .delete(sessionsTable)
+                        .where(eq(sessionsTable.userId, session.userId));
+
                     // Return the session data to continue
                     return { data: session };
                 },

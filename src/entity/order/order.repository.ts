@@ -4,17 +4,22 @@ import { ordersTable } from "../../db/schema";
 import { eq, count, and, or, ilike, isNotNull,sql } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { createUserNotificationService } from "../user_notifications/user_notifications.service";
+import { validateSessionUser } from "../user/user.repository";
+import { PgTransaction } from "drizzle-orm/pg-core";
+
+// Type definition for the transaction context
+type Transaction = PgTransaction<any, any, any>;
 
 // CREATE
 export async function createOrder(data: {
   orderStatus: string;
-  orderDate: Date;
+  orderDate: null;
   supplierId: number;
   expectedDeliveryDate: Date;
-  actualDeliveryDate?: Date;
-  projectId: number;
+  actualDeliveryDate: null;
+  projectId?: number;
   createdBy: string;
-  approvedBy?: string;
+  approvedBy: null;
 }) {
   return await db.transaction(async (tx) => {
     // 1. Insert the new order
@@ -43,6 +48,7 @@ export async function createOrder(data: {
 
 // READ
 export async function readOrder() {
+
   return db.select().from(ordersTable);
 }
 
@@ -103,16 +109,14 @@ export async function searchOrders(filters: {
 export async function updateOrder(data: {
   sessionUserId: string;
   id: number;
-  orderDate?: Date;
   expectedDeliveryDate?: Date;
   actualDeliveryDate?: Date;
   projectId?: number;
-  createdBy?: number;
 }) {
   const { id, ...incomingFields } = data;
 
   return await db.transaction(async (tx) => {
-    // 1. Get existing state
+    // 1. Check if order exists
     const [existing] = await tx
       .select()
       .from(ordersTable)
@@ -134,22 +138,12 @@ export async function updateOrder(data: {
 
       if (val !== undefined && isDifferent) {
         updates[key] = val;
-
-        await createLog({
-          userId: data.sessionUserId,
-          actionId: 16,                  // Edited a purchase order
-          targetId: id,
-          columnName: key,
-          prevValue: oldValue instanceof Date ? oldValue.toISOString() : (oldValue?.toString() ?? null),
-          newValue: val instanceof Date ? val.toISOString() : val.toString(),
-          remarks: null,
-        }, tx);
       }
     }
 
     if (Object.keys(updates).length === 0) return { message: "No changes detected" };
 
-    // 3. Finalize update
+    // 2. Finalize update
     const [updatedOrder] = await tx
       .update(ordersTable)
       .set(updates)
@@ -162,11 +156,15 @@ export async function updateOrder(data: {
 
 // CHANGE STATUS
 export async function changeOrderStatus(data: {
-  sessionUserId: string;
   id: number;
   orderStatus: string;
-}) {
-  return await db.transaction(async (tx) => {
+}, prevTx? : Transaction) {
+
+  const client = prevTx ?? db;
+
+  return await client.transaction(async (tx) => {
+    const user = await validateSessionUser()
+
     const [existing] = await tx
       .select()
       .from(ordersTable)
@@ -182,28 +180,50 @@ export async function changeOrderStatus(data: {
       .returning();
 
     if (updatedOrder) {
-      // General status change log
-      await createLog({
-        userId: data.sessionUserId,
-        actionId: 16, // Edited (specifically the status)
-        targetId: data.id,
-        columnName: "orderStatus",
-        prevValue: existing.orderStatus,
-        newValue: data.orderStatus,
-        remarks: null
-      }, tx);
 
       // Special Log for Received orders
-      if (data.orderStatus === "Delivered" || data.orderStatus === "Received") {
-        await createLog({
-          userId: data.sessionUserId,
-          actionId: 19,                  // Received an order
-          targetId: data.id,
-          columnName: "orderStatus",
-          prevValue: existing.orderStatus,
-          newValue: data.orderStatus
-        }, tx);
+      if (data.orderStatus === "Complete" || data.orderStatus === "Incomplete") {
+        const [orderRecieved] = await tx
+          .update(ordersTable)
+          .set({ 
+            actualDeliveryDate:  sql`now()`, // date when order was placed
+          })
+          .where(eq(ordersTable.orderId, data.id))
+          .returning();
+        
+        if(!orderRecieved) {
+          await createLog({
+            userId: user.id,
+            actionId: 19,                  // Received an order
+            targetId: data.id,
+            columnName: "orderStatus",
+            prevValue: existing.orderStatus,
+            newValue: data.orderStatus
+          }, tx);
+        }
         await createUserNotificationService({ notifId: 6, targetId: data.id }, tx);
+      }
+
+      else if(data.orderStatus === "Awaiting Delivery") {
+        const [orderPlaced] = await tx
+          .update(ordersTable)
+          .set({ 
+            orderDate:  sql`now()`, // date when order was placed
+          })
+          .where(eq(ordersTable.orderId, data.id))
+          .returning();
+        
+        if(!orderPlaced) {
+          await createLog({
+            userId: user.id,
+            actionId: 16,                  // Placed an order
+            targetId: data.id,
+            columnName: "orderStatus",
+            prevValue: existing.orderStatus,
+            newValue: data.orderStatus
+          }, tx);
+          await createUserNotificationService({ notifId: 8, targetId: data.id }, tx);
+        }
       }
     }
 
@@ -212,8 +232,10 @@ export async function changeOrderStatus(data: {
 }
 
 // APPROVE ORDER
-export async function approveOrder(data: { id: number; approvedBy: string }) {
+export async function approveOrder(data: { id: number; }) {
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser()
+
     const [existing] = await tx
       .select()
       .from(ordersTable)
@@ -224,22 +246,24 @@ export async function approveOrder(data: { id: number; approvedBy: string }) {
 
     const [updatedOrder] = await tx
       .update(ordersTable)
-      .set({ approvedBy: data.approvedBy })
+      .set({ 
+        approvedBy: user.id,
+        orderStatus: "Official"
+      })
       .where(eq(ordersTable.orderId, data.id))
       .returning();
 
     if (updatedOrder) {
       await createLog({
-        userId: data.approvedBy,
+        userId: user.id,
         actionId: 18,                    // Approved a purchase order
         targetId: data.id,
         columnName: "approvedBy",
         prevValue: existing.approvedBy?.toString() ?? null,
-        newValue: data.approvedBy.toString(),
+        newValue: user.id.toString(),
       }, tx);
       await createUserNotificationService({ notifId: 5, targetId: data.id }, tx);
     }
-
     return updatedOrder;
   });
 }
@@ -265,4 +289,38 @@ export async function notifyArrivingOrders() {
     
     return { count: orders.length };
   });
+}
+
+export async function deleteOrder(orderId: number) {
+  return await db.transaction(async (tx) => {
+
+
+      const user = await validateSessionUser()
+      const [order] = await tx 
+        .select()
+        .from(ordersTable)
+        .where(eq(ordersTable.orderId, orderId))
+        .limit(1);
+        
+      if (!order) throw new Error("Order not found");
+  
+      // Perform Delete
+      await db
+          .delete(ordersTable)
+          .where(eq(ordersTable.orderId, orderId))
+          .returning();
+      
+      // Log Deletion (Action ID 17)
+      await createLog({
+        userId: user.id,
+        actionId: 17,
+        targetId: orderId,
+        columnName: "order_id",
+        prevValue: order.orderId.toString(),
+        newValue: null,
+      }, tx);
+  
+      return { success: true };
+    });
+  
 }

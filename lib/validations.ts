@@ -46,10 +46,22 @@ export const newItemSchema = baseItemSchema.extend({
     .int()
     .min(1, "Please select a supplier"),
 
-  unitPrice: z.coerce
-    .number()
-    .positive("Price must be greater than 0")
-    .transform((val) => val.toFixed(2)),
+  unitPrice: z
+    .string()
+    .trim()
+    .min(1, "Price is required")
+    .regex(
+      /^\d+(\.\d{1,2})?$/,
+      "Invalid price format (e.g., 1450.00)"
+    )
+    .refine((val) => {
+      const num = parseFloat(val);
+      return num >= 0.01;
+    }, "Price must be at least 0.01")
+    .refine((val) => {
+      const num = parseFloat(val);
+      return num <= 9999999.99;
+    }, "Price exceeds the maximum limit of 9,999,999.99"),
 });
 
 // 3. EDIT ITEM (Essentials + Identity + Adjustments)
@@ -108,6 +120,7 @@ export const baseUserSchema = z.object({
 
 // Schema for New User (Passwords are REQUIRED)
 export const newUserSchema = baseUserSchema.extend({
+  username: z.string().min(6, "Username must be at least 6 characters"), // <-- ADD THIS LINE
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string().min(6, "Please confirm password"),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -117,6 +130,7 @@ export const newUserSchema = baseUserSchema.extend({
 
 // Schema for Edit User (Passwords are OPTIONAL)
 export const editUserSchema = baseUserSchema.extend({
+  username: z.string().min(1, "Username must be at least 6 characters"), // <-- ADD THIS LINE
   password: z.string().optional(),
   confirmPassword: z.string().optional(),
 }).refine((data) => !data.password || data.password === data.confirmPassword, {
@@ -128,19 +142,73 @@ export const editUserSchema = baseUserSchema.extend({
 
 // The rules for a single product line item
 const orderProductSchema = z.object({
-  productId: z.string().min(1, "Please select a product"),
-  qty: z.coerce.number<number>().int().min(1, "Quantity must be at least 1"),
+  productId: z.coerce
+    .number().int(),
+  unitPrice: z
+    .string()
+    .trim()
+    .min(1, "Price is required")
+    .regex(
+      /^\d+(\.\d{1,2})?$/,
+      "Invalid price format (e.g., 1450.00)"
+    )
+    .refine((val) => {
+      const num = parseFloat(val);
+      return num >= 0.01;
+    }, "Price must be at least 0.01")
+    .refine((val) => {
+      const num = parseFloat(val);
+      return num <= 9999999.99;
+    }, "Price exceeds the maximum limit of 9,999,999.99"),
+  quantity: z.coerce.number<number>().int().min(1, "Quantity must be at least 1"),
 });
+
+const receiveProductSchema = z.object({
+  productId: z.coerce
+    .number().int(),
+  quantity: z.coerce.number<number>().int().min(0, "Quantity cannot be negative"),
+})
+
 
 // The base rules for a Purchase Order
 export const baseOrderSchema = z.object({
-  supplier: z.string().min(1, "Supplier is required"),
-  expected: z.string().min(1, "Delivery date is required"),
+  supplierId: z.coerce
+    .number()
+    .int()
+    .min(1, "Please select a supplier"),
+  projectId: z.coerce
+    .number()
+    .int()
+    .optional(),
+  deliveryDate: z.coerce.date().min(new Date(new Date().setHours(0, 0, 0, 0)), "Choose a delivery date, and it must be at least today"),
   products: z.array(orderProductSchema).min(1, "You must add at least one product"),
 });
 
 export const newOrderSchema = baseOrderSchema;
-export const editOrderSchema = baseOrderSchema;
+export const editOrderSchema = z.object({
+  supplierId: z.coerce.number().int().min(1, "Please select a supplier"),
+  projectId: z.coerce.number().int().min(0).optional(),
+  deliveryDate: z.coerce.date()
+    .min(new Date(new Date().setHours(0, 0, 0, 0)), "Choose a delivery date, and it must be at least today")
+    .optional(),
+  products: z.array(
+    z.object({
+      productId: z.coerce.number().int(),
+      unitPrice: z
+        .string()
+        .trim()
+        .min(1, "Price is required")
+        .regex(/^\d+(\.\d{1,2})?$/, "Invalid price format (e.g., 1450.00)")
+        .refine((val) => parseFloat(val) >= 0.01, "Price must be at least 0.01")
+        .refine((val) => parseFloat(val) <= 9999999.99, "Price exceeds maximum"),
+      quantity: z.coerce.number().int().min(1, "Quantity must be at least 1"),
+    })
+  ).min(1, "You must add at least one product"),
+});
+
+export const receiveOrderSchema = z.object({
+  products: z.array(receiveProductSchema)
+})
 
 export const baseReportSchema = z.object({
   reportType: z.string().min(1, "Please select a report type"),

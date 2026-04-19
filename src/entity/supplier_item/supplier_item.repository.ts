@@ -86,6 +86,8 @@ export async function updateSupplierItem(data: {
   const { id, ...incomingFields } = data;
 
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser()
+
     // 1. Get the current link state
     const [existing] = await tx
       .select()

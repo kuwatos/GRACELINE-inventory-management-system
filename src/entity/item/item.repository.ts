@@ -5,6 +5,10 @@ import { eq, lte, ilike, or, and, isNotNull, isNull } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import {createUserNotificationService} from "../user_notifications/user_notifications.service";
 import { validateSessionUser } from "../user/user.repository";
+import { PgTransaction } from "drizzle-orm/pg-core";
+
+// Type definition for the transaction context
+type Transaction = PgTransaction<any, any, any>;
 
 // CREATE
 export async function createItem(data: {
@@ -104,10 +108,11 @@ export async function updateItem(data: {
   remarks?: string;      // 👈 Extract this for logging
   measurement?: string;
   projectId?: number | null;   // 👈 Extract this for logging
-}) {
+}, prevTx?: Transaction) {
   const { id, remarks: globalRemarks, ...rest } = data;
+  const client = prevTx ?? db;
 
-  return await db.transaction(async (tx) => {
+  return await client.transaction(async (tx) => {
     const user = await validateSessionUser() 
     const [existing] = await tx
       .select()
@@ -266,6 +271,7 @@ export async function restoreItem(
 }) {
   return await db.transaction(async (tx) => {
     const user = await validateSessionUser()
+
     const [restoredItem] = await tx
       .update(itemsTable)
       .set({ ...data, archived: false })
@@ -277,6 +283,7 @@ export async function restoreItem(
         // We only log if the value actually exists (not null/undefined)
         if (val !== null && val !== undefined) {
           await createLog({
+            userId: user.id,
             userId: user.id,
             actionId: 8,                    // Added a New Inventory Item
             targetId: restoredItem.productId,
