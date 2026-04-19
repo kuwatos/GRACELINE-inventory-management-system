@@ -61,7 +61,7 @@ export function LoginForm({
         window.location.href = path
       } else {
         // If it's a known validation error, we still set it on the form
-        form.setError("root", { message: result.message });
+        form.setError("root", { message: "Server error, please contact support." });
         }
       },
     );

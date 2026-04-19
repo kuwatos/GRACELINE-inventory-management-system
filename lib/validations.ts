@@ -120,6 +120,7 @@ export const baseUserSchema = z.object({
 
 // Schema for New User (Passwords are REQUIRED)
 export const newUserSchema = baseUserSchema.extend({
+  username: z.string().min(6, "Username must be at least 6 characters"), // <-- ADD THIS LINE
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string().min(6, "Please confirm password"),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -129,6 +130,7 @@ export const newUserSchema = baseUserSchema.extend({
 
 // Schema for Edit User (Passwords are OPTIONAL)
 export const editUserSchema = baseUserSchema.extend({
+  username: z.string().min(1, "Username must be at least 6 characters"), // <-- ADD THIS LINE
   password: z.string().optional(),
   confirmPassword: z.string().optional(),
 }).refine((data) => !data.password || data.password === data.confirmPassword, {
