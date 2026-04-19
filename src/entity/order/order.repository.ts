@@ -6,6 +6,7 @@ import { createLog } from "../log/log.repository";
 import { createUserNotificationService } from "../user_notifications/user_notifications.service";
 import { validateSessionUser } from "../user/user.repository";
 import { PgTransaction } from "drizzle-orm/pg-core";
+import Big from "big.js";
 
 // Type definition for the transaction context
 type Transaction = PgTransaction<any, any, any>;
@@ -13,13 +14,13 @@ type Transaction = PgTransaction<any, any, any>;
 // CREATE
 export async function createOrder(data: {
   orderStatus: string;
-  orderDate: null;
   supplierId: number;
   expectedDeliveryDate: Date;
   actualDeliveryDate: null;
   projectId: number | null;
   createdBy: string;
   approvedBy: null;
+  orderedValue: string
 }) {
   return await db.transaction(async (tx) => {
     // 1. Insert the new order
@@ -112,8 +113,9 @@ export async function updateOrder(data: {
   expectedDeliveryDate?: Date;
   actualDeliveryDate?: Date;
   projectId?: number;
+  orderedValue: string;
 }) {
-  const { id, ...incomingFields } = data;
+  const { id, sessionUserId, ...incomingFields } = data;
 
   return await db.transaction(async (tx) => {
     // 1. Check if order exists
@@ -130,6 +132,7 @@ export async function updateOrder(data: {
     // 2. Dynamic Diffing Loop
     for (const [key, val] of Object.entries(incomingFields)) {
       const oldValue = (existing as any)[key];
+      if (val === undefined) continue;
 
       // Standardize comparison (especially for Dates)
       const isDifferent = val instanceof Date && oldValue instanceof Date 
@@ -158,6 +161,7 @@ export async function updateOrder(data: {
 export async function changeOrderStatus(data: {
   id: number;
   orderStatus: string;
+  receivedValue?: string
 }, prevTx? : Transaction) {
 
   const client = prevTx ?? db;
@@ -181,17 +185,22 @@ export async function changeOrderStatus(data: {
 
     if (updatedOrder) {
 
-      // Special Log for Received orders
+      // Special Action for Received orders
       if (data.orderStatus === "Complete" || data.orderStatus === "Incomplete") {
+        const newReceivedValue = new Big(existing.receivedValue ?? "0")
+          .plus(new Big(data.receivedValue ?? "0"))
+          .toFixed(2);
+
         const [orderRecieved] = await tx
           .update(ordersTable)
           .set({ 
-            actualDeliveryDate:  sql`now()`, // date when order was placed
+            receivedValue: newReceivedValue,
+            actualDeliveryDate:  sql`now()`, // date when order was received
           })
           .where(eq(ordersTable.orderId, data.id))
           .returning();
         
-        if(!orderRecieved) {
+        if(orderRecieved) {
           await createLog({
             userId: user.id,
             actionId: 19,                  // Received an order
@@ -199,6 +208,15 @@ export async function changeOrderStatus(data: {
             columnName: "orderStatus",
             prevValue: existing.orderStatus,
             newValue: data.orderStatus
+          }, tx);
+
+          await createLog({
+            userId: user.id,
+            actionId: 19,                  // Received an order
+            targetId: data.id,
+            columnName: "receivedValue",
+            prevValue: existing.receivedValue,
+            newValue: newReceivedValue
           }, tx);
         }
         await createUserNotificationService({ notifId: 6, targetId: data.id }, tx);
@@ -213,7 +231,7 @@ export async function changeOrderStatus(data: {
           .where(eq(ordersTable.orderId, data.id))
           .returning();
         
-        if(!orderPlaced) {
+        if(orderPlaced) {
           await createLog({
             userId: user.id,
             actionId: 16,                  // Placed an order

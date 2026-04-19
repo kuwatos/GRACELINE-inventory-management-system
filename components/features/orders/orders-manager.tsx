@@ -51,20 +51,28 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, proj
 
   
 
-  // --- FILTERING ---
-  const currentTab = role === "warehouse" ? "Awaiting Delivery" : activeTab;
+  // --- FILTERING ---\
+  const warehouseTabs = ["Awaiting Delivery", "Incomplete"];
+
+  const allTabs = ["Draft", "Official", "Awaiting Delivery", "Incomplete", "Complete"] as const;
+  const visibleTabs =
+  role === "warehouse"
+    ? allTabs.filter(tab => warehouseTabs.includes(tab))
+    : allTabs;
   
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
-      const matchesTab = order.status === currentTab;
+      const matchesTab = order.status === activeTab;
+
       const searchLower = searchQuery.toLowerCase();
-      const matchesSearch = 
+      const matchesSearch =
         order.poId.toString().toLowerCase().includes(searchLower) ||
         order.supplierName.toLowerCase().includes(searchLower);
-        
+
       return matchesTab && matchesSearch;
     });
-  }, [orders, currentTab, searchQuery]);
+  }, [orders, activeTab, searchQuery]);
+
   
   // Loading Display
   if (isSessionPending) {
@@ -114,6 +122,7 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, proj
         }
     });
   };
+
 
   // Blind Receiving Logic
   const handleProcessReceipt = async (
@@ -177,20 +186,20 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, proj
           </div>
         </div>
 
-        {/* TABS (Admin and Purchasing Only) */}
-        {(role === "admin" || role === "purchasing") && (
+        {/* TABS */}
+        {(role === "admin" || role === "purchasing" || role === "warehouse") && (
           <div className="flex border-b border-gray-100 mb-6 gap-6 overflow-x-auto">
-            {(["Draft", "Official", "Awaiting Delivery", "Incomplete", "Complete"] as const).map((tab) => (
+            {visibleTabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${currentTab === tab ? "text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
+                className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === tab ? "text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 <span className="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-[10px] font-bold">
                   {orders.filter(o => o.status === tab).length}
                 </span>
-                {currentTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0f172a] rounded-t-full" />}
+                {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0f172a] rounded-t-full" />}
               </button>
             ))}
           </div>
@@ -200,7 +209,7 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, proj
         <OrderHistoryTable 
           data={filteredOrders} 
           currentRole={role as "admin" | "warehouse" | "purchasing" | "finance"}
-          viewMode={currentTab} 
+          viewMode={activeTab} 
           onView={setViewingOrder}
           onEdit={setEditingOrder} 
           onReceive={setReceivingOrder}

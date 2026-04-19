@@ -3,7 +3,6 @@ import { inputDeliveredItemQuantity, createOrderProducts, deleteOrderProducts, r
 import { db } from "../../index";
 import { ordersTable } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
-import { updateItem } from "../item/item.repository";
 import { success } from "zod";
 
 export async function createOrderService(data: {
@@ -15,17 +14,18 @@ export async function createOrderService(data: {
     productId: number;
     quantity: number;
     unitPrice: string;
-  }[];
+  }[],
+  orderedValue : string
 }) {
   const order = await createOrder({
     orderStatus: "Draft",
-    orderDate: null,
     supplierId: data.supplierId,
     expectedDeliveryDate: data.expectedDeliveryDate,
     actualDeliveryDate: null,
     projectId: data.projectId ?? null,
     createdBy: data.createdBy,
     approvedBy: null,
+    orderedValue: data.orderedValue,
   });
 
   const orderId = order.orderId;
@@ -51,6 +51,7 @@ export async function updateOrderService( data: {
     quantity: number;
     unitPrice: string;
   }[];
+  orderedValue: string;
 }) {
 
   const orderId = data.orderId
@@ -60,6 +61,7 @@ export async function updateOrderService( data: {
     id: orderId,
     expectedDeliveryDate: data.expectedDeliveryDate,
     projectId: data.projectId,
+    orderedValue: data.orderedValue,
 })
 
   const deleted =  await deleteOrderProducts(orderId)
@@ -97,7 +99,8 @@ export async function recieveOrder(data: {
   items: {
     productId: number;
     quantity: number;
-  }[];
+  }[],
+  receivedValue: string;
 
 }) {
     return await db.transaction(async (tx) => {
@@ -135,7 +138,8 @@ export async function recieveOrder(data: {
 
       await changeOrderStatus({
         id: data.orderId,
-        orderStatus: isOrderComplete ? "Complete" : "Incomplete"
+        orderStatus: isOrderComplete ? "Complete" : "Incomplete",
+        receivedValue: data.receivedValue
       }, tx)
       
     return {success:true, message: "Items recieved successfully."};

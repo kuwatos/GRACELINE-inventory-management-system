@@ -13,6 +13,7 @@ import { readOrderProducts } from "@/src/entity/order_product/order_product.quer
 import { readSuppliersAndIdHavingProducts } from "@/src/entity/supplier/supplier.query";
 import { readSupplierProducts } from "@/src/entity/supplier_item/supplier_item.query";
 import { readProjecstNameAndId } from "@/src/entity/projects/projects.repository";
+import Big from "big.js";
 
 export async function createOrderAction(values: z.infer<typeof newOrderSchema>) {
     try {
@@ -20,12 +21,24 @@ export async function createOrderAction(values: z.infer<typeof newOrderSchema>) 
         const user = await validateSessionUser()
         const validData = newOrderSchema.parse(values);
        
+        // Compute orderedValue from the submitted products
+        const orderedValue = validData.products
+          .reduce((acc, p) => {
+            try {
+              return acc.plus(new Big(p.unitPrice).times(new Big(p.quantity)));
+            } catch {
+              return acc;
+            }
+          }, new Big(0))
+          .toFixed(2);
+
         await createOrderService({
             supplierId: validData.supplierId,
             expectedDeliveryDate: validData.deliveryDate,
             projectId: validData.projectId,
             createdBy: user.id,
             items: validData.products,
+            orderedValue,           // ADD
         });
       
     
@@ -50,12 +63,23 @@ export async function updateOrderAction(orderId: number, values: z.infer<typeof 
         const user = await validateSessionUser()
         const validData = editOrderSchema.parse(values);
        
+        const orderedValue = validData.products
+          .reduce((acc, p) => {
+            try {
+              return acc.plus(new Big(p.unitPrice).times(new Big(p.quantity)));
+            } catch {
+              return acc;
+            }
+          }, new Big(0))
+          .toFixed(2);
+
         await updateOrderService({
             orderId: orderId,
             sessionUserId: user.id,
             expectedDeliveryDate: validData.deliveryDate,
             projectId: validData.projectId,
             items: validData.products,
+            orderedValue,           // ADD
         });
     
         revalidatePath("/orders"); 
@@ -77,10 +101,26 @@ export async function receiveOrderAction(orderId :number, values: z.infer<typeof
     const user = await validateSessionUser()
     const validData = receiveOrderSchema.parse(values);
 
+    // Need unit prices to compute receivedValue — fetch order products
+    const orderProducts = await readOrderProducts({ id: orderId });
+
+    const receivedValue = validData.products
+      .reduce((acc, item) => {
+        const match = orderProducts.find((p) => p.orderProductId === item.productId);
+        if (!match || !match.unitPrice) return acc;
+        try {
+          return acc.plus(new Big(match.unitPrice).times(new Big(item.quantity)));
+        } catch {
+          return acc;
+        }
+      }, new Big(0))
+      .toFixed(2);
+
     await recieveOrder({
             orderId: orderId,
             userId: user.id,
             items: validData.products,
+            receivedValue,          // ADD
         });
     
         revalidatePath("/orders"); 
@@ -167,6 +207,8 @@ export async function getOrdersAction(): Promise<OrderRecord[]> {
             ? new Date(order.actualDelivery).toLocaleDateString()
             : undefined,
           status: order.status as OrderRecord["status"],
+          orderedValue: order.orderedValue ?? undefined,    // ADD
+          receivedValue: order.receivedValue ?? undefined,  // ADD
           products: products.map((p) => ({
             orderProductId: p.orderProductId,
             productId: p.productId!,

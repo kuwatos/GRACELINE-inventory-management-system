@@ -19,6 +19,8 @@ type PurchaseOrderRow = {
   expectedDelivery: Date | null;
   actualDelivery: Date | null;
   status: string;
+  orderedValue: string | null;    // ADD
+  receivedValue: string | null;   // ADD
 };
 
 export async function readPurchaseOrderHistory(): Promise<PurchaseOrderRow[]> {
@@ -38,6 +40,8 @@ export async function readPurchaseOrderHistory(): Promise<PurchaseOrderRow[]> {
       expectedDelivery: ordersTable.expectedDeliveryDate,
       actualDelivery: ordersTable.actualDeliveryDate,
       status: ordersTable.orderStatus,
+      orderedValue: ordersTable.orderedValue,     // ADD
+      receivedValue: ordersTable.receivedValue,   // ADD
     })
     .from(ordersTable)
     // Join Supplier

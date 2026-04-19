@@ -82,7 +82,6 @@ export async function updateSupplierItem(data: {
   supplierId?: number;
   unitPrice?: string;
 }) {
-  const user = await validateSessionUser();
   const { id, ...incomingFields } = data;
 
   return await db.transaction(async (tx) => {

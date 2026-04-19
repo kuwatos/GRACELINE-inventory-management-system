@@ -58,10 +58,11 @@ export async function inputDeliveredItemQuantity(data : {
         .limit(1);
 
     if(!orderProduct) throw new Error("Order product not found");
-
+    
+    const prevDeliveredQuantity = orderProduct.deliveredOrderProductQuantity ?? 0
     const [addedOrderProductQuantity] = await tx
       .update(orderProductsTable)
-      .set({ deliveredOrderProductQuantity: data.quantity})
+      .set({ deliveredOrderProductQuantity: prevDeliveredQuantity + data.quantity})
       .where(eq(orderProductsTable.orderProductId, data.orderProductId))
       .returning();
 

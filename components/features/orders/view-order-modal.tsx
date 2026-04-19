@@ -62,7 +62,11 @@ export const ViewOrderModal = ({ isOpen, onClose, orderData }: ViewOrderModalPro
           <div className="p-8 space-y-6">
 
             {/* Order Info Card */}
-            <div className={`grid gap-6 bg-gray-50/50 p-6 rounded-2xl border border-gray-100 ${canSeePrices ? "grid-cols-4" : "grid-cols-3"}`}>
+            <div className={`grid gap-6 bg-gray-50/50 p-6 rounded-2xl border border-gray-100 ${
+              canSeePrices
+                ? isAudited ? "grid-cols-5" : "grid-cols-4"
+                : "grid-cols-3"
+            }`}>
               <div>
                 <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Supplier</Label>
                 <p className="font-bold mt-1">{orderData.supplierName}</p>
@@ -75,12 +79,30 @@ export const ViewOrderModal = ({ isOpen, onClose, orderData }: ViewOrderModalPro
                 <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Status</Label>
                 <p className="font-bold uppercase text-blue-600 mt-1">{orderData.status}</p>
               </div>
-              {/* Only non-warehouse roles see the order total */}
               {canSeePrices && (
-                <div>
-                  <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Order Total</Label>
-                  <p className="font-bold text-green-700 mt-1">₱{grandTotal}</p>
-                </div>
+                <>
+                  <div>
+                    <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Ordered Value</Label>
+                    <p className="font-bold text-blue-700 mt-1">
+                      {orderData.orderedValue ? `₱${orderData.orderedValue}` : "—"}
+                    </p>
+                  </div>
+                  {/* Received value only relevant for audited orders */}
+                  {isAudited && (
+                    <div>
+                      <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Received Value</Label>
+                      <p className={`font-bold mt-1 ${
+                        orderData.receivedValue && orderData.orderedValue
+                          ? new Big(orderData.receivedValue).lt(new Big(orderData.orderedValue))
+                            ? "text-red-500"
+                            : "text-green-600"
+                          : "text-gray-500"
+                      }`}>
+                        {orderData.receivedValue ? `₱${orderData.receivedValue}` : "—"}
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -99,7 +121,7 @@ export const ViewOrderModal = ({ isOpen, onClose, orderData }: ViewOrderModalPro
               <div>
                 <Label className="text-[10px] text-gray-400 uppercase tracking-widest">Actual Delivery</Label>
                 <p className={`font-medium mt-1 ${
-                  orderData.dateReceived && new Date(orderData.dateReceived) < new Date(orderData.expectedDelivery) 
+                  orderData.dateReceived && new Date(orderData.dateReceived) <= new Date(orderData.expectedDelivery) 
                     ? "text-green-600" // On time or Early: Show Green
                     : "text-red-400" // Late: Show Red
                 }`}>

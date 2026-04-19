@@ -25,6 +25,8 @@ export interface OrderRecord {
   expectedDelivery: string;
   dateReceived?: string;
   status: "Draft" | "Official" | "Awaiting Delivery" | "Incomplete" | "Complete";
+  orderedValue?: string;    // ADD
+  receivedValue?: string;   // ADD
   products: OrderProduct[];
 }
 
@@ -70,7 +72,7 @@ export const OrderHistoryTable = ({
         </TableHeader>
         <TableBody className="divide-y divide-gray-50">
           {data.map((order) => {
-            const totalCost = order.products.reduce((sum, p) => sum + (p.expectedQty * p.unitPrice), 0);
+            const totalCost = order.orderedValue;
 
             return (
               <TableRow key={order.poId} className="hover:bg-gray-50/50">
@@ -82,7 +84,7 @@ export const OrderHistoryTable = ({
                     <div>Expected: {order.expectedDelivery}</div>
                     {/* Only show for completed/incomplete orders */}
                     {(order.status === "Complete" || order.status === "Incomplete") && (
-                      <div className={order.dateReceived && (new Date(order.dateReceived) < new Date(order.expectedDelivery)) ? "text-green-600" : "text-red-400" }>
+                      <div className={order.dateReceived && (new Date(order.dateReceived) <= new Date(order.expectedDelivery)) ? "text-green-600" : "text-red-400" }>
                         Recieved: {order.dateReceived ?? "—"}
                       </div>
                     )}
@@ -90,7 +92,7 @@ export const OrderHistoryTable = ({
                 </TableCell>
                 {(currentRole === "admin" || currentRole === "purchasing") && (
                   <TableCell className="px-6 py-4 font-medium text-green-700 text-center">
-                    ₱{totalCost.toLocaleString(undefined, {minimumFractionDigits: 2})}
+                    ₱{totalCost}
                   </TableCell>
                 )}
                 <TableCell className="px-6 py-4 text-center">
@@ -153,11 +155,31 @@ export const OrderHistoryTable = ({
                       </>
                     )}
 
-                    {/* --- COMPLETE / INCOMPLETE ACTIONS --- */}
-                    {(viewMode === "Complete" || viewMode === "Incomplete") && (
+                    {/* --- COMPLETE AND INCOMPLETE ACTIONS --- */}
+                    {viewMode === "Complete"  && (
                       <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onView(order)} title="View Audit">
                         <Eye className="w-4 h-4" />
                       </Button>
+                    )}
+
+                    {viewMode === "Incomplete" && (
+                      <>
+                      <Button variant="ghost" size="icon" className="hover:bg-gray-100" onClick={() => onView(order)} title="View Audit">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      {/* WAREHOUSE SPECIFIC BUTTON */}
+                      {currentRole === "warehouse" && (
+                        <Button variant="outline" size="sm" className="bg-green-900 text-white hover:bg-green-800 gap-2 ml-1 transition-colors" onClick={() => onReceive(order)}>
+                          <PackageCheck className="w-4 h-4" /> Resolve Order
+                        </Button>
+                      )}
+                      {currentRole === "admin" && (
+                        <Button variant="outline" size="sm" className="bg-green-900 text-white hover:bg-green-800 gap-2 ml-1 transition-colors" onClick={() => onReceive(order)}>
+                          <PackageCheck className="w-4 h-4" /> Resolve Order
+                        </Button>
+                      )}
+                      
+                      </>
                     )}
 
                   </div>

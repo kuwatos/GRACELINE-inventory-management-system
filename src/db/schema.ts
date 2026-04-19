@@ -170,7 +170,7 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
     .primaryKey(),
   supplierId: integer("supplier_id").references(() => suppliersTable.supplierId),
   productId: integer("product_id").references(() => itemsTable.productId).notNull(),
-  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
+  unitPrice: text("unit_price"),
   lastUpdated: timestamp("last_updated", { withTimezone: true })
     // 1. For the initial insert (replaces defaultNow)
   .defaultNow()
@@ -191,13 +191,15 @@ export const ordersTable = pgTable("order_tb", {
     .generatedAlwaysAsIdentity({ startWith: 3000001 })
     .primaryKey(),
   orderStatus: text("order_status").notNull(),
-  orderDate: timestamp("order_date", { withTimezone: true }).notNull().defaultNow(),
+  orderDate: timestamp("order_date",  { withTimezone: true }),
   supplierId: integer("supplier_id").references(() => suppliersTable.supplierId).notNull(),
   expectedDeliveryDate: timestamp("expected_delivery_date", { withTimezone: true }),
   actualDeliveryDate: timestamp("actual_delivery_date", { withTimezone: true }),
   projectId: integer("project_id").references(() => projectsTable.projectId),
   createdBy: text("created_by").references(() => usersTable.id).notNull(),
   approvedBy: text("approved_by").references(() => usersTable.id),
+  orderedValue: text("ordered_value"),       // ADD
+  receivedValue: text("received_value"),     // ADD
 });
 
 //List of products in each order, with the quantity ordered for each produc
