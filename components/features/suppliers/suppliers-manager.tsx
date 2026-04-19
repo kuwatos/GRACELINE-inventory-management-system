@@ -73,12 +73,6 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
               />
             </div>
             
-            <div className="relative">
-              <select className="appearance-none h-11 px-5 bg-[#E5E7EB] rounded-xl text-sm font-medium pr-10 focus:outline-none cursor-pointer">
-                <option>Search Filters</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-            </div>
 
             <Button 
               onClick={() => setIsNewModalOpen(true)}
