@@ -284,7 +284,6 @@ export async function restoreItem(
         if (val !== null && val !== undefined) {
           await createLog({
             userId: user.id,
-            userId: user.id,
             actionId: 8,                    // Added a New Inventory Item
             targetId: restoredItem.productId,
             columnName: key,                // Dynamic: productName, productCategory1, etc.
