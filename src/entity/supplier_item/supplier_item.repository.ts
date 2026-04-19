@@ -145,6 +145,52 @@ export async function deleteSupplierItem(id: number) {
   return { success: true };
 }
 
+export async function deleteAllLinksForSupplier(supplierId: number) {
+  await db
+    .update(supplierItemsTable)
+    .set({ archived: true })
+    .where(eq(supplierItemsTable.supplierId, supplierId))
+    .returning();
+  return { success: true };
+}
+
+export async function restoreAllLinksForSupplier(supplierId: number) {
+  return await db.transaction(async (tx) => {
+    const user = await validateSessionUser();
+
+    // 1. Perform the bulk update
+    const restoredItems = await tx
+      .update(supplierItemsTable)
+      .set({ archived: false })
+      .where(eq(supplierItemsTable.supplierId, supplierId))
+      .returning();
+
+    // 2. Loop through all restored items to log and notify
+    if (restoredItems.length > 0) {
+      for (const item of restoredItems) {
+        // Log the specific 'archived' change for each item
+        await createLog({
+          userId: user.id,
+          actionId: 21, // "Restore Item Link"
+          targetId: item.supplierItemId,
+          columnName: "archived",
+          prevValue: "true",
+          newValue: "false",
+          remarks: `Bulk restore for supplier ID: ${supplierId}`
+        }, tx);
+
+        // 3. Trigger notification for each restored link
+        await createUserNotificationService({ 
+          notifId: 8, // "Item Link Restored"
+          targetId: item.supplierItemId 
+        }, tx);
+      }
+    }
+
+    return { success: true, count: restoredItems.length };
+  });
+}
+
 export async function restoreSupplierItem(data: {
   id: number; // 👈 This is the supplierItemId
   supplierId: number;

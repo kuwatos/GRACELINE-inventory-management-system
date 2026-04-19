@@ -5,6 +5,7 @@ import { restoreSupplier,createSupplier,findExistingSupplier, updateSupplier,del
 import { editSupplierSchema } from "@/lib/validations";
 import { newSupplierSchema } from "@/lib/validations";
 import * as z from "zod";
+import {deleteAllLinksForSupplier, restoreAllLinksForSupplier} from "@/src/entity/supplier_item/supplier_item.repository";
 
 export async function createSupplierAction(values: z.infer<typeof newSupplierSchema>) {
   try {
@@ -23,6 +24,8 @@ export async function createSupplierAction(values: z.infer<typeof newSupplierSch
         supplierEmail: validData.supplierEmail,
         supplierMobile: validData.supplierMobile
       });
+
+      await restoreAllLinksForSupplier(existingSupplier[0].supplierId); // Optional: If you want to also restore all supplier-item links for this supplier
 
       revalidatePath("/suppliers");
       return { success: true,message: "Archived supplier restored successfully!" };
@@ -105,6 +108,7 @@ export async function deleteSupplierAction(supplierId: number) {
   try {
     // Tell the Robot Butler to deactivate this user
     await deleteSupplier(supplierId);
+    await deleteAllLinksForSupplier(supplierId); // Optional: If you want to also delete/archived all supplier-item links for this supplier
 
     // Refresh the page so they disappear from the table instantly
     revalidatePath("/suppliers");
