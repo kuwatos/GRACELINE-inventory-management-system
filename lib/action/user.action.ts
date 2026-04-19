@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createUser, validateSessionUser } from "@/src/entity/user/user.repository"; // Update this path to wherever your CRUD file is!
-import { updateUser, deleteUser } from "@/src/entity/user/user.repository"; 
+import { updateUser, deleteUser, findExistingUser } from "@/src/entity/user/user.repository"; 
 import { editUserSchema } from "@/lib/validations";
 import { newUserSchema } from "@/lib/validations";
 import * as z from "zod";
@@ -12,6 +12,12 @@ import { redirect } from "next/dist/client/components/navigation";
 export async function createUserAction(values: z.infer<typeof newUserSchema>) {
   try {
     const validData = newUserSchema.parse(values);
+
+    const existingUser = await findExistingUser(validData.username);
+    
+    if (existingUser && existingUser.length > 0) {    
+      return { success: false, error: "Username already exists. Please try a different one." };
+    }
 
     await createUser({
       username: validData.username,
@@ -53,6 +59,11 @@ export async function createUserAction(values: z.infer<typeof newUserSchema>) {
 export async function updateUserAction(userId: string, values: z.infer<typeof editUserSchema>) {
   try {
     const validData = editUserSchema.parse(values);
+    const existingUser = await findExistingUser(validData.username);
+    
+    if (existingUser && existingUser.length > 0) {    
+      return { success: false, error: "Username already exists. Please try a different one." };
+    }
 
     // Hand the updated data to the Robot Butler
     await updateUser({

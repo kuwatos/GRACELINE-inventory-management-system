@@ -30,10 +30,23 @@ export async function generateMonthlyAudit(startDate: Date, endDate: Date) {
   const supplierSpending = await db
     .select({
       supplierName: suppliersTable.supplierName,
-      totalPurchased: sql<number>`SUM(${orderProductsTable.orderProductQuantity} * ${supplierItemsTable.unitPrice})`,
+      totalPurchased: sql<number>`SUM(${orderProductsTable.expectedOrderProductQuantity} * ${supplierItemsTable.unitPrice})`,
+      //total purchased value (official, di pa bayad)
+
+      // PROBLEM: naisasama pa rin kahit yung drafts. dapat yung approved lang. need istore yung status
+      // status galing logs, price galing sa order, di na iccompute per item, yung order nalang. kasi total price lang kailanganm
+      // magbase sa order table nalang. yung completed and incomplete. tas may new columns sa order, receivedValue and orderValue (add na)
+      // - schema change, sa supp items kasi kailangan masave yung old price. pag nagedit maaarchive yung luma
+      // - save supplierItem id to orderProducts
+      // - incomplete order new form 
+
+      //add name sa notification. string naman na, concat nalang. need lang magadd ng notif.
+
+      //add notifs sa dashboard
+
       totalPaid: sql<number>`SUM(
         CASE WHEN ${ordersTable.orderStatus} = 'Paid' 
-        THEN ${orderProductsTable.orderProductQuantity} * ${supplierItemsTable.unitPrice} 
+        THEN ${orderProductsTable.deliveredOrderProductQuantity} * ${supplierItemsTable.unitPrice} 
         ELSE 0 END
       )`,
     })
@@ -78,7 +91,7 @@ export async function generateMonthlyAudit(startDate: Date, endDate: Date) {
       // Get qty at the very start of the month
       const startLog = await tx.query.logsTable.findFirst({
         where: and(
-          eq(logsTable.targetId, item.productId),
+          eq(logsTable.targetId, item.productId.toString()),
           eq(logsTable.columnName, 'product_quantity'),
           lte(logsTable.logDate, startDate)
         ),
@@ -88,7 +101,7 @@ export async function generateMonthlyAudit(startDate: Date, endDate: Date) {
       // Get qty at the very end of the month
       const endLog = await tx.query.logsTable.findFirst({
         where: and(
-          eq(logsTable.targetId, item.productId),
+          eq(logsTable.targetId, item.productId.toString()),
           eq(logsTable.columnName, 'product_quantity'),
           lte(logsTable.logDate, endDate)
         ),

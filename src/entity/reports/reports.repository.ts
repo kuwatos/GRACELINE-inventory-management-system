@@ -8,15 +8,14 @@ import { validateSessionUser } from "../user/user.repository";
 
 //CREATE
 export async function createReport(data: {
-  userId: string;
   reportType: string; 
   dateStart: Date;
   dateEnd: Date;
 }) {
   return await db.transaction(async (tx) => {
       // Insert the new supplier
-          const user = await validateSessionUser()
-      const [newReport] = await tx.insert(reportsTable).values(data).returning();
+      const user = await validateSessionUser()
+      const [newReport] = await tx.insert(reportsTable).values({ ...data, userId: user.id }).returning();
   
       if (newReport) {
         // Loop through every field in the newly created supplier

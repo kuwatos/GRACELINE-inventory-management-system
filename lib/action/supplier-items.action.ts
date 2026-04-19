@@ -65,7 +65,7 @@ export async function updateSupplierItemAction(supplierItemId: number, values: z
     const validData = editSupplierItemSchema.parse(values);
     const existing = await findSupplierItemLink(validData.supplierId, validData.productId);
 
-    if (existing && existing[0].supplierItemId !== supplierItemId) {
+    if (existing && existing.length > 0 && existing[0].supplierItemId !== supplierItemId) {
       if (!existing[0].archived) {
         return { success: false, error: "Update failed: This supplier-product link already exists." };
       } else {

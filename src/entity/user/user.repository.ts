@@ -287,3 +287,7 @@ export async function validateSessionUser(requiredDepartment?: string) {
 
     return session.user;
 }
+
+export async function findExistingUser(username:string) {
+  return db.select().from(usersTable).where(ilike(usersTable.username, username)).limit(1);
+}

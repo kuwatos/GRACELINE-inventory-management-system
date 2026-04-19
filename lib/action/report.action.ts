@@ -9,19 +9,18 @@ import { validateSessionUser } from "@/src/entity/user/user.repository";
 
 export async function generateReportAction(values: z.input<typeof baseReportSchema>) {
   try {
-    // 1. Authenticate the user
-    // const session = await auth();
-    // if (!session?.user?.id) throw new Error("Unauthorized");
-
     // 2. Validate and Coerce strings to Dates
     const validated = baseReportSchema.parse(values);
+    // Adjust dates to Manila Timezone (+08:00) 
+    // This ensures the "Saved" report reflects the correct local boundaries
+    const manilaStart = new Date(`${values.dateStart}T00:00:00+08:00`);
+    const manilaEnd = new Date(`${values.dateEnd}T23:59:59+08:00`);
 
     // 3. Call the Repository
     await createReport({
-      userId: "user_001",
       reportType: validated.reportType,
-      dateStart: validated.dateStart,
-      dateEnd: validated.dateEnd,
+      dateStart: manilaStart,
+      dateEnd: manilaEnd,
     });
 
     // 4. Refresh the history table
@@ -49,10 +48,26 @@ export async function deleteReportAction(reportId: number) {
   }
 }
 
-export async function getMonthlyReportAction(startDate: string, endDate: string) {
+export async function getMonthlyReportAction(startDate: any, endDate: any) {
   try {
-    const data = await generateMonthlyAudit(new Date(startDate), new Date(endDate));
-    return { success: true, data };
+    // 1. Force the input to be a YYYY-MM-DD string
+    const toDateString = (val: any) => {
+      if (val instanceof Date) return val.toISOString().split('T')[0];
+      if (typeof val === 'string' && val.includes('T')) return val.split('T')[0];
+      return val; // Hopefully already YYYY-MM-DD
+    };
+
+    const cleanStart = toDateString(startDate);
+    const cleanEnd = toDateString(endDate);
+
+    const startWithOffset = new Date(`${cleanStart}T00:00:00+08:00`);
+    const endWithOffset = new Date(`${cleanEnd}T23:59:59+08:00`);
+
+    const rawData = await generateMonthlyAudit(startWithOffset, endWithOffset);
+    
+    // 2. IMPORTANT: Server Actions cannot return raw Date objects. 
+    // We must serialize them to strings before returning to the client.
+    return { success: true, data: JSON.parse(JSON.stringify(rawData)) };
   } catch (error) {
     console.error(error);
     return { success: false, error: "Failed to generate audit." };

@@ -43,23 +43,29 @@ export const ReportsManager = ({ data=[] }: ReportsManagerProps) => {
   
   if (res.success) {
     setAuditData(res.data); // Store the results
-    setSelectedReport({ 
-      reportId: Date.now(), 
+    const newReportRecord = { 
+      reportId: Date.now(), // Temporary ID for UI
       reportType: "Live Generated Audit",
-      username: "Current User",
       dateCreated: new Date(),
       dateStart: new Date(startDate),
       dateEnd: new Date(endDate)
-    });
-    await generateReportAction({
-      userId: "user_001",
+    };
+    setSelectedReport(
+      newReportRecord
+    );
+    const result=await generateReportAction({
       reportType: "Live Generated Audit",
-      dateStart: new Date(startDate),
-      dateEnd: new Date(endDate)
+      dateStart: startDate,
+      dateEnd: endDate
     });
-    setIsViewerOpen(true); // Open the modal automatically
+
+    if (result.success) {
+      // 3. UPDATE LOCAL STATE so the table refreshes
+      // In a real app, you might want the saved object back from the server
+      setReports((prev) => [newReportRecord, ...prev]); 
+    }
   }
-  
+  setIsViewerOpen(true);
   setIsGenerating(false);
 };
 
@@ -68,8 +74,8 @@ const handleViewReport = async (report: Report) => {
 
   // Fetch the actual audit numbers based on the saved report's dates
   const res = await getMonthlyReportAction(
-    report.dateStart.toString(), 
-    report.dateEnd.toString()
+    new Date(report.dateStart).toISOString(), 
+    new Date(report.dateEnd).toISOString()
   );
 
   if (res.success) {
@@ -84,9 +90,14 @@ const handleViewReport = async (report: Report) => {
   setIsGenerating(false);
 };
 
-const handleDeleteReport = (report: Report) => {
+const handleDeleteReport = async (report: Report) => {
   setSelectedReport(report);
-  const result = deleteReportAction(report.reportId);
+  const result = await deleteReportAction(report.reportId);
+
+  if (result.success) {
+    // Manually remove it from the local state
+    setReports((prev) => prev.filter(r => r.reportId !== report.reportId));
+  }
 }
 
   const filteredData = reports.filter((r) => 

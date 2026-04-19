@@ -5,19 +5,19 @@ import { Bell, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { NotificationItem } from "./notification-item";
+import {updateUserNotificationAction, markAllNotificationsAsReadAction} from "@/lib/action/user_notification.action";
 
 export interface Notification {
-  id: string;
-  type: 'alert' | 'order' | 'delivery';
-  title: string;
+  userNotifId: number;
   description: string;
-  timeLabel: string;
+  createdAt: string | Date | null; // Match the Item props
+  targetId: number|null; // Optional targetId for potential future use
 }
 
 interface NotificationManagerProps {
-  data?: Notification[];
+  data: Notification[];
   isLoading?: boolean; // 1. Added loading state for initial DB fetch
-  onMarkAsRead?: (id: string) => Promise<void> | void; // 2. Now supports async DB calls
+  onMarkAsRead?: (userNotifId: number) => Promise<void> | void; // 2. Now supports async DB calls
   onMarkAllAsRead?: () => Promise<void> | void;
 }
 
@@ -36,37 +36,21 @@ export const NotificationManager = ({
     setNotifications(data);
   }, [data]);
 
-  const handleMarkAsRead = async (id: string) => {
+  const handleMarkAsRead = async (id: number) => {
     // Save a backup of the current state in case the database fails
     const previousNotifications = [...notifications];
     
     // 1. Optimistic UI: Instantly hide it from the screen
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
+    setNotifications(prev => prev.filter(notif => notif.userNotifId !== id));
+    await updateUserNotificationAction (id);
     
-    try {
-      // 2. Tell the parent component to update Supabase
-      if (onMarkAsRead) {
-        await onMarkAsRead(id);
-      }
-    } catch (error) {
-      // 3. ROLLBACK: If Supabase fails, put the notification back on the screen!
-      console.error("Failed to update database:", error);
-      setNotifications(previousNotifications);
-    }
   };
 
   const handleMarkAllAsRead = async () => {
     const previousNotifications = [...notifications];
     setNotifications([]);
     
-    try {
-      if (onMarkAllAsRead) {
-        await onMarkAllAsRead();
-      }
-    } catch (error) {
-      console.error("Failed to update database:", error);
-      setNotifications(previousNotifications);
-    }
+    await markAllNotificationsAsReadAction()
   };
 
   return (
@@ -102,12 +86,11 @@ export const NotificationManager = ({
               // The Data State
               notifications.map((notif) => (
                 <NotificationItem
-                  key={notif.id}
-                  id={notif.id}
-                  type={notif.type}
-                  title={notif.title}
+                  key={notif.userNotifId}
+                  userNotifId={notif.userNotifId}
                   description={notif.description}
-                  timeLabel={notif.timeLabel}
+                  createdAt={notif.createdAt}
+                  targetId={notif.targetId}
                   isFullPage={true}
                   onMarkAsRead={handleMarkAsRead}
                 />

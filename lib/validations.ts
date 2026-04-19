@@ -213,7 +213,6 @@ export const receiveOrderSchema = z.object({
 })
 
 export const baseReportSchema = z.object({
-  userId: z.string().min(1, "User ID is required"),
   reportType: z.string().min(1, "Please select a report type"),
   dateStart: z.coerce.date(),
   dateEnd: z.coerce.date(),

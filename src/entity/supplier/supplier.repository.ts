@@ -159,7 +159,6 @@ export async function restoreSupplier(
   }) {
   return await db.transaction(async (tx) => {
     const user = await validateSessionUser()
-
     // Restore the supplier
     const [restoredSupplier] = await tx.update(suppliersTable)
       .set({ ...data, active: true })

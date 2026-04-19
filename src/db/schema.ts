@@ -100,7 +100,7 @@ export const logsTable = pgTable("log_tb", {
   targetId: text("target_id").notNull(),
   logDate: timestamp("log_date", { withTimezone: true })
     .notNull()
-    .default(sql`timezone('Asia/Manila', now())`),
+    .defaultNow(),
   columnName: varchar("column_name", { length: 50 }),
   prevValue: varchar("prev_value", { length: 255 }),
   newValue: varchar("new_value", { length: 255 }),
@@ -170,12 +170,12 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
     .primaryKey(),
   supplierId: integer("supplier_id").references(() => suppliersTable.supplierId),
   productId: integer("product_id").references(() => itemsTable.productId).notNull(),
-  unitPrice: text("unit_price"),
-  lastUpdated: timestamp("last_updated")
+  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
+  lastUpdated: timestamp("last_updated", { withTimezone: true })
     // 1. For the initial insert (replaces defaultNow)
-  .default(sql`timezone('Asia/Manila', now())`)
+  .defaultNow()
   // 2. For every update (replaces new Date())
-  .$onUpdate(() => sql`timezone('Asia/Manila', now())`),
+  .$onUpdate(() => sql`now()`),
   archived: boolean("archived").default(false),
 }, (table) => {
   return {
@@ -191,10 +191,10 @@ export const ordersTable = pgTable("order_tb", {
     .generatedAlwaysAsIdentity({ startWith: 3000001 })
     .primaryKey(),
   orderStatus: text("order_status").notNull(),
-  orderDate: timestamp("order_date"), //edited this because I made it to be the date that the order was made awaiting delivery, not when it was created
+  orderDate: timestamp("order_date", { withTimezone: true }).notNull().defaultNow(),
   supplierId: integer("supplier_id").references(() => suppliersTable.supplierId).notNull(),
-  expectedDeliveryDate: timestamp("expected_delivery_date"),
-  actualDeliveryDate: timestamp("actual_delivery_date"),
+  expectedDeliveryDate: timestamp("expected_delivery_date", { withTimezone: true }),
+  actualDeliveryDate: timestamp("actual_delivery_date", { withTimezone: true }),
   projectId: integer("project_id").references(() => projectsTable.projectId),
   createdBy: text("created_by").references(() => usersTable.id).notNull(),
   approvedBy: text("approved_by").references(() => usersTable.id),
@@ -238,9 +238,9 @@ export const userNotificationsTable = pgTable("user_notification_tb", {
   targetId: integer("target_id"), // e.g., supplierId, orderId, etc. depending on the notification
   notifId: integer("notif_id").references(() => notificationsTable.notifId),
   isRead: boolean("is_read").default(false),
-  createdAt: date("created_at")// 1. For the initial insert (replaces defaultNow)
-  .default(sql`timezone('Asia/Manila', now())`)
+  createdAt: timestamp("created_at", { withTimezone: true })// 1. For the initial insert (replaces defaultNow)
+  .defaultNow()
   // 2. For every update (replaces new Date())
-  .$onUpdate(() => sql`timezone('Asia/Manila', now())`),
+  .$onUpdate(() => sql`now()`),
 });
 
