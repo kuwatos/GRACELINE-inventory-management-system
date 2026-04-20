@@ -29,14 +29,14 @@ export const PurchasingDashboard = ({
   kpiRecentTransactionsMonth = 0,
 }: PurchasingDashboardProps) => {
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 ">
 
       <DashboardNotifications
         viewAllLink="/purchasing/notifications"
         notifications={notifications}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="flex gap-4">
         <KpiCard
           title="Pending Orders"
           value={kpiPendingOrders}
@@ -56,7 +56,6 @@ export const PurchasingDashboard = ({
       <div className="border border-gray-100 rounded-2xl bg-white shadow-sm overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-gray-50">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-gray-900" strokeWidth={2.5} />
             <h2 className="text-lg font-medium text-gray-900">Urgent: Low Stock Items</h2>
           </div>
           <Link
@@ -70,22 +69,32 @@ export const PurchasingDashboard = ({
         {lowStockItems.length === 0 ? (
           <div className="p-8 text-center text-gray-500 text-sm">No low stock items.</div>
         ) : (
-          <Table className="text-sm border-collapse">
+          <Table className="text-sm border-collapse w-full">
             <TableHeader>
-              <TableRow className="hover:bg-transparent bg-gray-50/50">
-                <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold">Item Name</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold text-center">Current Qty</TableHead>
-                <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold text-center">Reorder Level</TableHead>
+              <TableRow className="bg-gray-50/50 hover:bg-transparent border-b border-gray-100">
+                <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Item Name</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-center">Current Qty</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-center">Reorder Level</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="divide-y divide-gray-50">
+            <TableBody>
               {lowStockItems.slice(0, 3).map((item) => (
-                <TableRow key={item.productId} className="hover:bg-gray-50/50 border-none transition-colors">
-                  <TableCell className="px-6 py-4 font-medium text-gray-900">{item.productName}</TableCell>
-                  <TableCell className="px-6 py-4 text-center">
-                    <span className="text-red-600 font-bold">{item.productQuantity}</span>
+                <TableRow 
+                  key={item.productId} 
+                  className="group hover:bg-[#0f172a] transition-colors cursor-default border-b border-gray-50 last:border-0"
+                >
+                  <TableCell className="px-6 py-4 font-medium text-gray-800 group-hover:text-white transition-colors">
+                    {item.productName}
                   </TableCell>
-                  <TableCell className="px-6 py-4 text-center text-gray-600">{item.reorderLevel ?? "—"}</TableCell>
+                  <TableCell className="px-6 py-4 text-center">
+                    {/* 👇 Red text that snaps to white on hover */}
+                    <span className="text-red-600 font-bold group-hover:text-white transition-colors">
+                      {item.productQuantity}
+                    </span>
+                  </TableCell>
+                  <TableCell className="px-6 py-4 text-center text-gray-600 group-hover:text-white transition-colors">
+                    {item.reorderLevel ?? "—"}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

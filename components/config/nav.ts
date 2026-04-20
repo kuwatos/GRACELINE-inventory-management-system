@@ -142,11 +142,6 @@ export const sideBarNav: SideBarConfig = {
       label: "Dashboard",
       href: "/finance/dashboard",
       icon: LayoutDashboard
-    },
-    {
-      label: "Completed Orders",
-      href: "/finance/completed",
-      icon: PackageCheck
     }
   ],
 

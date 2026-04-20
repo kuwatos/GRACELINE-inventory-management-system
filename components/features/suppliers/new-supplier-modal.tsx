@@ -13,7 +13,6 @@ import { createSupplierAction } from "@/lib/action/supplier.action";
 import { useState } from "react";
 import { executeAction } from "@/lib/error.handler";
 
-
 interface NewSupplierModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -28,21 +27,19 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
       name: "", 
       supplierLandline: "", 
       supplierEmail: "",
-      supplierMobile: "" },
+      supplierMobile: "" 
+    },
   });
 
   async function onSubmit(values: z.infer<typeof newSupplierSchema>) {
     setIsSubmitting(true);
         
-    // You call the wrapper here...
     await executeAction(async () => {
       
-      // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
       const validatedData = newSupplierSchema.parse(values);
   
       const res = await createSupplierAction(validatedData);
   
-      // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
       if (!res.success) {
         throw res; 
       }
@@ -69,7 +66,8 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
                 <FormItem className="space-y-1.5">
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier Name</FormLabel>
                   <FormControl>
-                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                    {/* 👇 Applied standard focus ring */}
+                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>
@@ -79,7 +77,8 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
                 <FormItem className="space-y-1.5">
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Landline</FormLabel>
                   <FormControl>
-                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                    {/* 👇 Applied standard focus ring */}
+                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>
@@ -89,7 +88,8 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
                 <FormItem className="space-y-1.5">
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Email Address</FormLabel>
                   <FormControl>
-                    <Input {...field} type="email" className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                    {/* 👇 Applied standard focus ring */}
+                    <Input {...field} type="email" className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>
@@ -99,7 +99,8 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
                 <FormItem className="space-y-1.5">
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Mobile Number</FormLabel>
                   <FormControl>
-                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                    {/* 👇 Applied standard focus ring */}
+                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>
@@ -110,8 +111,9 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
               <Button type="button" variant="outline" onClick={() => { form.reset(); onClose(); }} className="px-8 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
                 Cancel
               </Button>
-              <Button type="submit" className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/70">
-                Add Supplier
+              {/* 👇 Applied #0f172a hover state and isSubmitting disabled state */}
+              <Button type="submit" disabled={isSubmitting} className="bg-[#0f172a] hover:bg-[#0f172a]/90 text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10">
+                {isSubmitting ? "Adding..." : "Add Supplier"}
               </Button>
             </DialogFooter>
           </form>

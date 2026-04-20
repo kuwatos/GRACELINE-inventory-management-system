@@ -14,7 +14,6 @@ import { newSupplierItemSchema } from "@/lib/validations";
 import { useState } from "react";
 import { executeAction } from "@/lib/error.handler";
 
-
 interface NewSupplierItemModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -22,8 +21,8 @@ interface NewSupplierItemModalProps {
   products: { 
     productId: number; 
     productName: string; 
-    productCategory1: string; // Added
-    measurement: string;      // Added
+    productCategory1: string; 
+    measurement: string;      
   }[];
 }
 
@@ -51,15 +50,12 @@ export const NewSupplierItemModal = ({
   async function onSubmit(values: z.input<typeof newSupplierItemSchema>) {
     setIsSubmitting(true);
     
-      // You call the wrapper here...
       await executeAction(async () => {
         
-        // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
         const validatedData = newSupplierItemSchema.parse(values);
     
         const res = await createSupplierItemAction(validatedData);
     
-        // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
         if (!res.success) {
           throw res; 
         }
@@ -75,7 +71,6 @@ export const NewSupplierItemModal = ({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl bg-white">
         <DialogHeader className="px-8 py-8 border-b border-gray-100 flex flex-col items-center bg-gray-50/50">
-         
           <DialogTitle className="text-2xl font-bold text-gray-900">Link Supplier Item</DialogTitle>
           <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-medium">Sourcing & Procurement</p>
         </DialogHeader>
@@ -90,7 +85,8 @@ export const NewSupplierItemModal = ({
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={""}>
                     <FormControl>
-                      <SelectTrigger className="h-12 rounded-xl border-gray-200 focus:ring-black">
+                      {/* 👇 Applied standard focus ring */}
+                      <SelectTrigger className="h-11! w-full rounded-xl border-gray-200 focus:ring-black/5">
                         <SelectValue placeholder="Choose a supplier" />
                       </SelectTrigger>
                     </FormControl>
@@ -112,14 +108,14 @@ export const NewSupplierItemModal = ({
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Product</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={""}>
                     <FormControl>
-                      <SelectTrigger className="h-12 rounded-xl border-gray-200 focus:ring-black">
+                      {/* 👇 Applied standard focus ring */}
+                      <SelectTrigger className="h-11! w-full rounded-xl border-gray-200 focus:ring-black/5">
                         <SelectValue placeholder="Choose a product" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {products.map((p) => (
                         <SelectItem key={p.productId} value={p.productId.toString()}>
-                          {/* Concatenated: Name - Category (Measurement) */}
                           {p.productName} — {p.productCategory1} ({p.measurement})
                         </SelectItem>
                       ))}
@@ -136,12 +132,13 @@ export const NewSupplierItemModal = ({
                   <FormControl>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₱</span>
+                      {/* 👇 Applied standard focus ring */}
                       <Input 
                         {...field} 
                         type="number" 
                         step="0.01" 
                         placeholder="0.00" 
-                        className="h-12 pl-8 rounded-xl border-gray-200 focus-visible:ring-black" 
+                        className="h-12 pl-8 rounded-xl border-gray-200 focus-visible:ring-black/5" 
                       />
                     </div>
                   </FormControl>
@@ -151,13 +148,14 @@ export const NewSupplierItemModal = ({
             </div>
 
             <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3">
-              <Button type="button" variant="outline" onClick={handleClose} className="px-8 h-12 rounded-xl font-bold text-gray-500">
+              <Button type="button" variant="outline" onClick={handleClose} className="px-10 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
                 Cancel
               </Button>
+              {/* 👇 Applied #0f172a styling here */}
               <Button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="bg-black text-white px-10 h-12 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-zinc-800 transition-all active:scale-95"
+                className="bg-[#0f172a] hover:bg-[#0f172a]/90 text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 transition-all active:scale-95"
               >
                 {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Link Item"}
               </Button>

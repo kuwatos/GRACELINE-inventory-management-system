@@ -52,15 +52,10 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
  async function onSubmit(values: z.input<typeof newItemSchema>) {
   setIsSubmitting(true);
 
-  // You call the wrapper here...
   await executeAction(async () => {
-    
-    // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
     const validatedData = newItemSchema.parse(values);
-
     const res = await createItemAction(validatedData);
 
-    // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
     if (!res.success) {
       throw res; 
     }
@@ -71,6 +66,7 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
 
   setIsSubmitting(false);
 }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden border-none shadow-2xl">
@@ -87,7 +83,10 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
                 <FormField control={form.control} name="productName" render={({ field }) => (
                   <FormItem className="col-span-2">
                     <FormLabel className="font-bold text-gray-700">Product Name</FormLabel>
-                    <FormControl><Input {...field} placeholder="e.g., Ultra-Slim Keyboard" className="h-11 rounded-xl" /></FormControl>
+                    <FormControl>
+                      {/* 👇 Applied to text input */}
+                      <Input {...field} placeholder="e.g., Ultra-Slim Keyboard" className="h-11 rounded-xl border-gray-200 focus-visible:ring-black/5" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -97,7 +96,10 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
                     <FormLabel className="font-bold text-gray-700">Supplier</FormLabel>
                     <Select onValueChange={(v) => field.onChange(Number(v))} value={field.value?.toString()}>
                       <FormControl>
-                        <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Choose a supplier..." /></SelectTrigger>
+                        {/* 👇 Kept the w-full fix here */}
+                        <SelectTrigger className="w-full h-11 rounded-xl">
+                          <SelectValue placeholder="Choose a supplier..." />
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {suppliers.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
@@ -122,7 +124,7 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
                             <Button
                               variant="outline"
                               role="combobox"
-                              className={cn("h-11 justify-between rounded-xl font-normal border-gray-200", !field.value && "text-gray-400")}
+                              className={cn("h-11 justify-between rounded-xl font-normal border-gray-200 focus-visible:ring-black/5", !field.value && "text-gray-400")}
                             >
                               {field.value || "Select or type a category..."}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -133,7 +135,7 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
                           <Command>
                             <CommandInput 
                               placeholder="Search or type new category..." 
-                              onValueChange={(val) => field.onChange(val)} // Allows typing new values
+                              onValueChange={(val) => field.onChange(val)} 
                             />
                             <CommandList>
                               <CommandEmpty>No existing category found. Type to create new.</CommandEmpty>
@@ -165,7 +167,8 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
                     <FormField key={catName} control={form.control} name={catName as any} render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input {...field} placeholder={`${catName} (Optional)`} className="h-10 rounded-xl text-xs" />
+                          {/* 👇 Applied to optional category inputs */}
+                          <Input {...field} placeholder={`${catName} (Optional)`} className="h-10 rounded-xl text-xs border-gray-200 focus-visible:ring-black/5" />
                         </FormControl>
                       </FormItem>
                     )} />
@@ -183,7 +186,7 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
                         <Button
                           variant="outline"
                           role="combobox"
-                          className={cn("h-11 justify-between rounded-xl font-normal border-gray-200", !field.value && "text-gray-400")}
+                          className={cn("h-11 justify-between rounded-xl font-normal border-gray-200 focus-visible:ring-black/5", !field.value && "text-gray-400")}
                         >
                           {field.value || "Select or type unit..."}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -220,19 +223,26 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
                   <FormMessage />
                 </FormItem>
               )} />
+              
               {/* SECTION: DESCRIPTION & QUANTITY */}
               <div className="grid grid-cols-3 gap-4">
                 <FormField control={form.control} name="productDesc" render={({ field }) => (
                   <FormItem className="col-span-3">
                     <FormLabel className="font-bold text-gray-700">Description</FormLabel>
-                    <FormControl><Textarea {...field} className="rounded-xl resize-none" placeholder="Dimensions, specs..." /></FormControl>
+                    <FormControl>
+                      {/* 👇 Applied to Textarea */}
+                      <Textarea {...field} className="rounded-xl resize-none border-gray-200 focus-visible:ring-black/5" placeholder="Dimensions, specs..." />
+                    </FormControl>
                   </FormItem>
                 )} />
 
                 <FormField control={form.control} name="unitPrice" render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-bold text-gray-700">Unit Price</FormLabel>
-                    <FormControl><Input {...field} value={(field.value as string) ?? ""} placeholder="0.00" className="h-11 rounded-xl" /></FormControl>
+                    <FormControl>
+                      {/* 👇 Applied to price input */}
+                      <Input {...field} value={(field.value as string) ?? ""} placeholder="0.00" className="h-11 rounded-xl border-gray-200 focus-visible:ring-black/5" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -240,7 +250,10 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
                 <FormField control={form.control} name="productQuantity" render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-bold text-gray-700">Current Qty</FormLabel>
-                    <FormControl><Input {...field} value={(field.value as string) ?? ""} type="number" className="h-11 rounded-xl" /></FormControl>
+                    <FormControl>
+                      {/* 👇 Applied to quantity input */}
+                      <Input {...field} value={(field.value as string) ?? ""} type="number" className="h-11 rounded-xl border-gray-200 focus-visible:ring-black/5" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -248,17 +261,27 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
                 <FormField control={form.control} name="reorderLevel" render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-bold text-gray-700">Reorder At</FormLabel>
-                    <FormControl><Input {...field} value={(field.value as string) ?? ""} type="number" className="h-11 rounded-xl" /></FormControl>
+                    <FormControl>
+                      {/* 👇 Applied to reorder input */}
+                      <Input {...field} value={(field.value as string) ?? ""} type="number" className="h-11 rounded-xl border-gray-200 focus-visible:ring-black/5" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
               </div>
             </div>
 
-            <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 gap-3">
-              <Button type="button" variant="ghost" onClick={onClose} className="rounded-xl text-gray-500">Cancel</Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-[#0f172a] hover:bg-black text-white px-8 rounded-xl font-bold">
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Item"}
+            <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3">
+              <Button type="button" variant="outline" onClick={onClose} className="px-10 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/90 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>

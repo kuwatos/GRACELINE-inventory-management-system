@@ -11,7 +11,6 @@ export default async function PurchasingDashboardPage() {
   ]);
 
   return (
-    <div className="p-8">
       <PurchasingDashboard
         notifications={notifications}
         lowStockItems={lowStockItems.map((i) => ({
@@ -24,6 +23,5 @@ export default async function PurchasingDashboardPage() {
         kpiRecentTransactionsWeek={kpis.kpiRecentTransactionsWeek}
         kpiRecentTransactionsMonth={kpis.kpiRecentTransactionsMonth}
       />
-    </div>
   );
 }

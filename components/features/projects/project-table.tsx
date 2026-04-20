@@ -56,17 +56,21 @@ export function ProjectTable({
               </TableRow>
             ) : (
               filteredProjects.map((p) => (
-                <TableRow key={p.projectId} className="group hover:bg-slate-50/50 border-b border-slate-100 last:border-0 transition-colors">
+                <TableRow key={p.projectId} className="group hover:bg-[#0f172a] border-b border-slate-100 last:border-0 transition-colors">
                   <TableCell className="py-3 px-6">
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200 group-hover:border-slate-300 transition-colors">
-                        <Folder className="h-4 w-4 text-slate-600" />
+                      {/* Added group-hover:bg-transparent and group-hover:border-transparent so the white icon shows clearly */}
+                      <div className="h-8 w-8 rounded-lg bg-slate-100 group-hover:bg-transparent flex items-center justify-center border border-slate-200 group-hover:border-transparent transition-colors">
+                        {/* Added group-hover:text-white */}
+                        <Folder className="h-4 w-4 text-slate-600 group-hover:text-white transition-colors" />
                       </div>
-                      <span className="font-medium text-slate-900">{p.projectName}</span>
+                      {/* Added group-hover:text-white */}
+                      <span className="font-medium text-slate-900 group-hover:text-white transition-colors">{p.projectName}</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-right py-3 px-6">
-                    <div className="flex justify-end gap-2 text-slate-400">
+                    {/* Added group-hover:text-white to the buttons container */}
+                    <div className="flex justify-end gap-2 text-slate-400 group-hover:text-white transition-colors">
                       {/* 👈 Passing the whole object 'p' back up */}
                       <Button variant="ghost" size="icon" onClick={() => onViewProject(p)} className="h-8 w-8 hover:text-zinc-900">
                         <Eye className="h-4 w-4" />

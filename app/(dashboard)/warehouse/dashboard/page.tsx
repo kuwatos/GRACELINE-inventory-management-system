@@ -12,11 +12,9 @@ export default async function WarehouseDashboardPage() {
   const pendingOrders = allOrders.filter((o) => o.status === "Awaiting Delivery");
 
   return (
-    <div className="p-8">
       <WarehouseDashboard
         notifications={notifications}
         pendingOrders={pendingOrders}
       />
-    </div>
   );
 }

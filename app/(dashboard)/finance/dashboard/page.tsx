@@ -4,8 +4,6 @@ import { readUserNotifications } from '@/src/entity/user_notifications/user_noti
 export default async function FinanceDashboardPage() {
   const notifications = await readUserNotifications();
   return (
-    <div className="p-8">
       <FinanceDashboard notifications={notifications} />
-    </div>
   );
 }

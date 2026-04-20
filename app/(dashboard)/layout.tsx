@@ -23,7 +23,7 @@ return (
       <AppSidebar />
       <SidebarInset className="flex-1 overflow-y-auto h-full">
         <DashboardHeader />
-        <div className="p-5">
+        <div className="p-6 md:p-8 lg:p-12">
           {children}
         </div>
       </SidebarInset>

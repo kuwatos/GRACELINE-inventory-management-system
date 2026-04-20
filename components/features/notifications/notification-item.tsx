@@ -1,6 +1,6 @@
 "use client";
 
-import { Package, Truck, AlertTriangle, CheckCircle2, Hash } from "lucide-react";
+import { Package, Truck, BellDot, CheckCircle2, Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NotificationProps {
@@ -14,7 +14,7 @@ interface NotificationProps {
 }
 
 const icons = {
-  alert: <AlertTriangle className="h-5 w-5 text-white" />,
+  alert: <BellDot className="h-5 w-5 text-white" />,
   order: <Package className="h-5 w-5 text-white" />,
   delivery: <Truck className="h-5 w-5 text-white" />,
 };
@@ -27,7 +27,7 @@ export function NotificationItem({ userNotifId, description, createdAt,targetId,
     )}>
       <div className="flex items-start gap-4">
         {/* Icon Container */}
-        <div className="p-2.5 rounded-xl shrink-0 bg-[#0f172a] flex items-center justify-center shadow-sm">
+        <div className="p-2.5 rounded-xl shrink-0 bg-red-400 flex items-center justify-center shadow-sm">
           {icons.alert}
         </div>
         
@@ -63,3 +63,4 @@ export function NotificationItem({ userNotifId, description, createdAt,targetId,
     </div>
   );
 }
+

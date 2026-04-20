@@ -11,6 +11,13 @@ import { SupplierItemTable, SupplierItem } from "./supplier-item-table";
 import { NewSupplierItemModal } from "./new-supplier-item-modal";
 import { EditSupplierItemModal } from "./edit-supplier-item-modal";
 import { deleteSupplierItemAction } from "@/lib/action/supplier-items.action";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SupplierItemManagerProps {
   data: SupplierItem[]; // The linked items with names and prices
@@ -75,13 +82,10 @@ export const SupplierItemManager = ({
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-sm border-gray-200 p-8 rounded-3xl bg-white">
+      <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div className="text-left">
             <h2 className="text-xl font-bold text-gray-800 tracking-tight">Items Sourcing by Supplier</h2>
-            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mt-1">
-              Linking Suppliers to Inventory
-            </p>
           </div>
           
           <div className="flex items-center gap-3 w-full md:w-auto">
@@ -92,34 +96,52 @@ export const SupplierItemManager = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search products or suppliers..." 
-                className="pl-9 h-11 border-gray-100 rounded-xl focus-visible:ring-black focus-visible:ring-2"
+                className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-black/5"
               />
             </div>
             
             {/* Group by Supplier Filter */}
-            <div className="relative">
-              <select 
-                value={filterSupplierId}
-                onChange={(e) => setFilterSupplierId(e.target.value)}
-                className="appearance-none h-11 px-5 bg-[#E5E7EB] rounded-xl text-sm font-medium pr-10 focus:outline-none cursor-pointer hover:bg-gray-300 transition-colors"
+            <Select 
+                value={filterSupplierId} 
+                onValueChange={(value) => setFilterSupplierId(value)}
               >
-                <option value="all">All Suppliers</option>
-                {suppliers.map(s => (
-                  <option key={s.supplierId} value={s.supplierId.toString()}>
-                    {s.supplierName}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-            </div>
+                {/* Standardized flat gray trigger */}
+                <SelectTrigger className="h-11! w-[200px] px-5 bg-[#E5E7EB] border-none shadow-none rounded-xl text-sm font-medium data-[placeholder]:text-black text-gray-900 focus:ring-0 focus:ring-offset-0 focus:outline-none cursor-pointer hover:bg-gray-300 transition-colors">
+                  <SelectValue placeholder="Filter by Supplier" />
+                </SelectTrigger>
+                
+                {/* Dropdown menu with 5px offset */}
+                <SelectContent 
+                  position="popper" 
+                  sideOffset={5} 
+                  className="rounded-xl border-slate-200 shadow-lg bg-white p-1 max-h-[300px]"
+                >
+                  <SelectItem 
+                    value="all" 
+                    className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                  >
+                    All Suppliers
+                  </SelectItem>
+                  
+                  {suppliers.map((s) => (
+                    <SelectItem 
+                      key={s.supplierId} 
+                      value={s.supplierId.toString()}
+                      className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                    >
+                      {s.supplierName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
             {/* Link Product Button */}
             <Button 
               onClick={() => setIsNewModalOpen(true)}
               className="bg-[#0f172a] text-white hover:bg-zinc-800 h-11 px-6 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-black/10 gap-2"
             >
-              <LinkIcon className="w-4 h-4" />
-              Link New Product
+              <Plus className="w-4 h-4" />
+              Add New Product
             </Button>
           </div>
         </div>

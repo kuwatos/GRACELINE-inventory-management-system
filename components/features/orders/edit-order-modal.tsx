@@ -26,8 +26,9 @@ interface EditOrderModalProps {
   onClose: () => void;
   order: OrderRecord | null;
   supplierProducts: SupplierProduct[];
-  projects: ProjectOption[];            // ADD
+  projects: ProjectOption[];
 }
+
 export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, projects }: EditOrderModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -44,11 +45,10 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
     }
   };
 
-  // AFTER — tell react-hook-form: "track input types internally, submit output types"
   const form = useForm<
-    z.input<typeof editOrderSchema>,   // what the form fields hold internally
+    z.input<typeof editOrderSchema>,
     any,
-    z.output<typeof editOrderSchema>   // what onSubmit receives after Zod transforms
+    z.output<typeof editOrderSchema>
   >({
     resolver: zodResolver(editOrderSchema),
     defaultValues: {
@@ -136,7 +136,6 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
 
    return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      {/* SCROLL FIX: same flex col + max-h pattern */}
       <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden border-none shadow-2xl flex flex-col h-[90vh] max-h-[90vh]">
         <LoadingOverlay isLoading={isSubmitting} message="Saving changes..." />
         <DialogHeader className="px-8 py-8 border-b border-gray-100 flex justify-center items-center shrink-0">
@@ -150,25 +149,25 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
                 <div className="grid grid-cols-2 gap-5">
 
                   {/* Supplier: read-only, no select */}
-                  <div className="space-y-1.5">
+                  <div className="flex flex-col gap-2 ">
                     <p className="text-sm font-semibold text-gray-700 ml-1">Supplier</p>
-                    <p className="h-11 flex items-center px-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-sm">
+                    {/* 👇 Applied !h-11 for exact alignment */}
+                    <p className="!h-11 flex items-center px-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-sm">
                       {order?.supplierName}
                     </p>
                   </div>
 
-                  
-
-                  {/* Delivery Date — unchanged */}
+                  {/* Delivery Date */}
                   <FormField control={form.control} name="deliveryDate" render={({ field }) => (
-                    <FormItem className="space-y-1.5">
+                    <FormItem className="flex flex-col gap-2">
                       <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Expected Delivery</FormLabel>
                       <FormControl>
+                        {/* 👇 Applied !h-11 and standard focus ring */}
                         <Input
                           type="date"
                           value={field.value ? new Date(field.value as Date).toISOString().split("T")[0] : ""}
                           onChange={(e) => field.onChange(new Date(e.target.value))}
-                          className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0"
+                          className="!h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5"
                         />
                       </FormControl>
                       <FormMessage className="text-xs text-red-500 ml-1" />
@@ -176,9 +175,9 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
                   )} />
                 </div>
 
-                  {/* Project (optional) — add this after the grid */}
+                  {/* Project (optional) */}
                   <FormField control={form.control} name="projectId" render={({ field }) => (
-                    <FormItem className="space-y-1.5">
+                    <FormItem className="">
                       <FormLabel className="text-sm font-semibold text-gray-700 ml-1">
                         Project <span className="text-gray-400 font-normal">(optional)</span>
                       </FormLabel>
@@ -187,7 +186,8 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
                         value={field.value ? String(field.value as number) : "none"}
                       >
                         <FormControl>
-                          <SelectTrigger className="h-11 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0">
+                          {/* 👇 Applied !h-11 and standard focus ring */}
+                          <SelectTrigger className="!h-11 w-full rounded-xl border-gray-200 focus:ring-black/5">
                             <SelectValue placeholder="Select project..." />
                           </SelectTrigger>
                         </FormControl>
@@ -202,8 +202,7 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
                     </FormItem>
                   )} />
 
-
-                {/* Products — same pattern as new modal */}
+                {/* Products */}
                 <div className="space-y-4 pt-4 border-t border-gray-100">
                   <div className="flex items-center justify-between">
                     <FormLabel className="text-lg font-bold text-gray-800 ml-1">Products</FormLabel>
@@ -218,7 +217,7 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
                           const selectedProductId = form.watch(`products.${index}.productId`);
                           const selectedProduct = availableProducts.find((p) => p.productId === Number(selectedProductId));
                           
-                          // IDs selected in OTHER rows — this row can still show its own current value
+                          // IDs selected in OTHER rows
                           const selectedInOtherRows = form
                             .watch("products")
                             .filter((_, i) => i !== index)
@@ -234,14 +233,15 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
                           <div key={field.id} className="flex gap-3 items-end bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
                             <div className="flex-1">
                               <FormField control={form.control} name={`products.${index}.productId`} render={({ field: f }) => (
-                                <FormItem className="space-y-1.5">
+                                <FormItem className="flex flex-col gap-2">
                                   <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Product {index + 1}</FormLabel>
                                   <Select
                                     onValueChange={(val) => handleProductSelect(index, Number(val))}
                                     value={f.value ? String(f.value as number) : ""}
                                   >
                                     <FormControl>
-                                      <SelectTrigger className="h-11 bg-white rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0">
+                                      {/* 👇 Applied !h-11, w-full, and standard focus ring */}
+                                      <SelectTrigger className="!h-11 w-full bg-white rounded-xl border-gray-200 focus:ring-black/5">
                                         <SelectValue placeholder="Select product..." />
                                       </SelectTrigger>
                                     </FormControl>
@@ -261,16 +261,18 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
                             {/* Unit price display only */}
                             <div className="w-28">
                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1.5">Unit Price</p>
-                              <div className="h-11 flex items-center px-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 text-sm font-medium">
+                              {/* 👇 Applied !h-11 */}
+                              <div className="!h-11 flex items-center px-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 text-sm font-medium">
                                 {selectedProduct ? `₱${selectedProduct.unitPrice}` : "—"}
                               </div>
                             </div>
 
                             <div className="w-24">
                               <FormField control={form.control} name={`products.${index}.quantity`} render={({ field: f }) => (
-                                <FormItem className="space-y-1.5">
+                                <FormItem className="flex flex-col gap-2">
                                   <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Qty</FormLabel>
                                   <FormControl>
+                                    {/* 👇 Applied !h-11 and standard focus ring */}
                                     <Input
                                       type="number"
                                       name={f.name}
@@ -278,7 +280,7 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
                                       value={f.value as number}
                                       onChange={f.onChange}
                                       onBlur={f.onBlur}
-                                      className="h-11 bg-white rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0"
+                                      className="!h-11 bg-white rounded-xl border-gray-200 focus-visible:ring-black/5"
                                     />
                                   </FormControl>
                                   <FormMessage className="text-xs text-red-500 ml-1" />
@@ -288,7 +290,8 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
 
                             <div className="w-28">
                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1.5">Total</p>
-                              <div className="h-11 flex items-center px-3 rounded-xl border border-gray-200 bg-gray-50 text-green-700 text-sm font-bold">
+                              {/* 👇 Applied !h-11 */}
+                              <div className="!h-11 flex items-center px-3 rounded-xl border border-gray-200 bg-gray-50 text-green-700 text-sm font-bold">
                                 {getRowTotal(index) !== "—" ? `₱${getRowTotal(index)}` : "—"}
                               </div>
                             </div>
@@ -311,7 +314,7 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
                     <Plus className="w-4 h-4 mr-2" />
                     {hasAvailableProducts ? "Add Product Row" : "All products added"}
                   </Button>
-                  {/* After the Add Product Row button: */}
+                  
                   <div className="flex justify-end pt-2">
                     <div className="flex items-center gap-4 bg-gray-900 text-white px-6 py-3 rounded-xl">
                       <span className="text-sm font-semibold">Order Total</span>
@@ -324,8 +327,9 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
             </ScrollArea>
 
             <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3 shrink-0">
-              <Button type="button" variant="outline" onClick={handleClose} className="px-8 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">Cancel</Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/70">
+              <Button type="button" variant="outline" onClick={handleClose} className="px-10 h-11 rounded-xl text-gray-500">Cancel</Button>
+              {/* 👇 Applied standard #0f172a hover state */}
+              <Button type="submit" disabled={isSubmitting} className="bg-[#0f172a] hover:bg-[#0f172a]/90 text-white px-10 h-11 rounded-xl font-bold">
                 {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>

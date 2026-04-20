@@ -98,6 +98,9 @@ export const InventoryTable = ({ data, onEdit, onDelete }: InventoryTableProps) 
             <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
               Reorder Level
             </TableHead>
+            <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
+              Actions
+            </TableHead>
             
           </TableRow>
         </TableHeader>
@@ -107,38 +110,38 @@ export const InventoryTable = ({ data, onEdit, onDelete }: InventoryTableProps) 
             return (
               <TableRow 
                 key={item.productId} 
-                className="group transition-colors hover:bg-black cursor-default border-b border-gray-50"
+                className="group transition-colors hover:bg-[#0f172a] cursor-default border-b border-gray-50"
               >
-                <TableCell className="px-4 py-4 font-medium text-gray-800 group-hover:text-white">
+                <TableCell className="px-4 py-4 font-medium text-gray-800 group-hover:text-white transition-colors">
                   {item.productId}
                 </TableCell>
-                <TableCell className="px-4 py-4 font-medium text-gray-800 group-hover:text-white">
+                <TableCell className="px-4 py-4 font-medium text-gray-800 group-hover:text-white transition-colors">
                   {item.productName}
                 </TableCell>
-                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
                   {item.productCategory1}
                 </TableCell>
-                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
                   {item.productCategory2}
                 </TableCell>
-                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
                   {item.productCategory3}
                 </TableCell>
-                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
                   {item.productCategory4}
                 </TableCell>
-                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
                   {item.productCategory5}
                 </TableCell>
-                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
                   {item.measurement}
                 </TableCell>
-                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
                   {item.productDesc}
                 </TableCell>
                 
                 <TableCell className="px-4 py-4">
-                  <span className={`flex items-center gap-1 ${
+                  <span className={`flex items-center gap-1 transition-colors ${
                     isLowStock 
                       ? "text-red-600 font-semibold group-hover:text-red-400" 
                       : "text-gray-700 group-hover:text-white"
@@ -146,17 +149,24 @@ export const InventoryTable = ({ data, onEdit, onDelete }: InventoryTableProps) 
                     {item.productQuantity} {isLowStock && <span className="text-[10px] font-normal uppercase">(low)</span>}
                   </span>
                 </TableCell>
-                <TableCell className="px-4 py-4 text-gray-500 group-hover:text-zinc-400">
+                <TableCell className="px-4 py-4 text-gray-500 group-hover:text-white transition-colors">
                   {item.reorderLevel}
                 </TableCell>
                 <TableCell className="px-6 py-6 text-right">
-                <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => onEdit(item)} className="text-zinc-400 hover:text-white transition-colors"><Edit3 className="w-4 h-4" /></button>
-                  {!isWarehouse && (
-                  <button onClick={() => onDelete(item)} className="text-zinc-400 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
-                  )}
-                </div>
-              </TableCell>
+                  <div className="flex items-center justify-end gap-3">
+                    
+                    <button onClick={() => onEdit(item)} className="text-slate-400 group-hover:text-white transition-colors">
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+
+                    {!isWarehouse && (
+                      <button onClick={() => onDelete(item)} className="text-slate-400 group-hover:text-white hover:!text-red-400 transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+
+                  </div>
+                </TableCell>
               </TableRow>
             );
           })}

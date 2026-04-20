@@ -3,10 +3,9 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { editItemSchema } from "@/lib/validations"; // Your shiny new schema!
+import { editItemSchema } from "@/lib/validations"; 
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-
 
 import {
   Dialog,
@@ -42,7 +41,6 @@ import { updateItemAction } from "@/lib/action/inventory.action";
 import { executeAction } from "@/lib/error.handler";
 import { authClient } from "@/lib/auth-client";
 
-
 interface EditItemModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -55,19 +53,17 @@ interface EditItemModalProps {
 
 export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements, projects, isViewOnly = false }: EditItemModalProps) => {
   const {data: session,isPending,error} =  authClient.useSession();
-  const user= session?.user; // Get the current user session (if needed for audit logs or permissions)
+  const user= session?.user; 
   const [openCombobox, setOpenCombobox] = useState(false);
   const [openCombobox2, setOpenCombobox2] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const userDept = user?.department?.toLowerCase(); // Assuming the field is 'dept'
+  const userDept = user?.department?.toLowerCase(); 
   const isWarehouse = userDept === "warehouse";
   const isPurchasing = userDept === "purchasing";
-  // 1. Setup React Hook Form with your editItemSchema
+  
   const form = useForm<z.input<typeof editItemSchema>>({
     resolver: zodResolver(editItemSchema),
-    // THE MAGIC TRICK: We use 'values' here instead of 'defaultValues'. 
-    // This forces the form to instantly update whenever you click a different item in the table!
     values: {
       productName: item?.productName || "",
       category1: item?.productCategory1 || "",
@@ -83,31 +79,28 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
       projectId: undefined,
     },
   });
-  // Place this right after your useForm hook
+  
   const watchReason = form.watch("reason");
 
-  // 2. The function that runs when you click Submit
   async function onSubmit(data: z.input<typeof editItemSchema>) {
     setIsSubmitting(true);
     
     await executeAction(async () => {
       if (!item) {
         throw new Error("Missing item context. Please refresh and try again.");
-      } // Just a safety check
+      } 
       
-      // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
       const validatedData = editItemSchema.parse(data);
   
       const res = await updateItemAction(item.productId,validatedData);
   
-      // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
       if (!res.success) {
         throw res; 
       }
       form.reset();
       onClose();
       return res;
-    }, "Item added successfully!");
+    }, "Item updated successfully!");
   
     setIsSubmitting(false);
   }
@@ -135,14 +128,14 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                 <FormItem>
                   <FormLabel className="font-bold text-gray-700">Product Name</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Update product name..." className="h-11 rounded-xl" />
+                    <Input {...field} placeholder="Update product name..." className="h-11 rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
             </div>
 
-            {/* SECTION: CATEGORIES (Consistent with New Item) */}
+            {/* SECTION: CATEGORIES */}
             <div className="space-y-3">
               <FormLabel className="font-bold text-gray-700">Categorization</FormLabel>
               <div className="grid grid-cols-2 gap-3">
@@ -154,7 +147,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                           <Button
                             variant="outline"
                             role="combobox"
-                            className={cn("h-11 justify-between rounded-xl font-normal border-gray-200", !field.value && "text-gray-400")}
+                            className={cn("h-11 justify-between rounded-xl font-normal border-gray-200 focus-visible:ring-black/5", !field.value && "text-gray-400")}
                           >
                             {field.value || "Select or type a category..."}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -193,16 +186,16 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                 )} />
                 
                 {["category2", "category3", "category4", "category5"].map((catName) => (
-                    <FormField key={catName} control={form.control} name={catName as any} render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input {...field} placeholder={`${catName} (Optional)`} className="h-10 rounded-xl text-xs" />
-                        </FormControl>
-                      </FormItem>
-                    )} />
-                  ))}
-                </div>
+                  <FormField key={catName} control={form.control} name={catName as any} render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input {...field} placeholder={`${catName} (Optional)`} className="h-10 rounded-xl text-xs border-gray-200 focus-visible:ring-black/5" />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                ))}
               </div>
+            </div>
 
             {/* Unit of Measurement Combobox */}
             <FormField control={form.control} name="measurement" render={({ field }) => (
@@ -215,11 +208,10 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                         variant="outline"
                         role="combobox"
                         className={cn(
-                          "h-11 justify-between rounded-xl font-normal border-gray-200",
+                          "h-11 justify-between rounded-xl font-normal border-gray-200 focus-visible:ring-black/5",
                           !field.value && "text-gray-400"
                         )}
                       >
-                        {/* Display the current value from the form (which defaults to item.measurement) */}
                         {field.value || "Select or type unit..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -229,7 +221,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                     <Command>
                       <CommandInput 
                         placeholder="Search units (e.g., kg, pcs, box)..." 
-                        onValueChange={(val) => field.onChange(val)} // Allows typing new units
+                        onValueChange={(val) => field.onChange(val)} 
                       />
                       <CommandList>
                         <CommandEmpty>No matching unit. Type to create "{field.value}"</CommandEmpty>
@@ -267,7 +259,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
               <FormItem>
                 <FormLabel className="font-bold text-gray-700">Description</FormLabel>
                 <FormControl>
-                  <Textarea {...field} className="rounded-xl resize-none h-24" placeholder="Update details..." />
+                  <Textarea {...field} className="rounded-xl resize-none h-24 border-gray-200 focus-visible:ring-black/5" placeholder="Update details..." />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -297,7 +289,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                   <FormItem className="space-y-2">
                     <FormLabel className="font-bold text-gray-700 text-xs">Adjusted Stock</FormLabel>
                     <FormControl>
-                      <Input {...field} value={(field.value as string) ?? ""} type="number" className="h-11 rounded-xl border-blue-200 focus:ring-blue-500" placeholder="0" />
+                      <Input {...field} value={(field.value as string) ?? ""} type="number" className="h-11 rounded-xl border-blue-200 focus-visible:ring-blue-500/30" placeholder="0" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -308,7 +300,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                   <FormItem className="space-y-2">
                     <FormLabel className="font-bold text-gray-700 text-xs">Reorder Level</FormLabel>
                     <FormControl>
-                      <Input {...field} value={(field.value as string) ?? ""} type="number" className="h-11 rounded-xl" />
+                      <Input {...field} value={(field.value as string) ?? ""} type="number" className="h-11 rounded-xl border-gray-200 focus-visible:ring-black/5" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -322,7 +314,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                     <FormLabel className="font-bold text-gray-700 text-xs">Reason for Adjustment</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="h-11 rounded-xl bg-white">
+                        <SelectTrigger className="h-11 rounded-xl bg-white border-gray-200 focus:ring-black/5">
                           <SelectValue placeholder="Why is this changing?" />
                         </SelectTrigger>
                       </FormControl>
@@ -349,7 +341,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                         value={field.value?.toString()}
                       >
                         <FormControl>
-                          <SelectTrigger className="h-11 rounded-xl bg-white border-blue-200">
+                          <SelectTrigger className="h-11 rounded-xl bg-white border-blue-200 focus:ring-blue-500/30">
                             <SelectValue placeholder="Choose project..." />
                           </SelectTrigger>
                         </FormControl>
@@ -370,12 +362,19 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                         )}
           </div>
 
-          <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 gap-3">
-            <Button type="button" variant="ghost" onClick={onClose} className="rounded-xl text-gray-500">Cancel</Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-black hover:bg-zinc-800 text-white px-8 rounded-xl font-bold">
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Update Item"}
-            </Button>
-          </DialogFooter>
+          <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3">
+              <Button type="button" variant="outline" onClick={onClose} className="px-10 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/90 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {isSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
         </form>
       </Form>
     </DialogContent>

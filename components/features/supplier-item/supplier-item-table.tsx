@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, Edit3, Trash2, Calendar, Tag } from "lucide-react";
+import { Eye, Edit3, Trash2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -12,15 +12,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// This interface assumes you've performed a JOIN in your server component 
-// to get the names alongside the IDs.
 export interface SupplierItem {
   supplierItemId: number;
   supplierId: number;
   supplierName: string;
   productId: number;
   productName: string;
-  unitPrice: string | number; // 👈 Drizzle numeric returns as string  category1: string | null;
+  unitPrice: string | number; 
   category1: string;
   lastUpdated: Date | string | null;
   measurement: string;
@@ -50,21 +48,16 @@ export const SupplierItemTable = ({ data = [], onView, onEdit, onDelete }: Suppl
   const currentItems = data.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(data.length / itemsPerPage);
 
-  // Helper to format currency
- 
-
-  // Helper to format date
   const formatDate = (date: Date | string | null) => {
     if (!date) return '-';
-    return new Date(date).toLocaleString()
-   
+    return new Date(date).toLocaleString();
   };
 
   return (
     <div className="rounded-2xl border border-gray-100 overflow-hidden bg-white">
-      <Table className="text-sm border-collapse">
+      <Table className="text-sm border-collapse w-full">
         <TableHeader>
-          <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
+          <TableRow className="bg-gray-50/50 hover:bg-transparent border-b border-gray-100">
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Link ID</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Supplier</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Product</TableHead>
@@ -72,67 +65,64 @@ export const SupplierItemTable = ({ data = [], onView, onEdit, onDelete }: Suppl
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Measurement</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-right">Unit Price</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Last Updated</TableHead>
-            <TableHead className="px-6 py-4 text-right"></TableHead>
+            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {currentItems.map((item) => (
-            <TableRow key={item.supplierItemId} className="group hover:bg-black transition-colors cursor-default border-b border-gray-50">
-              <TableCell className="px-6 py-6 font-mono text-[10px] text-gray-400 group-hover:text-zinc-500">
+            <TableRow 
+              key={item.supplierItemId} 
+              className="group hover:bg-[#0f172a] transition-colors cursor-default border-b border-gray-50 last:border-0"
+            >
+              <TableCell className="px-6 py-6 font-mono text-[10px] text-gray-400 group-hover:text-white transition-colors">
                 {item.supplierItemId}
               </TableCell>
               <TableCell className="px-6 py-6">
-                <span className="font-semibold text-gray-800 group-hover:text-white block truncate max-w-[150px]">
+                <span className="font-semibold text-gray-800 group-hover:text-white transition-colors block truncate max-w-[150px]">
                   {item.supplierName}
                 </span>
               </TableCell>
               <TableCell className="px-6 py-6">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-600 group-hover:text-zinc-300">
-                    {item.productName}
-                  </span>
-                </div>
+                <span className="font-medium text-gray-600 group-hover:text-white transition-colors">
+                  {item.productName}
+                </span>
               </TableCell>
               <TableCell className="px-6 py-6">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-600 group-hover:text-zinc-300">
-                    {item.category1}
-                  </span>
-                </div>
+                <span className="font-medium text-gray-600 group-hover:text-white transition-colors">
+                  {item.category1}
+                </span>
               </TableCell>
               <TableCell className="px-6 py-6">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-600 group-hover:text-zinc-300">
-                    {item.measurement}
-                  </span>
-                </div>
+                <span className="font-medium text-gray-600 group-hover:text-white transition-colors">
+                  {item.measurement}
+                </span>
               </TableCell>
-              <TableCell className="px-6 py-6 text-right font-bold text-green-600 group-hover:text-green-400">
-                {item.unitPrice}
+              <TableCell className="px-6 py-6 text-right font-bold text-green-600 group-hover:text-white transition-colors">
+                ₱{item.unitPrice}
               </TableCell>
-              <TableCell className="px-6 py-6 text-gray-500 group-hover:text-zinc-400">
+              <TableCell className="px-6 py-6 text-gray-500 group-hover:text-white transition-colors">
                 <div className="flex items-center gap-2 text-[11px]">
                   <Calendar className="w-3 h-3" />
                   {formatDate(item.lastUpdated)}
                 </div>
               </TableCell>
               <TableCell className="px-6 py-6 text-right">
-                <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center justify-end gap-2 group-hover:text-white transition-colors">
                   <button 
                     onClick={() => onView(item)} 
-                    className="text-zinc-400 hover:text-white transition-colors"
+                    className="p-2 rounded-lg text-slate-400 group-hover:text-white hover:bg-white/10 transition-colors"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
                   <button 
                     onClick={() => onEdit(item)} 
-                    className="text-zinc-400 hover:text-white transition-colors"
+                    className="p-2 rounded-lg text-slate-400 group-hover:text-white hover:bg-white/10 transition-colors"
                   >
                     <Edit3 className="w-4 h-4" />
                   </button>
                   <button 
                     onClick={() => onDelete(item)} 
-                    className="text-zinc-400 hover:text-red-400 transition-colors"
+                    className="p-2 rounded-lg text-slate-400 group-hover:text-white hover:bg-red-500/20 hover:!text-red-400 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -160,7 +150,11 @@ export const SupplierItemTable = ({ data = [], onView, onEdit, onDelete }: Suppl
               key={i} 
               variant={currentPage === i + 1 ? "default" : "outline"} 
               onClick={() => setCurrentPage(i + 1)} 
-              className={`h-8 w-8 p-0 text-[11px] ${currentPage === i + 1 ? "bg-black text-white hover:bg-zinc-800" : "border-gray-200 hover:bg-gray-50 text-gray-600"}`}
+              className={`h-8 w-8 p-0 text-[11px] ${
+                currentPage === i + 1 
+                  ? "bg-[#0f172a] text-white hover:bg-[#0f172a]/90" 
+                  : "border-gray-200 hover:bg-gray-50 text-gray-600"
+              }`}
             >
               {i + 1}
             </Button>

@@ -70,11 +70,10 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-sm border-gray-200 p-8 rounded-3xl bg-white">
+      <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div className="text-left">
             <h2 className="text-xl font-bold text-gray-800 tracking-tight">Supplier Directory</h2>
-            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mt-1">Manage External Partners</p>
           </div>
           
           <div className="flex items-center gap-3 w-full md:w-auto">
@@ -84,7 +83,7 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by supplier name or ID..." 
-                className="pl-9 h-11 border-gray-100 rounded-xl focus-visible:ring-black focus-visible:ring-2"
+                className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-black/5"
               />
             </div>
             

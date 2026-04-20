@@ -3,7 +3,7 @@
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { newOrderSchema } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -20,20 +20,17 @@ import Big from "big.js";
 import { ProjectOption, SupplierOption, SupplierProduct } from "@/lib/action/order.action";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
-
 interface NewOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   suppliers: SupplierOption[];
   supplierProducts: SupplierProduct[];
-  projects: ProjectOption[];            // ADD
+  projects: ProjectOption[];
 }
 
 export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, projects }: NewOrderModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(null);
-
-  
 
   // Products available for the selected supplier
   const availableProducts = supplierProducts.filter(
@@ -93,6 +90,7 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
   const hasAvailableProducts = availableProducts.some(
     (p) => !selectedProductIds.includes(p.productId)
   );
+  
   const handleClose = () => {
     form.reset();
     setSelectedSupplierId(null);
@@ -135,7 +133,7 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                 {/* Row 1: Supplier + Delivery Date */}
                 <div className="grid grid-cols-2 gap-5">
                   <FormField control={form.control} name="supplierId" render={({ field }) => (
-                    <FormItem className="space-y-1.5">
+                    <FormItem className="flex flex-col gap-2">
                       <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier</FormLabel>
                       <Select
                         onValueChange={(val) => {
@@ -147,7 +145,8 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                         value={field.value ? String(field.value as number) : ""}
                       >
                         <FormControl>
-                          <SelectTrigger className={cn("h-11 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0", !(field.value as number) && "text-gray-400")}>
+                          {/* 👇 Applied standard focus ring */}
+                          <SelectTrigger className={cn("h-11! w-full rounded-xl border-gray-200 focus:ring-black/5", !(field.value as number) && "text-gray-400")}>
                             <SelectValue placeholder="Select supplier..." />
                           </SelectTrigger>
                         </FormControl>
@@ -162,14 +161,15 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                   )} />
 
                   <FormField control={form.control} name="deliveryDate" render={({ field }) => (
-                    <FormItem className="space-y-1.5">
+                    <FormItem className="flex flex-col gap-2 ">
                       <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Expected Delivery</FormLabel>
                       <FormControl>
+                        {/* 👇 Applied standard focus ring */}
                         <Input
                           type="date"
                           value={field.value ? new Date(field.value as Date).toISOString().split("T")[0] : ""}
                           onChange={(e) => field.onChange(new Date(e.target.value))}
-                          className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0"
+                          className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5"
                         />
                       </FormControl>
                       <FormMessage className="text-xs text-red-500 ml-1" />
@@ -188,7 +188,8 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                       value={field.value ? String(field.value as number) : "none"}
                     >
                       <FormControl>
-                        <SelectTrigger className="h-11 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0">
+                        {/* 👇 Applied standard focus ring */}
+                        <SelectTrigger className="h-11! w-full rounded-xl border-gray-200 focus:ring-black/5">
                           <SelectValue placeholder="Select project..." />
                         </SelectTrigger>
                       </FormControl>
@@ -235,7 +236,6 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                               (p) => !selectedInOtherRows.includes(p.productId)
                             );
 
-
                             return (
                               <div key={field.id} className="flex gap-3 items-end bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
                                 <div className="flex-1">
@@ -247,7 +247,8 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                                         value={f.value ? String(f.value as number) : ""}
                                       >
                                         <FormControl>
-                                          <SelectTrigger className="h-11 bg-white rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0">
+                                          {/* 👇 Applied standard focus ring and w-full */}
+                                          <SelectTrigger className="h-11 w-full bg-white rounded-xl border-gray-200 focus:ring-black/5">
                                             <SelectValue placeholder="Select product..." />
                                           </SelectTrigger>
                                         </FormControl>
@@ -278,6 +279,7 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                                     <FormItem className="space-y-1.5">
                                       <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Qty</FormLabel>
                                       <FormControl>
+                                        {/* 👇 Applied standard focus ring */}
                                         <Input
                                           type="number"
                                           name={f.name}
@@ -285,7 +287,7 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                                           value={f.value as number}
                                           onChange={f.onChange}
                                           onBlur={f.onBlur}
-                                          className="h-11 bg-white rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0"
+                                          className="h-11 bg-white rounded-xl border-gray-200 focus-visible:ring-black/5"
                                         />
                                       </FormControl>
                                       <FormMessage className="text-xs text-red-500 ml-1" />
@@ -334,10 +336,17 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
               </div>
             </ScrollArea>
 
-            <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3 shrink-0">
-              <Button type="button" variant="outline" onClick={handleClose} className="px-8 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">Cancel</Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/70">
-                {isSubmitting ? "Submitting..." : "Create Draft"}
+            <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3">
+              <Button type="button" variant="outline" onClick={handleClose} className="px-10 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/90 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>

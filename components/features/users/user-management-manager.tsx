@@ -9,6 +9,13 @@ import { Card } from "@/components/ui/card";
 import { UserTable, User } from "./user-table";
 import { NewUserModal } from "./new-user-modal";
 import { EditUserModal } from "./edit-user-modal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface UserManagementManagerProps {
   data?: User[];
@@ -66,7 +73,7 @@ export const UserManagementManager = ({ data = [] }: UserManagementManagerProps)
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-sm border-gray-200 p-8">
+      <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <h2 className="text-xl font-bold text-gray-800">System Users</h2>
           
@@ -77,24 +84,57 @@ export const UserManagementManager = ({ data = [] }: UserManagementManagerProps)
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by Name, Username, ID..." // Updated placeholder
-                className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-green-500 focus-visible:ring-2"
+                className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-black/5"
               />
             </div>
             
-            <div className="relative">
-              <select 
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="appearance-none h-11 px-5 bg-[#E5E7EB] rounded-xl text-sm font-medium pr-10 focus:outline-none cursor-pointer"
+            <Select 
+              value={roleFilter} 
+              onValueChange={(value) => setRoleFilter(value)}
+            >
+              {/* 👇 Forced !h-11 height and flat gray styling */}
+             <SelectTrigger className="h-11! w-[200px] px-5 bg-[#E5E7EB] border-none shadow-none rounded-xl text-sm font-medium text-gray-900! focus:ring-0 focus:ring-offset-0 focus:outline-none cursor-pointer hover:bg-gray-300 transition-colors">
+                  <SelectValue placeholder="Filter by Roles" />
+                </SelectTrigger>
+              
+              {/* The 5px gap dropdown menu */}
+              <SelectContent 
+                position="popper" 
+                sideOffset={5} 
+                className="rounded-xl border-slate-200 shadow-lg bg-white p-1"
               >
-                <option value="">All Roles</option>
-                <option value="admin">Admin</option>
-                <option value="finance">Finance</option>
-                <option value="purchasing">Purchasing</option> {/* Fixed Typo */}
-                <option value="warehouse">Warehouse</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-            </div>
+                <SelectItem 
+                  value="all" 
+                  className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                >
+                  All Roles
+                </SelectItem>
+                <SelectItem 
+                  value="admin" 
+                  className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                >
+                  Admin
+                </SelectItem>
+                <SelectItem 
+                  value="finance" 
+                  className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                >
+                  Finance
+                </SelectItem>
+                <SelectItem 
+                  value="purchasing" 
+                  className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                >
+                  Purchasing
+                </SelectItem>
+                <SelectItem 
+                  value="warehouse" 
+                  className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                >
+                  Warehouse
+                </SelectItem>
+              </SelectContent>
+            </Select>
 
             <Button 
               onClick={() => setIsNewModalOpen(true)}

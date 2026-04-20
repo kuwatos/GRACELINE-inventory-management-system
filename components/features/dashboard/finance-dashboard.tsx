@@ -9,7 +9,7 @@ interface FinanceDashboardProps {
 
 export const FinanceDashboard = ({ notifications = [] }: FinanceDashboardProps) => {
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6">
       <DashboardNotifications
         title="Notifications"
         viewAllLink="/finance/notifications"

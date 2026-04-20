@@ -56,11 +56,10 @@ export const NotificationManager = ({
 
   return (
     <div className="space-y-6">
-      <div className="shadow-sm border-gray-200 p-8">
+      <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h2 className="text-xl font-bold text-gray-800">System Notifications</h2>
-            <p className="text-sm font-medium text-gray-500">Manage your inventory alerts and order updates.</p>
+            <h2 className="text-xl font-bold text-gray-800">Notifications</h2>
           </div>
           
           {notifications.length > 0 && !isLoading && (
@@ -74,8 +73,6 @@ export const NotificationManager = ({
             </Button>
           )}
         </div>
-
-        <Card className="shadow-sm border-gray-200 rounded-2xl overflow-hidden p-6 bg-gray-50/30">
           <div className="space-y-3">
             {isLoading ? (
               // The Loading State (Prevents flashing "All caught up" while fetching)
@@ -110,8 +107,7 @@ export const NotificationManager = ({
               </div>
             )}
           </div>
-        </Card>
-      </div>
+      </Card>
     </div>
   );
 };

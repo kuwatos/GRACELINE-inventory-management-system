@@ -112,14 +112,10 @@ const isInvalidDateRange =
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-sm border-gray-200 p-8 rounded-2xl">
+      <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
         <div className="mb-8 flex items-center gap-3">
-          <div className="bg-black p-2 rounded-xl">
-            <FileText className="w-5 h-5 text-white" />
-          </div>
           <div>
             <h2 className="text-xl font-bold text-gray-800">Month-End Report</h2>
-            <p className="text-xs text-gray-400 font-medium tracking-tight">Full Supplier Audit & Inventory Movement</p>
           </div>
         </div>
         
@@ -152,10 +148,14 @@ const isInvalidDateRange =
       </Card>
 
       <Card className="shadow-sm border-gray-200 p-8 rounded-2xl min-h-[400px]">
-        <div className="flex justify-end mb-6">
-          <div className="relative w-full md:w-64">
+        <div className="flex justify-end mb-6 ">
+          <div className="relative w-full md:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search history..." className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-black" />
+            <Input 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+              placeholder="Search history..." 
+              className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-black/5" />
           </div>
         </div>
 

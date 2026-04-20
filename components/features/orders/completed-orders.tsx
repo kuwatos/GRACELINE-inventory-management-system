@@ -44,7 +44,6 @@ export const CompletedOrders = ({ data = MOCK_COMPLETED_ORDERS }: { data?: Compl
   return (
     <div className="space-y-6">
       <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
-        
         <div className="mb-6">
           <h2 className="text-xl font-medium text-gray-900">Completed Orders</h2>
         </div>

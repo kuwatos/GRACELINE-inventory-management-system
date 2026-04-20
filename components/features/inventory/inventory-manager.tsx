@@ -11,6 +11,13 @@ import { EditItemModal } from "./edit-item-modal";
 import { deleteItem } from "@/src/entity/item/item.repository";
 import { deleteItemAction } from "@/lib/action/inventory.action";
 import { authClient } from "@/lib/auth-client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface InventoryManagerProps {
   data?: InventoryItem[];
@@ -76,7 +83,7 @@ export const InventoryManager = ({ data = [], suppliers = [], categories = [], m
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-sm border-gray-200 p-8">
+      <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <h2 className="text-xl font-bold text-gray-800">
             {filterStatus === "low-stock" ? "🚨 Low Stock Warning" : "Current Stock Levels"}
@@ -90,19 +97,40 @@ export const InventoryManager = ({ data = [], suppliers = [], categories = [], m
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by Item Name or Code..."
-                className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-green-500 focus-visible:ring-2"
+                 className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-black/5"
               />
             </div>
 
             <div className="relative">
-              <select 
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as "all" | "low-stock")}
-                className="appearance-none h-11 px-5 bg-[#E5E7EB] rounded-xl text-sm font-medium pr-10 focus:outline-none cursor-pointer"
+              <Select 
+                value={filterStatus} 
+                onValueChange={(value) => setFilterStatus(value as "all" | "low-stock")}
+
               >
-                <option value="all">All Items</option>
-                <option value="low-stock">Low Stock</option>
-              </select>
+                <SelectTrigger className="h-11! w-40 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 shadow-sm hover:border-slate-300 hover:shadow-md hover:text-slate-900 transition-all">
+                  <SelectValue placeholder="Filter items" />
+                </SelectTrigger>
+                
+                {/* ADDED position and sideOffset HERE 👇 */}
+                <SelectContent 
+                  position="popper" 
+                  sideOffset={5} 
+                  className="rounded-xl border-slate-200 shadow-lg bg-white p-1"
+                >
+                  <SelectItem 
+                    value="all" 
+                    className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                  >
+                    All Items
+                  </SelectItem>
+                  <SelectItem 
+                    value="low-stock" 
+                    className="focus:bg-red-50 focus:text-red-700 text-red-600 cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                  >
+                    Low Stock
+                  </SelectItem>
+                </SelectContent>
+              </Select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
             </div>
 

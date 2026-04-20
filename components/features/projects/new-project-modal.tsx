@@ -82,26 +82,17 @@ export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
               />
             </div>
 
-            <DialogFooter className="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-row justify-end gap-3">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={onClose} 
-                disabled={isSubmitting}
-                className="px-8 h-12 rounded-xl font-bold text-gray-500"
-              >
+            <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3">
+              <Button type="button" variant="outline" onClick={onClose} className="px-10 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
                 Cancel
               </Button>
               <Button 
                 type="submit" 
-                disabled={isSubmitting}
-                className="bg-black text-white px-10 h-12 rounded-xl font-bold hover:bg-zinc-800 shadow-lg shadow-black/10 transition-all active:scale-95"
+                disabled={isSubmitting} 
+                className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/90 transition-all active:scale-95 disabled:opacity-50"
               >
-                {isSubmitting ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
-                ) : (
-                  "Create Project"
-                )}
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>

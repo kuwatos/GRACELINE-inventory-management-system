@@ -10,7 +10,6 @@ import { editSupplierSchema } from "@/lib/validations";
 import { Supplier } from "./supplier-table";
 import { executeAction } from "@/lib/error.handler";
 
-
 import {
   Dialog,
   DialogContent,
@@ -50,6 +49,7 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
       supplierMobile: "",
     },
   });
+  
   // 2. Sync Form when supplier changes
   useEffect(() => {
     if (isOpen && supplier) {
@@ -68,14 +68,12 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
     await executeAction(async () => {
       if (!supplier) {
         throw new Error("Missing supplier context. Please refresh and try again.");
-      } // Just a safety check
+      } 
       
-      // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
       const validatedData = editSupplierSchema.parse(values);
   
       const res = await updateSupplierAction(supplier.supplierId,validatedData);
   
-      // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
       if (!res.success) {
         throw res; 
       }
@@ -154,7 +152,7 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
                 {isViewOnly ? "Close" : "Cancel"}
               </Button>
               {!isViewOnly && (
-                <Button type="submit" disabled={isSubmitting} className="bg-black text-white px-10 h-12 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-zinc-800 transition-all active:scale-95">
+                <Button type="submit" disabled={isSubmitting} className="bg-[#0f172a] hover:bg-[#0f172a]/90 text-white px-10 h-12 rounded-xl font-bold shadow-lg shadow-black/10 transition-all active:scale-95">
                   {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
                 </Button>
               )}

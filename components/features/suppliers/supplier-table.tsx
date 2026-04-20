@@ -48,31 +48,56 @@ export const SupplierTable = ({ data = [], onView, onEdit, onDelete }: SupplierT
 
   return (
     <div className="rounded-2xl border border-gray-100 overflow-hidden">
-      <Table className="text-sm border-collapse">
+      <Table className="text-sm border-collapse w-full">
         <TableHeader>
-          <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
+          <TableRow className="bg-gray-50/50 hover:bg-transparent border-b border-gray-100">
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Supplier ID</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Supplier Name</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Mobile</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Landline</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Email</TableHead>
-            
+            <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {currentItems.map((sup) => (
-            // Use sup.supplierId instead of sup.id
-             <TableRow key={sup.supplierId} className="group hover:bg-black transition-colors cursor-default border-b border-gray-50">
-              <TableCell className="px-6 py-6 font-mono text-xs text-gray-500 group-hover:text-zinc-400">{sup.supplierId}</TableCell>
-              <TableCell className="px-6 py-6 font-medium text-gray-800 group-hover:text-white">{sup.supplierName}</TableCell>
-              <TableCell className="px-6 py-6 text-gray-600 group-hover:text-zinc-300">{sup.supplierMobile ||  '-'}</TableCell>
-              <TableCell className="px-6 py-6 text-gray-600 group-hover:text-zinc-300">{sup.supplierLandline || '-'}</TableCell>
-              <TableCell className="px-6 py-6 text-gray-600 group-hover:text-zinc-300">{sup.supplierEmail || '-'}</TableCell>
+            // Swapped hover:bg-black for hover:bg-[#0f172a] and added transition-colors
+             <TableRow key={sup.supplierId} className="group hover:bg-[#0f172a] transition-colors cursor-default border-b border-gray-50 last:border-0">
+              <TableCell className="px-6 py-6 font-mono text-xs text-gray-500 group-hover:text-white transition-colors">{sup.supplierId}</TableCell>
+              <TableCell className="px-6 py-6 font-medium text-gray-800 group-hover:text-white transition-colors">{sup.supplierName}</TableCell>
+              <TableCell className="px-6 py-6 text-gray-600 group-hover:text-white transition-colors">{sup.supplierMobile ||  '-'}</TableCell>
+              <TableCell className="px-6 py-6 text-gray-600 group-hover:text-white transition-colors">{sup.supplierLandline || '-'}</TableCell>
+              <TableCell className="px-6 py-6 text-gray-600 group-hover:text-white transition-colors">{sup.supplierEmail || '-'}</TableCell>
+              
               <TableCell className="px-6 py-6 text-right">
-                <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => onView(sup)} className="text-zinc-400 hover:text-white transition-colors"><Eye className="w-4 h-4" /></button>
-                  <button onClick={() => onEdit(sup)} className="text-zinc-400 hover:text-white transition-colors"><Edit3 className="w-4 h-4" /></button>
-                  <button onClick={() => onDelete(sup)} className="text-zinc-400 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                {/* Removed opacity classes so buttons are always visible */}
+                <div className="flex items-center justify-end gap-3 group-hover:text-white transition-colors">
+                  {/* View Button */}
+                  <button 
+                    onClick={() => onView(sup)} 
+                    className="p-2 rounded-lg text-slate-400 group-hover:text-white hover:bg-white/10 transition-colors" 
+                    title="View"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+
+                  {/* Edit Button */}
+                  <button 
+                    onClick={() => onEdit(sup)} 
+                    className="p-2 rounded-lg text-slate-400 group-hover:text-white hover:bg-white/10 transition-colors" 
+                    title="Edit"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+
+                  {/* Delete Button */}
+                  <button 
+                    onClick={() => onDelete(sup)} 
+                    className="p-2 rounded-lg text-slate-400 group-hover:text-white hover:bg-red-500/20 hover:!text-red-400 transition-colors" 
+                    title="Delete"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </TableCell>
             </TableRow>
@@ -84,9 +109,23 @@ export const SupplierTable = ({ data = [], onView, onEdit, onDelete }: SupplierT
         <span>Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, data.length)} of {data.length} results</span>
         <div className="flex items-center gap-1">
           <Button variant="outline" className="h-8 px-3 text-[11px] border-gray-200 hover:bg-gray-50 disabled:opacity-30" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</Button>
+          
+          {/* Applied the truncated pagination fix from earlier */}
           {[...Array(totalPages)].map((_, i) => (
-            <Button key={i} variant={currentPage === i + 1 ? "default" : "outline"} onClick={() => setCurrentPage(i + 1)} className={`h-8 w-8 p-0 text-[11px] ${currentPage === i + 1 ? "bg-black text-white hover:bg-zinc-800" : "border-gray-200 hover:bg-gray-50 text-gray-600"}`}>{i + 1}</Button>
+            <Button 
+              key={i} 
+              variant={currentPage === i + 1 ? "default" : "outline"} 
+              onClick={() => setCurrentPage(i + 1)} 
+              className={`h-8 w-8 p-0 text-[11px] ${
+                currentPage === i + 1 
+                  ? "bg-[#0f172a] text-white hover:bg-[#0f172a]/90" 
+                  : "border-gray-200 hover:bg-gray-50 text-gray-600"
+              }`}
+            >
+              {i + 1}
+            </Button>
           ))}
+
           <Button variant="outline" className="h-8 px-3 text-[11px] border-gray-200 hover:bg-gray-50 disabled:opacity-30" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0}>Next</Button>
         </div>
       </div>
