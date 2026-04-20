@@ -160,11 +160,6 @@ export const sideBarNav: SideBarConfig = {
       icon: LayoutDashboard
     },
     {
-      label: "Projects", // 👈 Added to Warehouse
-      href: "/warehouse/projects",
-      icon: FolderDot
-    },
-    {
       label: "Orders", // 👈 Added to Warehouse
       href: "/warehouse/orders",
       icon: ShoppingBag
