@@ -107,7 +107,7 @@ export const PrintOrder = ({ order }: PrintOrderProps) => {
             <td colSpan={(order.status === "Complete" || order.status === "Incomplete") ? 4 : 3} className="px-4 py-3 font-bold text-right rounded-bl-lg">
               ORDER TOTAL
             </td>
-            <td className="px-4 py-3 font-black text-right text-lg rounded-br-lg">₱{grandTotal}</td>
+            <td className="px-4 py-3 font-black text-right text-lg rounded-br-lg">₱{order.orderedValue}</td>
           </tr>
         </tfoot>
       </table>

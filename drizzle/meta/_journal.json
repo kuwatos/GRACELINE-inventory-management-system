@@ -106,6 +106,13 @@
       "when": 1776373994294,
       "tag": "0013_fearless_firebird",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1776676776203,
+      "tag": "0014_slim_mojo",
+      "breakpoints": true
     }
   ]
 }
