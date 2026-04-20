@@ -113,6 +113,13 @@
       "when": 1776676776203,
       "tag": "0014_slim_mojo",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1776687467847,
+      "tag": "0015_heavy_dark_beast",
+      "breakpoints": true
     }
   ]
 }

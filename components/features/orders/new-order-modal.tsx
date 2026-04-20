@@ -178,30 +178,40 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                 </div>
 
                 {/* Row 2: Project (optional) */}
-                <FormField control={form.control} name="projectId" render={({ field }) => (
-                  <FormItem className="space-y-1.5">
-                    <FormLabel className="text-sm font-semibold text-gray-700 ml-1">
-                      Project <span className="text-gray-400 font-normal">(optional)</span>
-                    </FormLabel>
-                    <Select
-                      onValueChange={(val) => field.onChange(val === "none" ? undefined : Number(val))}
-                      value={field.value ? String(field.value as number) : "none"}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="h-11 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0">
-                          <SelectValue placeholder="Select project..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">No project</SelectItem>
-                        {projects.map((p) => (
-                          <SelectItem key={p.projectId} value={String(p.projectId)}>{p.projectName}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="text-xs text-red-500 ml-1" />
-                  </FormItem>
-                )} />
+                <FormField
+                  control={form.control}
+                  name="projectId"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="text-sm font-semibold text-gray-700 ml-1">
+                        Project <span className="text-gray-400 font-normal">(optional)</span>
+                      </FormLabel>
+                      <Select
+                        // 1. Explicitly set to null when "none" is picked
+                        onValueChange={(val) => {
+                          field.onChange(val === "none" ? null : Number(val));
+                        }}
+                        // 2. Use a strict check so ID 0 doesn't break the UI
+                        value={field.value !== undefined && field.value !== null ? String(field.value) : "none"}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-11 w-full rounded-xl border-gray-200">
+                            <SelectValue placeholder="Select project..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">No project</SelectItem>
+                          {projects.map((p) => (
+                            <SelectItem key={p.projectId} value={String(p.projectId)}>
+                              {p.projectName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-xs text-red-500 ml-1" />
+                    </FormItem>
+                  )}
+                />
 
                 {/* Products */}
                 <div className="space-y-4 pt-4 border-t border-gray-100">
