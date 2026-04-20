@@ -12,6 +12,7 @@ export interface Notification {
   description: string;
   createdAt: string | Date | null; // Match the Item props
   targetId: number|null; // Optional targetId for potential future use
+  additionalDescription: string; // specific description for this notification instance
 }
 
 interface NotificationManagerProps {
@@ -91,6 +92,7 @@ export const NotificationManager = ({
                   description={notif.description}
                   createdAt={notif.createdAt}
                   targetId={notif.targetId}
+                  additionalDescription={notif.additionalDescription}
                   isFullPage={true}
                   onMarkAsRead={handleMarkAsRead}
                 />

@@ -236,6 +236,7 @@ export const userNotificationsTable = pgTable("user_notification_tb", {
     .primaryKey(),
   userId: text("user_id").references(() => usersTable.id),
   targetId: integer("target_id"), // e.g., supplierId, orderId, etc. depending on the notification
+  additionalDescription: text("additional_description").notNull(), // specific description for this notification instance
   notifId: integer("notif_id").references(() => notificationsTable.notifId),
   isRead: boolean("is_read").default(false),
   createdAt: timestamp("created_at", { withTimezone: true })// 1. For the initial insert (replaces defaultNow)
