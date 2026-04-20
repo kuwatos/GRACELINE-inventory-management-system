@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { createSupplierAction } from "@/lib/action/supplier.action";
 import { useState } from "react";
 import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface NewSupplierModalProps {
   isOpen: boolean;
@@ -118,6 +119,7 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
             </DialogFooter>
           </form>
         </Form>
+        <LoadingOverlay isLoading={isSubmitting} message="Creating Supplier..." />
       </DialogContent>
     </Dialog>
   );

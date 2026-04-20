@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { Bell, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { NotificationItem } from "./notification-item";
 import {updateUserNotificationAction, markAllNotificationsAsReadAction} from "@/lib/action/user_notification.action";
+import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 export interface Notification {
   userNotifId: number;
@@ -32,6 +34,7 @@ export const NotificationManager = ({
 }: NotificationManagerProps) => {
   
   const [notifications, setNotifications] = useState<Notification[]>(data);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     setNotifications(data);
@@ -42,16 +45,24 @@ export const NotificationManager = ({
     const previousNotifications = [...notifications];
     
     // 1. Optimistic UI: Instantly hide it from the screen
-    setNotifications(prev => prev.filter(notif => notif.userNotifId !== id));
-    await updateUserNotificationAction (id);
-    
+    startTransition(async () => {
+      await executeAction(async () => {
+        const res = await updateUserNotificationAction (id);
+        if (!res.success) throw res;
+        return res;
+      }, "Notification marked as read!");
+    });
   };
 
   const handleMarkAllAsRead = async () => {
     const previousNotifications = [...notifications];
     setNotifications([]);
+    await executeAction(async () => {
+      const res = await markAllNotificationsAsReadAction()
+      if (!res.success) throw res;
+      return res;
+    }, "All notifications marked as read!");
     
-    await markAllNotificationsAsReadAction()
   };
 
   return (
@@ -72,7 +83,11 @@ export const NotificationManager = ({
               Mark all as read
             </Button>
           )}
-        </div>
+        </div> 
+        </Card>
+
+        <Card className="shadow-sm border-gray-200 rounded-2xl overflow-hidden p-6 bg-gray-50/30">
+          <LoadingOverlay isLoading={isPending} message="Loading..." />
           <div className="space-y-3">
             {isLoading ? (
               // The Loading State (Prevents flashing "All caught up" while fetching)

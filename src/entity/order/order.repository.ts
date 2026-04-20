@@ -252,8 +252,7 @@ export async function changeOrderStatus(data: {
           .from(suppliersTable)
           .where(eq(suppliersTable.supplierId, existing.supplierId))
           .limit(1);
-
-          await createUserNotificationService({ notifId: 8, targetId: data.id, additionalDescription: getSupplierName[0]?.supplierName || "Unknown Supplier" }, tx);
+          await createUserNotificationService({ notifId: 9, targetId: data.id, additionalDescription: getSupplierName[0]?.supplierName || "Unknown Supplier" }, tx);
         }
       }
     }

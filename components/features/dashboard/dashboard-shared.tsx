@@ -40,7 +40,7 @@ export const DashboardNotifications = ({ title = "Notifications", viewAllLink, n
               {notif.targetId !== null && notif.targetId !== 0 && (
                 <span className="flex items-center gap-0.5 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold w-fit group-hover:bg-white/20 group-hover:text-white transition-colors">
                   <Hash className="w-2.5 h-2.5" />
-                  {notif.targetId}
+                  {notif.targetId + " " + notif.additionalDescription}
                 </span>
               )}
               <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 group-hover:text-gray-400/80 transition-colors">

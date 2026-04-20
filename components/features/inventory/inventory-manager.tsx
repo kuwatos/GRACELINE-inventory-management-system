@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Search, ChevronDown, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import { executeAction } from "@/lib/error.handler";
 
 interface InventoryManagerProps {
   data?: InventoryItem[];
@@ -35,6 +37,7 @@ export const InventoryManager = ({ data = [], suppliers = [], categories = [], m
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const session = authClient.useSession();
   const userDept = session.data?.user?.department?.toLowerCase(); // Assuming the field is 'dept'
@@ -63,27 +66,23 @@ export const InventoryManager = ({ data = [], suppliers = [], categories = [], m
   };
 
   const handleDeleteClick = async (item: InventoryItem) => {
-    setSelectedItem(item);
-    const isConfirmed = window.confirm(`Are you sure you want to delete inventory item: ${item.productName}?`);
-            
-            if (isConfirmed) {
-              try {
-                // 2. Send the ID across the bridge to your Robot Butler
-                const result = await deleteItemAction(item.productId);
-        
-                if (!result.success) {
-                  console.error("Failed to delete item:", result.error);
-                  alert("Failed to delete order. Please try again.");
-                }
-              } catch (error) {
-                console.error("Server error during deletion:", error);
-              }
-            }
+    startTransition(async () => {
+      setSelectedItem(item);
+      const isConfirmed = window.confirm(`Are you sure you want to delete inventory item: ${item.productName}?`);
+        if (isConfirmed) {
+          await executeAction(async () => {
+                const res = await deleteItemAction(item.productId);
+                if (!res.success) throw res;
+                return res;
+              }, "Inventory item archived!");
+        }
+    });
   };
 
   return (
     <div className="space-y-6">
       <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
+        <LoadingOverlay isLoading={isPending} message="Updating..." />
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <h2 className="text-xl font-bold text-gray-800">
             {filterStatus === "low-stock" ? "🚨 Low Stock Warning" : "Current Stock Levels"}

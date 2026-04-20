@@ -351,6 +351,7 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
             </DialogFooter>
           </form>
         </Form>
+        <LoadingOverlay isLoading={isSubmitting} message="Creating Order Draft..." />
       </DialogContent>
     </Dialog>
   );

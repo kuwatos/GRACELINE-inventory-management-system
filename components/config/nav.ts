@@ -72,7 +72,7 @@ export const sideBarNav: SideBarConfig = {
       icon: Hammer
     },
     {
-      label: "Completed Orders",
+      label: "Completed Orders Notifs",
       href: "/admin/completed",
       icon: PackageCheck
     },
@@ -118,7 +118,7 @@ export const sideBarNav: SideBarConfig = {
       icon: Hammer
     },
     {
-      label: "Completed Orders",
+      label: "Completed Orders Notifs",
       href: "/purchasing/completed",
       icon: PackageCheck
     },

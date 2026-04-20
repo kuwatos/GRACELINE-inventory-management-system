@@ -10,6 +10,7 @@ import { Loader2 } from "lucide-react";
 import { projectFormSchema, ProjectFormValues } from "@/lib/validations"; 
 import { createProjectAction } from "@/lib/action/project.action";
 import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 
 interface NewProjectModalProps {
@@ -97,6 +98,7 @@ export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
             </DialogFooter>
           </form>
         </Form>
+        <LoadingOverlay isLoading={isSubmitting} message="Creating Project..." />
       </DialogContent>
     </Dialog>
   );

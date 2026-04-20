@@ -335,6 +335,7 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
             </DialogFooter>
           </form>
         </Form>
+        <LoadingOverlay isLoading={isSubmitting} message="Saving Changes..." />
       </DialogContent>
     </Dialog>
   );

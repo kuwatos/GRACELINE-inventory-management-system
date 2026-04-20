@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Search, ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { ProjectTable, Project } from "./project-table";
 import { NewProjectModal } from "./new-project-modal"; 
 import { EditProjectModal } from "./edit-project-modal"; 
 import { deleteProjectAction } from "@/lib/action/project.action";
+import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface ProjectManagerProps {
   data: Project[];
@@ -18,6 +20,7 @@ export const ProjectManager = ({ data = [] }: ProjectManagerProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
   
   // Data States (Matches Supplier Pattern)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -45,14 +48,21 @@ export const ProjectManager = ({ data = [] }: ProjectManagerProps) => {
   };
 
   const handleDeleteClick = async (project: Project) => {
-    if (confirm(`Are you sure you want to delete ${project.projectName}?`)) {
-      await deleteProjectAction(project.projectId);
-    }
+    startTransition(async () => {
+      if (confirm(`Are you sure you want to delete ${project.projectName}?`)) {
+        await executeAction(async () => { 
+            const res = await deleteProjectAction(project.projectId);
+            if (!res.success) throw res;
+            return res;
+          }, "Project archived successfully!");
+        }
+      })
   };
 
   return (
     <div className="space-y-6">
       <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
+        <LoadingOverlay isLoading={isPending} message="Updating..." />
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <h2 className="text-xl font-bold text-gray-800">Project Directory</h2>
           

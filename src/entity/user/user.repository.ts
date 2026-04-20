@@ -2,12 +2,10 @@
 "use server";
 import { db } from "../../index";
 import { usersTable } from "../../db/schema";
-import { and, or, ilike, eq, ne } from "drizzle-orm";
+import { and, or, ilike, eq, ne, desc } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { auth, type User} from "@/lib/auth";
 import { headers } from "next/headers";
-import { id } from "zod/v4/locales";
-import { role } from "better-auth/plugins";
 
 export async function createUser(data: { 
   firstName: string; 
@@ -73,13 +71,15 @@ export async function createUser(data: {
 // READ
 export async function readUsers(sessionUserId: string) {
   return db
-  .select()
-  .from(usersTable)
-  .where(
-    and(
-      eq(usersTable.active, true),
-      ne(usersTable.id, sessionUserId)
-  ));
+    .select()
+    .from(usersTable)
+    .where(
+      and(
+        eq(usersTable.active, true),
+        ne(usersTable.id, sessionUserId)
+      )
+    )
+    .orderBy(desc(usersTable.createdAt)); // latest first
 }
 
 // SEARCH
