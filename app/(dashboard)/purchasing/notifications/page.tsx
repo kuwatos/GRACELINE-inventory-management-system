@@ -1,9 +1,13 @@
 import { NotificationManager } from '@/components/features/notifications/notification-manager'
+import { readUserNotifications } from '@/src/entity/user_notifications/user_notifications.query'
 import React from 'react'
 
-function page() {
+
+async function page() {
+  const notifications = await readUserNotifications();
+
   return (
-    <NotificationManager/>
+    <NotificationManager data={notifications} />
   )
 }
 

@@ -123,6 +123,7 @@ export const ReceiveOrderModal = ({ isOpen, onClose, orderData, onSubmitReceipt 
           <Button onClick={handleSubmit} className="bg-black text-white h-11 px-8">Move to Complete</Button>
           )}
         </DialogFooter>
+        <LoadingOverlay isLoading={isSubmitting} message={role === "warehouse" ? "Receiving Items..." : "Resolving Order..."} />
       </DialogContent>
     </Dialog>
   );

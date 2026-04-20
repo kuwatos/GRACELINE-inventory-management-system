@@ -15,6 +15,7 @@ import { useTransition } from "react";
 import { approveOrderAction, changeOrderStatusAction, deleteOrderAction, receiveOrderAction } from "@/lib/action/order.action";
 import { SupplierOption, SupplierProduct, ProjectOption } from "@/lib/action/order.action";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import { executeAction } from "@/lib/error.handler";
 
 
 export type Role = "admin" | "warehouse" | "purchasing" | "finance";
@@ -35,6 +36,12 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, proj
   // --- STATE ---
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState<OrderRecord["status"]>("Draft");
+  useEffect(() => {
+    if (role === "warehouse") {
+      setActiveTab("Awaiting Delivery");
+    }
+  }, [role]);
+
   const [searchQuery, setSearchQuery] = useState(""); 
   const [orders, setOrders] = useState<OrderRecord[]>(initialOrders);
   
@@ -141,8 +148,12 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, proj
     };
 
     startTransition(async () => {
-      await receiveOrderAction(orderId, payload);
-    });
+      await executeAction(async () => {
+      const res = await receiveOrderAction(orderId, payload);
+      if (!res.success) throw res;
+      return res;
+    }, "Order received successfully!");
+  });
   };
   
   return (

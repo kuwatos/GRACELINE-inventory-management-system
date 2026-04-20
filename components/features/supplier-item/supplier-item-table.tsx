@@ -20,7 +20,7 @@ export interface SupplierItem {
   supplierName: string;
   productId: number;
   productName: string;
-  unitPrice: string | number; // 👈 Drizzle numeric returns as string  category1: string | null;
+  unitPrice: string; // 👈 Drizzle numeric returns as string  category1: string | null;
   category1: string;
   lastUpdated: Date | string | null;
   measurement: string;

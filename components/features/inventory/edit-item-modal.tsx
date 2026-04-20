@@ -41,6 +41,7 @@ import { useState } from "react";
 import { updateItemAction } from "@/lib/action/inventory.action";
 import { executeAction } from "@/lib/error.handler";
 import { authClient } from "@/lib/auth-client";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 
 interface EditItemModalProps {
@@ -378,6 +379,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
           </DialogFooter>
         </form>
       </Form>
+      <LoadingOverlay isLoading={isSubmitting} message="Saving Changes..." />
     </DialogContent>
   </Dialog>
 );

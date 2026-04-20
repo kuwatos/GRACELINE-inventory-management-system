@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface NewUserModalProps {
   isOpen: boolean;
@@ -174,6 +175,7 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
             </DialogFooter>
           </form>
         </Form>
+        <LoadingOverlay isLoading={isSubmitting} message="Creating User..." />
       </DialogContent>
     </Dialog>
   );

@@ -29,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { updateSupplierAction } from "@/lib/action/supplier.action";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface EditSupplierModalProps {
   isOpen: boolean;
@@ -161,6 +162,7 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
             </DialogFooter>
           </form>
         </Form>
+        <LoadingOverlay isLoading={isSubmitting} message="Saving Changes..." />
       </DialogContent>
     </Dialog>
   );

@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -204,6 +205,7 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
             </DialogFooter>
           </form>
         </Form>
+        <LoadingOverlay isLoading={isSubmitting} message="Saving Changes..." />
       </DialogContent>
     </Dialog>
   );

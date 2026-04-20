@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useTransition } from "react";
 import { useReactToPrint } from "react-to-print";
 import { Search, Loader2, FileText, Plus, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ export const ReportsManager = ({ data=[] }: ReportsManagerProps) => {
   
   const printRef = useRef<HTMLDivElement>(null);
 
+  const [isPending, startTransition] = useTransition();
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `GraceLine-MonthEnd-${selectedReport?.dateCreated || "Report"}`,

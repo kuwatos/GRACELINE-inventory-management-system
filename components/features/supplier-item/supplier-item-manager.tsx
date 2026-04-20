@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Search, ChevronDown, Plus, Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,8 @@ import { SupplierItemTable, SupplierItem } from "./supplier-item-table";
 import { NewSupplierItemModal } from "./new-supplier-item-modal";
 import { EditSupplierItemModal } from "./edit-supplier-item-modal";
 import { deleteSupplierItemAction } from "@/lib/action/supplier-items.action";
+import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface SupplierItemManagerProps {
   data: SupplierItem[]; // The linked items with names and prices
@@ -35,6 +37,7 @@ export const SupplierItemManager = ({
   // Data States
   const [selectedLink, setSelectedLink] = useState<SupplierItem | null>(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   // Search & Grouping Logic
   const filteredData = data.filter((item) => {
@@ -69,13 +72,20 @@ export const SupplierItemManager = ({
 
   const handleDeleteClick = async (item: SupplierItem) => {
     if (confirm(`Are you sure you want to remove the link between ${item.supplierName} and ${item.productName}?`)) {
-       await deleteSupplierItemAction(item.supplierItemId);
-    }
+      startTransition(async () => {
+        await executeAction(async () => { 
+          const res = await deleteSupplierItemAction(item.supplierItemId);
+          if (!res.success) throw res;
+          return res;
+        }, "Supplier-product link deleted successfully!");
+      })
   };
+}
 
   return (
     <div className="space-y-6">
       <Card className="shadow-sm border-gray-200 p-8 rounded-3xl bg-white">
+        <LoadingOverlay isLoading={isPending} message="Loading..." />
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div className="text-left">
             <h2 className="text-xl font-bold text-gray-800 tracking-tight">Items Sourcing by Supplier</h2>

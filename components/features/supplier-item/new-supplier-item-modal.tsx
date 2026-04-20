@@ -13,6 +13,7 @@ import { createSupplierItemAction } from "@/lib/action/supplier-items.action";
 import { newSupplierItemSchema } from "@/lib/validations";
 import { useState } from "react";
 import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 
 interface NewSupplierItemModalProps {
@@ -164,6 +165,7 @@ export const NewSupplierItemModal = ({
             </DialogFooter>
           </form>
         </Form>
+        <LoadingOverlay isLoading={isSubmitting} message="Creating Supplier Item..." />
       </DialogContent>
     </Dialog>
   );

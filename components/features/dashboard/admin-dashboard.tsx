@@ -40,7 +40,7 @@ export const AdminDashboard = ({
         <KpiCard
           title="Recent Transactions"
           value={kpiRecentTransactionsMonth}
-          subtext1={`Mon – Today: ${kpiRecentTransactionsWeek}`}
+          subtext1={`Monday – Today: ${kpiRecentTransactionsWeek}`}
           subtext2={`This Month: ${kpiRecentTransactionsMonth}`}
           icon={<Receipt className="w-5 h-5" />}
         />

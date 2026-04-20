@@ -1,7 +1,7 @@
 "use client";
 
 import { deleteUserAction } from "@/lib/action/user.action"; // Make sure this path matches!
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Search, ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { Card } from "@/components/ui/card";
 import { UserTable, User } from "./user-table";
 import { NewUserModal } from "./new-user-modal";
 import { EditUserModal } from "./edit-user-modal";
+import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface UserManagementManagerProps {
   data?: User[];
@@ -20,6 +22,7 @@ export const UserManagementManager = ({ data = [] }: UserManagementManagerProps)
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   // UPDATED: Search filter logic mimicking the Inventory and Supplier tabs
   const filteredData = data.filter((user) => {
@@ -47,26 +50,23 @@ export const UserManagementManager = ({ data = [] }: UserManagementManagerProps)
 
  const handleDeleteClick = async (user: User) => {
     // 1. Ask for confirmation so they don't accidentally delete someone!
-    const isConfirmed = window.confirm(`Are you sure you want to deactivate ${user.firstName} ${user.lastName}?`);
-    
-    if (isConfirmed) {
-      try {
-        // 2. Send the ID across the bridge to your Robot Butler
-        const result = await deleteUserAction(user.id);
-
-        if (!result.success) {
-          console.error("Failed to delete user:", result.error);
-          alert("Failed to delete user. Please try again.");
+      startTransition(async () => {
+      const isConfirmed = window.confirm(`Are you sure you want to deactivate ${user.firstName} ${user.lastName}?`);
+      
+      if (isConfirmed) {
+          await executeAction(async () => { 
+            const res = await deleteUserAction(user.id)
+            if (!res.success) throw res;
+            return res;
+          }, "User deleted successfully!");
         }
-      } catch (error) {
-        console.error("Server error during deletion:", error);
-      }
-    }
-  };
+  });
+}
 
   return (
     <div className="space-y-6">
       <Card className="shadow-sm border-gray-200 p-8">
+        <LoadingOverlay isLoading={isPending} message="Loading..." />
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <h2 className="text-xl font-bold text-gray-800">System Users</h2>
           

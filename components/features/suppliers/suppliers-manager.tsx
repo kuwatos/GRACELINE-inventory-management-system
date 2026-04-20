@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Search, ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { SupplierTable, Supplier } from "./supplier-table";
 import { NewSupplierModal } from "./new-supplier-modal";
 import { EditSupplierModal } from "./edit-supplier-modal";
 import { deleteSupplierAction } from "@/lib/action/supplier.action";
+import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface SuppliersManagerProps {
   data: Supplier[];
@@ -25,6 +27,7 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
   // Data States
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   // Search Filter Logic matching your specific property names
   const filteredData = data.filter((supplier) => {
@@ -50,27 +53,24 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
 
   const handleDeleteClick = async (supplier: Supplier) => {
     setSelectedSupplier(supplier);
+    startTransition(async () => {
     // 1. Ask for confirmation so they don't accidentally delete
     const isConfirmed = window.confirm(`Are you sure you want to archive supplier: ${supplier.supplierName}?`);
     
     if (isConfirmed) {
-      try {
-        // 2. Send the ID across the bridge to your Robot Butler
-        const result =  await deleteSupplierAction(supplier.supplierId)
-
-        if (!result.success) {
-          console.error("Failed to delete order:", result.error);
-          alert("Failed to delete order. Please try again.");
+          await executeAction(async () => { 
+            const res = await await deleteSupplierAction(supplier.supplierId)
+            if (!res.success) throw res;
+            return res;
+          }, "Supplier archived successfully!");
         }
-      } catch (error) {
-        console.error("Server error during deletion:", error);
-      }
-    }
-  };
+      })
+    };
 
   return (
     <div className="space-y-6">
       <Card className="shadow-sm border-gray-200 p-8 rounded-3xl bg-white">
+        <LoadingOverlay isLoading={isPending} message="Loading..." />
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div className="text-left">
             <h2 className="text-xl font-bold text-gray-800 tracking-tight">Supplier Directory</h2>

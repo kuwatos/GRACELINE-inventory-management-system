@@ -168,9 +168,9 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
   supplierItemId: integer("supplier_item_id")
     .generatedAlwaysAsIdentity({ startWith: 6000001 })
     .primaryKey(),
-  supplierId: integer("supplier_id").references(() => suppliersTable.supplierId),
+  supplierId: integer("supplier_id").references(() => suppliersTable.supplierId).notNull(),
   productId: integer("product_id").references(() => itemsTable.productId).notNull(),
-  unitPrice: text("unit_price"),
+  unitPrice: text("unit_price").notNull(),
   lastUpdated: timestamp("last_updated", { withTimezone: true })
     // 1. For the initial insert (replaces defaultNow)
   .defaultNow()

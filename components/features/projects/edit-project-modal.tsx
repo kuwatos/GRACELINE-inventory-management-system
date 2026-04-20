@@ -12,6 +12,7 @@ import { projectFormSchema, ProjectFormValues } from "@/lib/validations";
 import { updateProjectAction } from "@/lib/action/project.action";
 import { Project } from "./project-table";
 import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 
 interface EditProjectModalProps {
@@ -106,6 +107,7 @@ export function EditProjectModal({ isOpen, onClose, project, isViewOnly = false 
             </DialogFooter>
           </form>
         </Form>
+        <LoadingOverlay isLoading={isSubmitting} message="Saving Changes..." />
       </DialogContent>
     </Dialog>
   );
