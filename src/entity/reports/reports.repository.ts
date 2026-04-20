@@ -1,6 +1,6 @@
 // CRUD lives here
 import { db } from "../../index";
-import { reportsTable } from "../../db/schema";
+import { reportsTable,usersTable } from "../../db/schema";
 import { eq, count, ilike, or, and } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { createUserNotificationService } from "../user_notifications/user_notifications.service";
@@ -33,7 +33,12 @@ export async function createReport(data: {
             }, tx);
           }
         }
-        await createUserNotificationService({ notifId: 7, targetId: newReport.reportId }, tx);
+        const getUserName = await tx
+          .select({ userName: usersTable.username })
+          .from(usersTable)
+          .where(eq(usersTable.id, user.id))
+          .limit(1);
+        await createUserNotificationService({ notifId: 7, targetId: newReport.reportId, additionalDescription: getUserName[0]?.userName || "Unknown User" }, tx);
       }
   
       return newReport;

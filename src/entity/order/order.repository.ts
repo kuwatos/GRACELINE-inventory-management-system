@@ -1,6 +1,6 @@
 // CRUD lives here
 import { db } from "../../index";
-import { ordersTable } from "../../db/schema";
+import { ordersTable, suppliersTable } from "../../db/schema";
 import { eq, count, and, or, ilike, isNotNull,sql } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { createUserNotificationService } from "../user_notifications/user_notifications.service";
@@ -219,7 +219,13 @@ export async function changeOrderStatus(data: {
             newValue: newReceivedValue
           }, tx);
         }
-        await createUserNotificationService({ notifId: 6, targetId: data.id }, tx);
+
+        const getSupplierName = await tx
+          .select({ supplierName: suppliersTable.supplierName })
+          .from(suppliersTable)
+          .where(eq(suppliersTable.supplierId, existing.supplierId))
+          .limit(1);
+        await createUserNotificationService({ notifId: 6, targetId: data.id, additionalDescription: getSupplierName[0]?.supplierName || "Unknown Supplier" }, tx);
       }
 
       else if(data.orderStatus === "Awaiting Delivery") {
@@ -240,7 +246,14 @@ export async function changeOrderStatus(data: {
             prevValue: existing.orderStatus,
             newValue: data.orderStatus
           }, tx);
-          await createUserNotificationService({ notifId: 8, targetId: data.id }, tx);
+
+          const getSupplierName = await tx
+          .select({ supplierName: suppliersTable.supplierName })
+          .from(suppliersTable)
+          .where(eq(suppliersTable.supplierId, existing.supplierId))
+          .limit(1);
+
+          await createUserNotificationService({ notifId: 8, targetId: data.id, additionalDescription: getSupplierName[0]?.supplierName || "Unknown Supplier" }, tx);
         }
       }
     }
@@ -280,7 +293,14 @@ export async function approveOrder(data: { id: number; }) {
         prevValue: existing.approvedBy?.toString() ?? null,
         newValue: user.id.toString(),
       }, tx);
-      await createUserNotificationService({ notifId: 5, targetId: data.id }, tx);
+
+      const getSupplierName = await tx
+          .select({ supplierName: suppliersTable.supplierName })
+          .from(suppliersTable)
+          .where(eq(suppliersTable.supplierId, existing.supplierId))
+          .limit(1);
+          
+      await createUserNotificationService({ notifId: 5, targetId: data.id, additionalDescription: getSupplierName[0]?.supplierName || "Unknown Supplier" }, tx);
     }
     return updatedOrder;
   });
@@ -299,9 +319,16 @@ export async function notifyArrivingOrders() {
 
     // 3. Trigger notification for each order
     for (const order of orders) {
+      const getSupplierName = await tx
+        .select({ supplierName: suppliersTable.supplierName })
+        .from(suppliersTable)
+        .where(eq(suppliersTable.supplierId, order.supplierId))
+        .limit(1);
+
       await createUserNotificationService({ 
         notifId: 4, // "Order Should Arrive Today"
-        targetId: order.orderId
+        targetId: order.orderId,
+        additionalDescription: getSupplierName[0]?.supplierName || "Unknown Supplier"
       }, tx);
     }
     

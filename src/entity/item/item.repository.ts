@@ -45,8 +45,8 @@ export async function createItem(data: {
         }
       }
     }
-
-    await createUserNotificationService({ notifId: 1, targetId: newItem.productId }, tx); // Assuming notifId 1 is for new item notifications
+    const additionalDesc = `${newItem.productName} - ${newItem.productCategory1} (${newItem.measurement})`;
+    await createUserNotificationService({ notifId: 1, targetId: newItem.productId, additionalDescription: additionalDesc }, tx); // Assuming notifId 1 is for new item notifications
     return newItem;
   });
 }
@@ -141,8 +141,10 @@ export async function updateItem(data: {
       if (key === "productQuantity") {
         actionId = 10;
         const reorderLevel = Number(existing.reorderLevel);
+        const additionalDesc = `${existing.productName} - ${existing.productCategory1} (${existing.measurement})`;
+
         if (!isNaN(val) && !isNaN(reorderLevel) && val <= reorderLevel) {
-          await createUserNotificationService({ notifId: 2, targetId: id }, tx);
+          await createUserNotificationService({ notifId: 2, targetId: id, additionalDescription: additionalDesc }, tx);
         }
       } else if (key === "reorderLevel") {
         actionId = 7;
@@ -294,8 +296,8 @@ export async function restoreItem(
         }
       }
     }
-
-    await createUserNotificationService({ notifId: 1, targetId: restoredItem.productId }, tx); // Assuming notifId 1 is for new item notifications
+    const additionalDesc = `${restoredItem.productName} - ${restoredItem.productCategory1} (${restoredItem.measurement})`;
+    await createUserNotificationService({ notifId: 1, targetId: restoredItem.productId, additionalDescription: additionalDesc }, tx); // Assuming notifId 1 is for new item notifications
     return restoredItem;
   });
 };

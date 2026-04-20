@@ -1,6 +1,6 @@
 // CRUD lives here
 import { db } from "../../index";
-import { supplierItemsTable } from "../../db/schema";
+import { supplierItemsTable, suppliersTable, itemsTable } from "../../db/schema";
 import { eq, and} from "drizzle-orm";
 import { createUserNotificationService } from "../user_notifications/user_notifications.service";
 import { createLog } from "../log/log.repository";
@@ -35,9 +35,22 @@ export async function createSupplierItem(data: {
       }
 
       // 3. Trigger the notification service
+      const getSupplierName = await tx
+        .select({ supplierName: suppliersTable.supplierName })
+        .from(suppliersTable)
+        .where(eq(suppliersTable.supplierId, newLink.supplierId!))
+        .limit(1);
+
+      const getProductName = await tx
+        .select({ productName: itemsTable.productName })
+        .from(itemsTable)
+        .where(eq(itemsTable.productId, newLink.productId))
+        .limit(1);
+
       await createUserNotificationService({ 
         notifId: 8,                        // [BLANK] - Fill in for "New Item Linked"
-        targetId: newLink.supplierItemId 
+        targetId: newLink.supplierItemId,
+        additionalDescription: `${getProductName[0]?.productName || "Unknown Product"} - ${getSupplierName[0]?.supplierName || "Unknown Supplier"}`
       }, tx);
     }
 
@@ -126,8 +139,20 @@ export async function updateSupplierItem(data: {
       .returning();
 
     // 4. Notify about the specific product's price change
+    const getSupplierName = await tx
+        .select({ supplierName: suppliersTable.supplierName })
+        .from(suppliersTable)
+        .where(eq(suppliersTable.supplierId, updated.supplierId!))
+        .limit(1);
+
+      const getProductName = await tx
+        .select({ productName: itemsTable.productName })
+        .from(itemsTable)
+        .where(eq(itemsTable.productId, updated.productId))
+        .limit(1);
+
     if (existing.productId !== null) {
-      await createUserNotificationService({ notifId: 8, targetId: existing.productId }, tx);
+      await createUserNotificationService({ notifId: 8, targetId: existing.productId, additionalDescription: `${getProductName[0]?.productName || "Unknown Product"} - ${getSupplierName[0]?.supplierName || "Unknown Supplier"}` }, tx);
     }
 
     return updated;
@@ -179,9 +204,22 @@ export async function restoreAllLinksForSupplier(supplierId: number) {
         }, tx);
 
         // 3. Trigger notification for each restored link
+        const getSupplierName = await tx
+        .select({ supplierName: suppliersTable.supplierName })
+        .from(suppliersTable)
+        .where(eq(suppliersTable.supplierId, item.supplierId!))
+        .limit(1);
+
+      const getProductName = await tx
+        .select({ productName: itemsTable.productName })
+        .from(itemsTable)
+        .where(eq(itemsTable.productId, item.productId))
+        .limit(1);
+
         await createUserNotificationService({ 
           notifId: 8, // "Item Link Restored"
           targetId: item.supplierItemId 
+          ,additionalDescription: `${getProductName[0]?.productName || "Unknown Product"} - ${getSupplierName[0]?.supplierName || "Unknown Supplier"}`
         }, tx);
       }
     }
@@ -224,9 +262,22 @@ export async function restoreSupplierItem(data: {
       }
 
       // 3. Trigger the notification service
+      const getSupplierName = await tx
+        .select({ supplierName: suppliersTable.supplierName })
+        .from(suppliersTable)
+        .where(eq(suppliersTable.supplierId, restoredSupplierItem.supplierId!))
+        .limit(1);
+
+      const getProductName = await tx
+        .select({ productName: itemsTable.productName })
+        .from(itemsTable)
+        .where(eq(itemsTable.productId, restoredSupplierItem.productId))
+        .limit(1);
+
       await createUserNotificationService({ 
         notifId: 8,                        // [BLANK] - Fill in for "New Item Linked"
         targetId: restoredSupplierItem.supplierItemId 
+        ,additionalDescription: `${getProductName[0]?.productName || "Unknown Product"} - ${getSupplierName[0]?.supplierName || "Unknown Supplier"}`
       }, tx);
     }
 

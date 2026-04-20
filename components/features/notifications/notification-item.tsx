@@ -39,7 +39,7 @@ export function NotificationItem({ userNotifId, description, createdAt,targetId,
             {targetId !== null && targetId !== 0 && (
               <span className="flex items-center gap-0.5 bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">
                 <Hash className="w-2.5 h-2.5" />
-                {targetId}+{additionalDescription}
+                {targetId} - {additionalDescription}
               </span>
             )}
           <span className="text-xs font-bold uppercase tracking-widest text-gray-400 mt-1">
