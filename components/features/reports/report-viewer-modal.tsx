@@ -38,7 +38,7 @@ export const ReportViewerModal = ({ isOpen, onClose, reportData, auditResults }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[1000px] p-0 overflow-hidden rounded-3xl border-none shadow-2xl">
+      <DialogContent className="sm:max-w-[1000px] p-0 overflow-hidden rounded-3xl border-none shadow-2xl [&>button]:text-white ">
         <DialogHeader className="px-10 py-8 bg-black text-white">
           <div className="flex justify-between items-center">
             <div>
