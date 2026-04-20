@@ -1,10 +1,10 @@
 import { NotificationManager } from '@/components/features/notifications/notification-manager'
-import { readCompletedOrderNotifications } from '@/src/entity/user_notifications/user_notifications.query'
+import { readUserNotifications } from '@/src/entity/user_notifications/user_notifications.query'
 import React from 'react'
 
 
 async function page() {
-  const notifications = await readCompletedOrderNotifications();
+  const notifications = await readUserNotifications();
 
   return (
     <NotificationManager data={notifications} />
