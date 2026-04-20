@@ -8,6 +8,7 @@ export async function createUserNotification(data: {
   notifId: number;
   userId: string;
   targetId: number;
+  additionalDescription: string; // specific description for this notification instance
   //   createdAt: Date; //removed because it defaults to now() in the schema, so it can be optional in the input
 }, tx?: any) {
   const client = tx || db; 

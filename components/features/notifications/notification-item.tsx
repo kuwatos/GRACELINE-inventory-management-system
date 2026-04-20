@@ -8,6 +8,7 @@ interface NotificationProps {
   description: string;
   createdAt: string | Date | null ;
   targetId: number|null; // Optional targetId for potential future use
+  additionalDescription: string; // specific description for this notification instance
   isFullPage?: boolean;
   onMarkAsRead?: (id: number) => void; // Added click handler
 }
@@ -18,7 +19,7 @@ const icons = {
   delivery: <Truck className="h-5 w-5 text-white" />,
 };
 
-export function NotificationItem({ userNotifId, description, createdAt,targetId, isFullPage, onMarkAsRead }: NotificationProps) {
+export function NotificationItem({ userNotifId, description, createdAt,targetId, additionalDescription, isFullPage, onMarkAsRead }: NotificationProps) {
   return (
     <div className={cn(
       "flex items-center justify-between p-5 border border-gray-100 rounded-2xl bg-white shadow-sm transition-all hover:border-gray-200 hover:shadow-md",
@@ -38,7 +39,7 @@ export function NotificationItem({ userNotifId, description, createdAt,targetId,
             {targetId !== null && targetId !== 0 && (
               <span className="flex items-center gap-0.5 bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">
                 <Hash className="w-2.5 h-2.5" />
-                {targetId}
+                {targetId}+{additionalDescription}
               </span>
             )}
           <span className="text-xs font-bold uppercase tracking-widest text-gray-400 mt-1">

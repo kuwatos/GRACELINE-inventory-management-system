@@ -9,6 +9,7 @@ export async function readUserNotifications() {
     .select({
       userNotifId: userNotificationsTable.userNotifId,
       description: notificationsTable.description,
+      additionalDescription: userNotificationsTable.additionalDescription,
       createdAt: userNotificationsTable.createdAt,
       targetId: userNotificationsTable.targetId,
     })
