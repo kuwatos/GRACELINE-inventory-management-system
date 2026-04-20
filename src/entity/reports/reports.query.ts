@@ -1,5 +1,5 @@
 import { db } from "../../index";
-import { and, gte, lte, eq, sql, desc } from "drizzle-orm";import { 
+import { and, gte, lte, eq, sql, desc, inArray } from "drizzle-orm";import { 
   logsTable, 
   ordersTable, 
   orderProductsTable, 
@@ -26,49 +26,65 @@ export async function readReportHistory() {
 
 export async function generateMonthlyAudit(startDate: Date, endDate: Date) {
   
-  // 1. & 2. Magkano Binili vs Binayaran per Supplier
-  const supplierSpending = await db
+  // 1. Magkano Binili PER Supplier (Total Liability)
+  // Statuses: Everything except "Draft" (Official equivalent here is "Awaiting payment")
+  const totalPurchased = await db
     .select({
       supplierName: suppliersTable.supplierName,
-      totalPurchased: sql<number>`SUM(${orderProductsTable.expectedOrderProductQuantity} * ${supplierItemsTable.unitPrice})`,
-      //total purchased value (official, di pa bayad)
-
-      // PROBLEM: naisasama pa rin kahit yung drafts. dapat yung approved lang. need istore yung status
-      // status galing logs, price galing sa order, di na iccompute per item, yung order nalang. kasi total price lang kailanganm
-      // magbase sa order table nalang. yung completed and incomplete. tas may new columns sa order, receivedValue and orderValue (add na)
-      // - schema change, sa supp items kasi kailangan masave yung old price. pag nagedit maaarchive yung luma
-      // - save supplierItem id to orderProducts
-      // - incomplete order new form 
-
-      //add name sa notification. string naman na, concat nalang. need lang magadd ng notif.
-
-      //add notifs sa dashboard
-
-      totalPaid: sql<number>`SUM(
-        CASE WHEN ${ordersTable.orderStatus} = 'Paid' 
-        THEN ${orderProductsTable.deliveredOrderProductQuantity} * ${supplierItemsTable.unitPrice} 
-        ELSE 0 END
-      )`,
+      totalAmount: sql<number>`SUM(CAST(COALESCE(${ordersTable.orderedValue}, '0') AS NUMERIC))`.mapWith(Number),
     })
     .from(ordersTable)
     .innerJoin(suppliersTable, eq(ordersTable.supplierId, suppliersTable.supplierId))
-    .innerJoin(orderProductsTable, eq(ordersTable.orderId, orderProductsTable.orderId))
-    .innerJoin(supplierItemsTable, and(
-        eq(orderProductsTable.productId, supplierItemsTable.productId),
-        eq(ordersTable.supplierId, supplierItemsTable.supplierId)
-    ))
     .where(and(
+      inArray(ordersTable.orderStatus, [
+        "Awaiting Delivery", 
+        "Incomplete Delivery", 
+        "Delivered", 
+        "Complete", 
+        "Incomplete"
+      ]),
       gte(ordersTable.orderDate, startDate),
       lte(ordersTable.orderDate, endDate)
     ))
     .groupBy(suppliersTable.supplierName);
 
-  // 3. Parating na Mats (Orders that are 'Pending' or 'In Transit')
+  // 2. Binayaran na PER Supplier (Total Paid)
+  // Statuses: Not Draft/Awaiting Payment (Official). 
+  // Includes: Complete, Incomplete, Awaiting delivery, Incomplete delivery, Delivered
+  const totalPaid = await db
+    .select({
+      supplierName: suppliersTable.supplierName,
+      paidAmount: sql<number>`SUM(CAST(COALESCE(${ordersTable.orderedValue}, '0') AS NUMERIC))`.mapWith(Number),
+    })
+    .from(ordersTable)
+    .innerJoin(suppliersTable, eq(ordersTable.supplierId, suppliersTable.supplierId))
+    .where(and(
+      inArray(ordersTable.orderStatus, [
+        "Awaiting Delivery", 
+        "Incomplete Delivery", 
+        "Delivered", 
+        "Complete", 
+        "Incomplete"
+      ]),
+      gte(ordersTable.orderDate, startDate),
+      lte(ordersTable.orderDate, endDate)
+    ))
+    .groupBy(suppliersTable.supplierName);
+
+  // 3. Parating na Mats (Incoming Materials)
+  // Logic: Remaining = Expected Quantity - Delivered Quantity
   const incomingMaterials = await db
     .select({
       supplierName: suppliersTable.supplierName,
       productName: itemsTable.productName,
-      quantity: orderProductsTable.orderProductQuantity,
+      // This calculates the "Balance" for partial receipts
+      quantity: sql<number>`
+        CASE 
+          WHEN ${ordersTable.orderStatus} IN ( 'Incomplete') 
+          THEN ${orderProductsTable.expectedOrderProductQuantity} - COALESCE(${orderProductsTable.deliveredOrderProductQuantity}, 0)
+          ELSE ${orderProductsTable.expectedOrderProductQuantity}
+        END
+      `.mapWith(Number),
       status: ordersTable.orderStatus,
       eta: ordersTable.expectedDeliveryDate,
     })
@@ -77,18 +93,17 @@ export async function generateMonthlyAudit(startDate: Date, endDate: Date) {
     .innerJoin(orderProductsTable, eq(ordersTable.orderId, orderProductsTable.orderId))
     .innerJoin(itemsTable, eq(orderProductsTable.productId, itemsTable.productId))
     .where(and(
-      eq(ordersTable.orderStatus, 'Pending'), // Adjust status name as needed
+      // We check for these statuses as they represent "In-Flight" or "Unfinished" items
+      inArray(ordersTable.orderStatus, ["Awaiting Delivery", "Incomplete"]),
       gte(ordersTable.orderDate, startDate),
       lte(ordersTable.orderDate, endDate)
     ));
-
-  // 4. Start and End Inventory (Reconstructed from Logs)
-  // We look for the last 'product_quantity' log entry BEFORE the dates
+  // 4. Start and End Inventory (Reconstructed from logsTable)
   const inventorySnapshot = await db.transaction(async (tx) => {
     const items = await tx.select().from(itemsTable);
     
     const snapshots = await Promise.all(items.map(async (item) => {
-      // Get qty at the very start of the month
+      // Find quantity at the start of the range
       const startLog = await tx.query.logsTable.findFirst({
         where: and(
           eq(logsTable.targetId, item.productId.toString()),
@@ -98,7 +113,7 @@ export async function generateMonthlyAudit(startDate: Date, endDate: Date) {
         orderBy: [desc(logsTable.logDate)]
       });
 
-      // Get qty at the very end of the month
+      // Find quantity at the end of the range
       const endLog = await tx.query.logsTable.findFirst({
         where: and(
           eq(logsTable.targetId, item.productId.toString()),
@@ -110,8 +125,9 @@ export async function generateMonthlyAudit(startDate: Date, endDate: Date) {
 
       return {
         productName: item.productName,
+        measurement: item.measurement,
         startQty: startLog ? parseInt(startLog.newValue || "0") : 0,
-        endQty: endLog ? parseInt(endLog.newValue || "0") : parseInt(item.productQuantity?.toString() || "0"),
+        endQty: endLog ? parseInt(endLog.newValue || "0") : item.productQuantity,
       };
     }));
 
@@ -119,8 +135,12 @@ export async function generateMonthlyAudit(startDate: Date, endDate: Date) {
   });
 
   return {
-    spending: supplierSpending,
+    purchased: totalPurchased,
+    paid: totalPaid,
     incoming: incomingMaterials,
-    inventory: inventorySnapshot
+    inventory: inventorySnapshot,
+
   };
 }
+
+

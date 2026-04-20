@@ -8,7 +8,8 @@ import {
   varchar,
   timestamp,
   numeric,
-  uniqueIndex
+  uniqueIndex, 
+  check
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -119,7 +120,10 @@ export const reportsTable = pgTable("report_tb", {
     .notNull(),
   dateStart: timestamp("date_start", { withTimezone: true }).notNull(),
   dateEnd: timestamp("date_end", { withTimezone: true }).notNull(),
-});
+}, (table) => ({
+  // ✅ ADD THIS: Database-level constraint
+  dateOrderConstraint: check("date_order_check", sql`${table.dateEnd} >= ${table.dateStart}`),
+}));
 
 // --- Projects ---
 
