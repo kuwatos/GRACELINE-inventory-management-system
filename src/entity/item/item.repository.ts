@@ -61,7 +61,7 @@ export async function readLowStockItems() {
   return db
     .select()
     .from(itemsTable)
-    .where(lte(itemsTable.productQuantity, itemsTable.reorderLevel));
+    .where(and(lte(itemsTable.productQuantity, itemsTable.reorderLevel), eq(itemsTable.archived, false)));
 }
 
 // SEARCH (No changes needed for Search)

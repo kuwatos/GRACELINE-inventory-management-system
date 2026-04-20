@@ -24,6 +24,5 @@ export async function readUserNotifications() {
         eq(userNotificationsTable.isRead, false), // 0 in SQL is false in JS/TS
       ),
     )
-    .orderBy(desc(userNotificationsTable.createdAt))
-    ;
+    .orderBy(desc(userNotificationsTable.createdAt));
 }

@@ -11,6 +11,7 @@ import { ReportsHistoryTable, Report } from "./reports-history-table";
 import { ReportViewerModal } from "./report-viewer-modal";
 import { PrintableReport } from "./printable-report";
 import { deleteReportAction, generateReportAction, getMonthlyReportAction } from "@/lib/action/report.action";
+import { cn } from "@/lib/utils";
 
 interface ReportsManagerProps {
   data: Report[];
@@ -100,6 +101,11 @@ const handleDeleteReport = async (report: Report) => {
   }
 }
 
+const isInvalidDateRange = 
+  startDate !== "" && 
+  endDate !== "" && 
+  new Date(endDate) < new Date(startDate);
+
   const filteredData = reports.filter((r) => 
     r.dateCreated?.toLocaleString().includes(searchQuery) || r.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -135,11 +141,13 @@ const handleDeleteReport = async (report: Report) => {
         
         <Button 
           onClick={handleGenerateClick} 
-          disabled={isGenerating || !startDate || !endDate} 
-          className="w-full md:w-auto bg-black text-white hover:bg-zinc-800 h-12 rounded-xl font-bold px-10 transition-all active:scale-95 shadow-lg shadow-gray-200"
+          disabled={isGenerating || !startDate || !endDate || isInvalidDateRange} 
+          className={cn(
+            "w-full md:w-auto h-12 rounded-xl font-bold px-10 transition-all",
+            isInvalidDateRange ? "bg-red-100 text-red-600 cursor-not-allowed" : "bg-black text-white"
+          )}
         >
-          {isGenerating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
-          Generate Report
+          {isInvalidDateRange ? "Invalid Date Range" : "Generate Report"}
         </Button>
       </Card>
 
@@ -160,7 +168,7 @@ const handleDeleteReport = async (report: Report) => {
       </Card>
 
       <ReportViewerModal isOpen={isViewerOpen} onClose={() => setIsViewerOpen(false)} reportData={selectedReport} auditResults={auditData} />
-      <PrintableReport ref={printRef} reportData={selectedReport} />
+      <PrintableReport ref={printRef} reportData={selectedReport} auditData={auditData} />
     </div>
   );
 };

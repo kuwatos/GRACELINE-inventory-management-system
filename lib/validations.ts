@@ -247,3 +247,15 @@ export const baseSupplierItemSchema = z.object({
 });
 export const newSupplierItemSchema = baseSupplierItemSchema;
 export const editSupplierItemSchema = baseSupplierItemSchema;
+
+export const reportSchema = z.object({
+  reportType: z.string(),
+  dateStart: z.string(), // Input type="date" gives a string
+  dateEnd: z.string(),
+}).refine((data) => {
+  // Logic: End date must be greater than or equal to Start date
+  return new Date(data.dateEnd) >= new Date(data.dateStart);
+}, {
+  message: "The End Date cannot be earlier than the Start Date.",
+  path: ["dateEnd"], // This attaches the error message specifically to the dateEnd field
+});
