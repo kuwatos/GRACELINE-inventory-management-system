@@ -1,91 +1,124 @@
 "use client";
 
-import { Box, FileText, Truck, Clock, Receipt, ArrowRight } from "lucide-react";
+import { Clock, Receipt, ArrowRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DashboardNotifications, KpiCard, NotificationItem } from "./dashboard-shared";
+import { DashboardNotifications, KpiCard } from "./dashboard-shared";
 import Link from "next/link";
-
-export interface ActivityRecord {
-  id: string;
-  timestamp: string;
-  user: string;
-  action: string;
-  recordAffected: string;
-  avatarUrl?: string; // For the tiny face icons
-}
+import { Log } from "../activity/activity-log-table";
+import { Notification } from "../notifications/notification-manager";
 
 interface AdminDashboardProps {
-  notifications?: NotificationItem[];
-  activities?: ActivityRecord[];
+  notifications?: Notification[];
+  activities?: Log[];
   kpiPendingOrders?: number;
-  kpiRecentTransactions?: number;
-  isLoading?: boolean;
+  kpiRecentTransactionsWeek?: number;
+  kpiRecentTransactionsMonth?: number;
 }
 
-const MOCK_NOTIFS = [
-  { id: "1", title: "Low Stock Alert: Industrial Valve Model A-342", subtext1: "Current quantity: 5 units", subtext2: "Reorder level: 20 units", icon: <Box className="w-5 h-5 text-white" /> },
-  { id: "2", title: "Order Placed: PO#2025-0847", subtext1: "Delivery Date: November 20, 2025", subtext2: "Supplier: TechSupply Co.", icon: <FileText className="w-5 h-5 text-white" /> },
-  { id: "3", title: "Delivery Received: Supplier GlobalParts Ltd", subtext1: "Date Delivered: November 5, 2025", icon: <Truck className="w-5 h-5 text-white" /> },
-];
-
-const MOCK_ACTIVITY = [
-  { id: "1", timestamp: "Mar 13, 2025 14:32", user: "John Davis", action: "Updated Item Quantity", recordAffected: "Industrial Valve A-342 (+50 units)" },
-  { id: "2", timestamp: "Mar 13, 2025 13:18", user: "Sarah Mitchell", action: "Created Purchase Order", recordAffected: "PO#2025-0848 - GlobalParts Ltd" },
-  { id: "3", timestamp: "Mar 13, 2025 11:45", user: "Emily Rodriguez", action: "Created Purchase Order", recordAffected: "PO#2025-0845 - TechSupply Co." },
-];
-
 export const AdminDashboard = ({ 
-  notifications = MOCK_NOTIFS, 
-  activities = MOCK_ACTIVITY,
-  kpiPendingOrders = 23,
-  kpiRecentTransactions = 142
+  notifications = [],
+  activities = [],
+  kpiPendingOrders = 0,
+  kpiRecentTransactionsWeek = 0,
+  kpiRecentTransactionsMonth = 0,
 }: AdminDashboardProps) => {
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 ">
+
       {/* Top: Notifications */}
       <DashboardNotifications viewAllLink="/admin/notifications" notifications={notifications} />
 
       {/* Middle: KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KpiCard title="Pending Orders" value={kpiPendingOrders} subtext1=" " subtext2=" " icon={<Clock className="w-5 h-5" />} />
-        <KpiCard title="Recent Transactions" value={kpiRecentTransactions} subtext1="This week: 47" subtext2="This month: 142" icon={<Receipt className="w-5 h-5" />} />
+      <div className="flex gap-4">
+        <KpiCard
+          title="Pending Orders"
+          value={kpiPendingOrders}
+          subtext1=" "
+          subtext2=" "
+          icon={<Clock className="w-5 h-5" />}
+        />
+        <KpiCard
+          title="Recent Transactions"
+          value={kpiRecentTransactionsMonth}
+          subtext1={`Monday – Today: ${kpiRecentTransactionsWeek}`}
+          subtext2={`This Month: ${kpiRecentTransactionsMonth}`}
+          icon={<Receipt className="w-5 h-5" />}
+        />
       </div>
 
-      {/* Bottom: Activity Table */}
-      <div className="border border-gray-100 rounded-2xl bg-white shadow-sm overflow-hidden">
+      {/* Bottom: Activity Log — 3 entries only */}
+      <div className="rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
         <div className="flex justify-between items-center p-6 border-b border-gray-50">
           <h2 className="text-lg font-medium text-gray-900">Recent System Activity</h2>
-          <Link href="/admin/activity" className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1 transition-colors">
+          <Link
+            href="/admin/activity"
+            className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1 transition-colors"
+          >
             View Full Activity Log <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
-        <Table className="text-sm border-collapse">
-          <TableHeader>
-            <TableRow className="hover:bg-transparent bg-gray-50/50">
-              <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold">Timestamp</TableHead>
-              <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold">User</TableHead>
-              <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold">Action Performed</TableHead>
-              <TableHead className="text-[11px] uppercase tracking-widest px-6 py-4 text-gray-500 font-bold">Item/Record Affected</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="divide-y divide-gray-50">
-            {activities.map((log) => (
-              <TableRow key={log.id} className="hover:bg-gray-50/50 border-none transition-colors">
-                <TableCell className="px-6 py-4 text-gray-600">{log.timestamp}</TableCell>
-                <TableCell className="px-6 py-4 font-medium text-gray-900 flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden">
-                    {/* Placeholder for real avatar image */}
-                    <div className="w-full h-full bg-gray-300" />
-                  </div>
-                  {log.user}
-                </TableCell>
-                <TableCell className="px-6 py-4 text-gray-600">{log.action}</TableCell>
-                <TableCell className="px-6 py-4 text-gray-600">{log.recordAffected}</TableCell>
+
+        {activities.length === 0 ? (
+          <div className="p-8 text-center text-gray-500 text-sm">No recent activity.</div>
+        ) : (
+          <Table className="text-sm border-collapse w-full">
+            <TableHeader>
+              {/* 👇 Disabled hover effect on header */}
+              <TableRow className="bg-gray-50/50 hover:bg-transparent border-b border-gray-100">
+                <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold whitespace-nowrap">Date & Time</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">User Account</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Department</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Action</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Column</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Target ID</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Prev</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">New</TableHead>
+                <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Project</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {activities.slice(0, 3).map((log) => (
+                <TableRow
+                  key={log.id}
+                  className="group hover:bg-[#0f172a] transition-colors cursor-default border-b border-gray-50 last:border-0"
+                >
+                  <TableCell className="px-6 py-4 text-xs font-mono text-gray-500 group-hover:text-white transition-colors whitespace-nowrap">
+                    {log.timestamp ? new Date(log.timestamp).toLocaleString() : "—"}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 font-medium text-gray-800 group-hover:text-white transition-colors">
+                    {log.user ?? "—"}
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    {/* 👇 Updated badge hover to white/20 */}
+                    <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase group-hover:bg-white/20 group-hover:text-white transition-colors">
+                      {log.dept ?? "—"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="px-6 py-4 font-medium text-gray-700 group-hover:text-white transition-colors">
+                    {log.action ?? "—"}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 font-mono text-xs text-gray-500 group-hover:text-white transition-colors">
+                    {log.column ?? "—"}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 font-mono text-xs text-gray-500 group-hover:text-white transition-colors">
+                    {log.target}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 font-medium text-gray-700 group-hover:text-white transition-colors">
+                    {log.prev ?? "—"}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 font-medium text-gray-700 group-hover:text-white transition-colors">
+                    {log.next ?? "—"}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 font-medium text-gray-700 group-hover:text-white transition-colors">
+                    {log.project ?? "—"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </div>
+
     </div>
   );
 };

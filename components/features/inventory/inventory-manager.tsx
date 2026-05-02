@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Search, ChevronDown, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,36 +8,84 @@ import { Card } from "@/components/ui/card";
 import { InventoryTable, InventoryItem } from "./inventory-table"; 
 import { NewItemModal } from "./new-item-modal";
 import { EditItemModal } from "./edit-item-modal";
+import { deleteItem } from "@/src/entity/item/item.repository";
+import { deleteItemAction } from "@/lib/action/inventory.action";
+import { authClient } from "@/lib/auth-client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import { executeAction } from "@/lib/error.handler";
 
 interface InventoryManagerProps {
   data?: InventoryItem[];
+  suppliers?: { id: number; name: string }[]; // Add suppliers to props
+  categories?: { name: string }[]; // Add categories to props
+  measurements?: { name: string }[]; // Add measurements to props
+  projects?: { id: number; name: string }[]; // Add projects to props
+  
 }
 
-export const InventoryManager = ({ data = [] }: InventoryManagerProps) => {
+export const InventoryManager = ({ data = [], suppliers = [], categories = [], measurements = [], projects = [] }: InventoryManagerProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"all" | "low-stock">("all");
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [isViewOnly, setIsViewOnly] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  const session = authClient.useSession();
+  const userDept = session.data?.user?.department?.toLowerCase(); // Assuming the field is 'dept'
+  const isWarehouse = userDept === "warehouse";
 
   const filteredData = data.filter((item) => {
     const searchLower = searchQuery.toLowerCase();
-    return (
-      item.name.toLowerCase().includes(searchLower) ||
-      item.code.toLowerCase().includes(searchLower)
+    const words= (
+      item.productName.toLowerCase().includes(searchLower) 
+      || item.productCategory1?.toLowerCase().includes(searchLower)
+      || item.productCategory2?.toLowerCase().includes(searchLower)
+      || item.productCategory3?.toLowerCase().includes(searchLower)
+      || item.productCategory4?.toLowerCase().includes(searchLower) 
+      || item.productCategory5?.toLowerCase().includes(searchLower)
+      || item.productId.toString().includes(searchLower)
     );
+    const isLowStock = (item.productQuantity ?? 0) <= (item.reorderLevel ?? 0);
+    const matchesStatus = filterStatus === "low-stock" ? isLowStock : true;
+    return words && matchesStatus;
   });
 
   const handleEditClick = (item: InventoryItem) => {
     setSelectedItem(item);
+    setIsViewOnly(false);
     setIsEditModalOpen(true);
+  };
+
+  const handleDeleteClick = async (item: InventoryItem) => {
+    startTransition(async () => {
+      setSelectedItem(item);
+      const isConfirmed = window.confirm(`Are you sure you want to delete inventory item: ${item.productName}?`);
+        if (isConfirmed) {
+          await executeAction(async () => {
+                const res = await deleteItemAction(item.productId);
+                if (!res.success) throw res;
+                return res;
+              }, "Inventory item archived!");
+        }
+    });
   };
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-sm border-gray-200 p-8">
+      <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
+        <LoadingOverlay isLoading={isPending} message="Updating..." />
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <h2 className="text-xl font-bold text-gray-800">
-            Current Stock Levels
+            {filterStatus === "low-stock" ? "🚨 Low Stock Warning" : "Current Stock Levels"}
           </h2>
           
           <div className="flex items-center gap-3 w-full md:w-auto">
@@ -48,34 +96,65 @@ export const InventoryManager = ({ data = [] }: InventoryManagerProps) => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by Item Name or Code..."
-                className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-green-500 focus-visible:ring-2"
+                 className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-black/5"
               />
             </div>
 
             <div className="relative">
-              <select className="appearance-none h-11 px-5 bg-[#E5E7EB] rounded-xl text-sm font-medium pr-10 focus:outline-none cursor-pointer">
-                <option>Search Filters</option>
-              </select>
+              <Select 
+                value={filterStatus} 
+                onValueChange={(value) => setFilterStatus(value as "all" | "low-stock")}
+
+              >
+                <SelectTrigger className="h-11! w-40 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 shadow-sm hover:border-slate-300 hover:shadow-md hover:text-slate-900 transition-all">
+                  <SelectValue placeholder="Filter items" />
+                </SelectTrigger>
+                
+                {/* ADDED position and sideOffset HERE 👇 */}
+                <SelectContent 
+                  position="popper" 
+                  sideOffset={5} 
+                  className="rounded-xl border-slate-200 shadow-lg bg-white p-1"
+                >
+                  <SelectItem 
+                    value="all" 
+                    className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                  >
+                    All Items
+                  </SelectItem>
+                  <SelectItem 
+                    value="low-stock" 
+                    className="focus:bg-red-50 focus:text-red-700 text-red-600 cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                  >
+                    Low Stock
+                  </SelectItem>
+                </SelectContent>
+              </Select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
             </div>
 
             {/* Your custom slate color is applied here! */}
-            <Button 
+            {!isWarehouse && (
+              <Button 
               onClick={() => setIsNewModalOpen(true)}
               className="bg-[#0f172a] text-white hover:bg-[#0f172a]/70 h-11 px-6 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-black/10 gap-2"
             >
               <Plus className="w-4 h-4" />
               Add New Inventory Item
             </Button>
+            )}
           </div>
         </div>
 
-        <InventoryTable data={filteredData} onEdit={handleEditClick} />
+        <InventoryTable data={filteredData} onEdit={handleEditClick} onDelete={handleDeleteClick} />
       </Card>
 
       <NewItemModal 
         isOpen={isNewModalOpen} 
         onClose={() => setIsNewModalOpen(false)} 
+        suppliers={suppliers} // Pass suppliers to the modal
+        categories={categories} // Pass categories if needed in the future
+        measurements={measurements} // Pass measurements if needed in the future
       />
 
       <EditItemModal 
@@ -85,6 +164,10 @@ export const InventoryManager = ({ data = [] }: InventoryManagerProps) => {
           setSelectedItem(null);
         }} 
         item={selectedItem}
+        isViewOnly={isViewOnly}
+        categories={categories}
+        measurements={measurements}
+        projects= {projects}
       />
     </div>
   );

@@ -8,7 +8,10 @@ import {
   varchar,
   timestamp,
   numeric,
+  uniqueIndex, 
+  check
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // --- BetterAuth required schema for auth and session (do not modify!) ---
 
@@ -22,16 +25,22 @@ export const usersTable = pgTable("user", {
 	createdAt: timestamp("created_at", { precision: 6, withTimezone: true }).notNull(),
 	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
   
-  //for username login plug-in
-  username: varchar("username", { length: 255 }).unique(),
+  // required fields for username login plug-in
+  username: varchar("username", { length: 255 }).unique().notNull(),
 	displayUsername: text("display_username"),
 
+  // required fields for admin plug-in
+  
+  role: text("role"),
+	banned: boolean("banned"),
+	banReason: text("ban_reason"),
+	banExpires: timestamp("ban_expires", { precision: 6, withTimezone: true }),
 
   // custom fields for our app
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   department: text("department").notNull(),
-  active: boolean("active").default(true),
+  active: boolean("active").default(true).notNull(),
 });
 
 export const sessionsTable = pgTable("session", {
@@ -43,6 +52,9 @@ export const sessionsTable = pgTable("session", {
 	userAgent: text("user_agent"),
 	createdAt: timestamp("created_at", { precision: 6, withTimezone: true }).notNull(),
 	updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }).notNull(),
+
+  // required field for admin plug-in
+  impersonatedBy: text("impersonated_by"),
 });
 
 export const accountsTable = pgTable("account", {
@@ -72,6 +84,7 @@ export const verificationTable = pgTable("verification", {
 });
 
 
+
 //List of actions that can be logged in the system. Purpose niya lang is to be a list ng ilalagay sa logs tas nasa logs na yung
 //may value and timestamp kung kelan ginawa yung action.
 export const actionsTable = pgTable("action_tb", {
@@ -85,24 +98,32 @@ export const logsTable = pgTable("log_tb", {
   logId: serial("log_id").primaryKey(),
   userId: text("user_id").references(() => usersTable.id),
   actionId: integer("action_id").references(() => actionsTable.actionId),
-  targetId: integer("target_id").notNull(),
-  logDate: timestamp("log_date").defaultNow(),
+  targetId: text("target_id").notNull(),
+  logDate: timestamp("log_date", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
   columnName: varchar("column_name", { length: 50 }),
   prevValue: varchar("prev_value", { length: 255 }),
   newValue: varchar("new_value", { length: 255 }),
   remarks: varchar("remarks", { length: 255 }),
+  projectId: integer("project").references(() => projectsTable.projectId),
 });
 
 export const reportsTable = pgTable("report_tb", {
   reportId: integer("report_id")
     .generatedAlwaysAsIdentity({ startWith: 5000001 })
     .primaryKey(),
-  userId: text("user_id").references(() => usersTable.id),
+  userId: text("user_id").notNull().references(() => usersTable.id),
   reportType: text("report_type").notNull(),
-  dateCreated: timestamp("date_created").defaultNow(),
-  dateStart: timestamp("date_start"),
-  dateEnd: timestamp("date_end"),
-});
+  dateCreated: timestamp("date_created", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  dateStart: timestamp("date_start", { withTimezone: true }).notNull(),
+  dateEnd: timestamp("date_end", { withTimezone: true }).notNull(),
+}, (table) => ({
+  // ✅ ADD THIS: Database-level constraint
+  dateOrderConstraint: check("date_order_check", sql`${table.dateEnd} >= ${table.dateStart}`),
+}));
 
 // --- Projects ---
 
@@ -110,7 +131,7 @@ export const projectsTable = pgTable("project_tb", {
   projectId: integer("project_id")
     .generatedAlwaysAsIdentity({ startWith: 4000001 })
     .primaryKey(),
-  projectName: text("project_name").notNull(),
+  projectName: text("project_name").notNull().unique(),
   archived: boolean("archived").default(false),
 });
 
@@ -120,10 +141,10 @@ export const suppliersTable = pgTable("supplier_tb", {
   supplierId: integer("supplier_id")
     .generatedAlwaysAsIdentity({ startWith: 7000001 })
     .primaryKey(),
-  supplierName: text("supplier_name").notNull(),
+  supplierName: text("supplier_name").notNull().unique(),
   supplierLandline: text("supplier_landline"),
   supplierEmail: text("supplier_email"),
-  supplierMobile: text("supplier_mobile"),
+  supplierMobile: text("supplier_mobile").notNull(),
   active: boolean("active").default(true),
 });
 
@@ -140,7 +161,8 @@ export const itemsTable = pgTable("item_tb", {
   productCategory4: text("product_category4"),
   productCategory5: text("product_category5"),
   productDesc: text("product_desc"),
-  productQuantity: integer("product_quantity").default(0),
+  measurement: text("measurement").notNull(),
+  productQuantity: integer("product_quantity").default(0).notNull(),
   reorderLevel: integer("reorder_level"),
   archived: boolean("archived").default(false),
 });
@@ -150,15 +172,21 @@ export const supplierItemsTable = pgTable("supplier_item_tb", {
   supplierItemId: integer("supplier_item_id")
     .generatedAlwaysAsIdentity({ startWith: 6000001 })
     .primaryKey(),
-  supplierId: integer("supplier_id").references(() => suppliersTable.supplierId),
-  productId: integer("product_id").references(() => itemsTable.productId),
-  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }),
-  lastUpdated: timestamp("last_updated")
-    .defaultNow()
-    .$onUpdate(() => new Date()),
+  supplierId: integer("supplier_id").references(() => suppliersTable.supplierId).notNull(),
+  productId: integer("product_id").references(() => itemsTable.productId).notNull(),
+  unitPrice: text("unit_price").notNull(),
+  lastUpdated: timestamp("last_updated", { withTimezone: true })
+    // 1. For the initial insert (replaces defaultNow)
+  .defaultNow()
+  // 2. For every update (replaces new Date())
+  .$onUpdate(() => sql`now()`),
   archived: boolean("archived").default(false),
+}, (table) => {
+  return {
+    // This creates a constraint where the same supplier + product pair cannot repeat
+    uniqueLink: uniqueIndex("unique_supplier_product_idx").on(table.supplierId, table.productId),
+  };
 });
-
 // --- Orders ---
 
 //List of orders
@@ -167,13 +195,15 @@ export const ordersTable = pgTable("order_tb", {
     .generatedAlwaysAsIdentity({ startWith: 3000001 })
     .primaryKey(),
   orderStatus: text("order_status").notNull(),
-  orderDate: timestamp("order_date").notNull().defaultNow(),
-  supplierId: integer("supplier_id").references(() => suppliersTable.supplierId),
-  expectedDeliveryDate: timestamp("expected_delivery_date"),
-  actualDeliveryDate: timestamp("actual_delivery_date"),
+  orderDate: timestamp("order_date",  { withTimezone: true }),
+  supplierId: integer("supplier_id").references(() => suppliersTable.supplierId).notNull(),
+  expectedDeliveryDate: timestamp("expected_delivery_date", { withTimezone: true }),
+  actualDeliveryDate: timestamp("actual_delivery_date", { withTimezone: true }),
   projectId: integer("project_id").references(() => projectsTable.projectId),
-  createdBy: text("created_by").references(() => usersTable.id),
+  createdBy: text("created_by").references(() => usersTable.id).notNull(),
   approvedBy: text("approved_by").references(() => usersTable.id),
+  orderedValue: text("ordered_value"),       // ADD
+  receivedValue: text("received_value"),     // ADD
 });
 
 //List of products in each order, with the quantity ordered for each produc
@@ -184,8 +214,11 @@ export const orderProductsTable = pgTable("order_product_tb", {
     .primaryKey(),
   orderId: integer("order_id").references(() => ordersTable.orderId),
   productId: integer("product_id").references(() => itemsTable.productId),
-  orderProductQuantity: integer("order_product_quantity").notNull(),
-});
+  expectedOrderProductQuantity: integer("expected_order_product_quantity").notNull(),
+  deliveredOrderProductQuantity: integer("delivered_order_product_quantity"),
+}, (table) => ({
+  unqOrderProduct: uniqueIndex("unique_order_product_idx").on(table.orderId, table.productId),
+}));
 
 // --- Notifications ---
 
@@ -209,7 +242,12 @@ export const userNotificationsTable = pgTable("user_notification_tb", {
     .primaryKey(),
   userId: text("user_id").references(() => usersTable.id),
   targetId: integer("target_id"), // e.g., supplierId, orderId, etc. depending on the notification
+  additionalDescription: text("additional_description").notNull(), // specific description for this notification instance
   notifId: integer("notif_id").references(() => notificationsTable.notifId),
   isRead: boolean("is_read").default(false),
-  createdAt: date("created_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })// 1. For the initial insert (replaces defaultNow)
+  .defaultNow()
+  // 2. For every update (replaces new Date())
+  .$onUpdate(() => sql`now()`),
 });
+

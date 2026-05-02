@@ -1,11 +1,21 @@
 
 import { OrdersManager } from '@/components/features/orders/orders-manager'
-import React from 'react'
+import { getOrdersAction, getSuppliersAction, getSupplierProductsAction, getProjectsAction } from "@/lib/action/order.action";
 
-function page() {
+export default async function OrdersPage() {
+  const [orders, suppliers, supplierProducts, projects] = await Promise.all([
+    getOrdersAction(),
+    getSuppliersAction(),
+    getSupplierProductsAction(),
+    getProjectsAction(),
+  ]);
+
   return (
-    <OrdersManager/>
-  )
+      <OrdersManager
+        initialOrders={orders}
+        suppliers={suppliers}
+        supplierProducts={supplierProducts}
+        projects={projects}
+      />
+  );
 }
-
-export default page

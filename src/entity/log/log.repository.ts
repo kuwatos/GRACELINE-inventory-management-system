@@ -7,18 +7,20 @@ import { eq, ilike, or, and } from "drizzle-orm";
 // logs.service.ts or similar
 export async function createLog(
   data: {
+    userId: string;
     actionId: number;
-    targetId: number;
+    targetId:  string | number;
     columnName: string;
     prevValue?: string | null;
     newValue?: string | null;
     remarks?: string | null;
+    projectId?: number | null; // Optional projectId for future use
   },
   tx?: any // Optional Transaction Client
 ) {
   // If 'tx' is provided, use it. Otherwise, use the standard 'db'.
-  const client = tx || db; 
-  return client.insert(logsTable).values(data);
+  const client = tx ?? db; 
+  return  client.insert(logsTable).values(data);
 }
 
 //READ

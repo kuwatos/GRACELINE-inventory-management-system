@@ -4,6 +4,7 @@ import { suppliersTable } from "../../db/schema";
 import { eq, ilike, and } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { createUserNotificationService } from "../user_notifications/user_notifications.service";
+import { validateSessionUser } from "../user/user.repository";
 
 // 1. CREATE WITH DYNAMIC LOGGING
 export async function createSupplier(data: {
@@ -14,6 +15,7 @@ export async function createSupplier(data: {
 }) {
   return await db.transaction(async (tx) => {
     // Insert the new supplier
+    const user = await validateSessionUser()
     const [newSupplier] = await tx.insert(suppliersTable).values(data).returning();
 
     if (newSupplier) {
@@ -22,6 +24,7 @@ export async function createSupplier(data: {
         // Log every column that has a value
         if (val !== null && val !== undefined) {
           await createLog({
+            userId: user.id,
             actionId: 12,                  // Added a New Supplier
             targetId: newSupplier.supplierId,
             columnName: key,               // Dynamic: supplierName, supplierEmail, etc.
@@ -31,7 +34,7 @@ export async function createSupplier(data: {
           }, tx);
         }
       }
-      await createUserNotificationService({ notifId: 3 }, tx);
+      await createUserNotificationService({ notifId: 3, targetId: newSupplier.supplierId, additionalDescription: newSupplier.supplierName }, tx);
     }
 
     return newSupplier;
@@ -66,6 +69,8 @@ export async function updateSupplier(data: {
   const { id, ...incomingFields } = data;
 
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser()
+
     // Fetch current state
     const [existing] = await tx
       .select()
@@ -86,6 +91,7 @@ export async function updateSupplier(data: {
 
         // Log each individual column change
         await createLog({
+          userId: user.id,
           actionId: 13,                  // Edited a Supplier’s Details
           targetId: id,
           columnName: key,               // Dynamic field name
@@ -112,6 +118,8 @@ export async function updateSupplier(data: {
 // 3. DELETE WITH LOGGING
 export async function deleteSupplier(id: number) {
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser()
+
     const [existing] = await tx
       .select()
       .from(suppliersTable)
@@ -125,6 +133,7 @@ export async function deleteSupplier(id: number) {
 
     // Log the deletion (Action ID 14)
     await createLog({
+      userId: user.id,
       actionId: 14,
       targetId: id,
       columnName: "supplier_name",
@@ -135,3 +144,45 @@ export async function deleteSupplier(id: number) {
     return { success: true };
   });
 }
+
+export async function findExistingSupplier(name:string) {
+  return db.select().from(suppliersTable).where(ilike(suppliersTable.supplierName, name)).limit(1);
+}
+
+export async function restoreSupplier(
+  id:number,
+  data: {
+    supplierName: string;
+    supplierLandline?: string;
+    supplierEmail?: string;
+    supplierMobile: string;
+  }) {
+  return await db.transaction(async (tx) => {
+    const user = await validateSessionUser()
+    // Restore the supplier
+    const [restoredSupplier] = await tx.update(suppliersTable)
+      .set({ ...data, active: true })
+      .where(eq(suppliersTable.supplierId, id))
+      .returning();
+
+    if (restoredSupplier) {
+      // Loop through every field in the newly created supplier
+      for (const [key, val] of Object.entries(restoredSupplier)) {
+        // Log every column that has a value
+        if (val !== null && val !== undefined) {
+          await createLog({
+            userId: user.id,
+            actionId: 12,                  // Added a New Supplier
+            targetId: restoredSupplier.supplierId,
+            columnName: key,               // Dynamic: supplierName, supplierEmail, etc.
+            prevValue: null,
+            newValue: val.toString(),
+            remarks: null
+          }, tx);
+        }
+      }
+      await createUserNotificationService({ notifId: 3, targetId: restoredSupplier.supplierId, additionalDescription: restoredSupplier.supplierName }, tx);
+    }
+
+    return restoredSupplier;
+  })}

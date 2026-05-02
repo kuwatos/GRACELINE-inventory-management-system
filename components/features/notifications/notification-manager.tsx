@@ -1,23 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { Bell, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { NotificationItem } from "./notification-item";
+import {updateUserNotificationAction, markAllNotificationsAsReadAction} from "@/lib/action/user_notification.action";
+import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 export interface Notification {
-  id: string;
-  type: 'alert' | 'order' | 'delivery';
-  title: string;
+  userNotifId: number;
   description: string;
-  timeLabel: string;
+  createdAt: string | Date | null; // Match the Item props
+  targetId: number|null; // Optional targetId for potential future use
+  additionalDescription: string; // specific description for this notification instance
 }
 
 interface NotificationManagerProps {
-  data?: Notification[];
+  data: Notification[];
   isLoading?: boolean; // 1. Added loading state for initial DB fetch
-  onMarkAsRead?: (id: string) => Promise<void> | void; // 2. Now supports async DB calls
+  onMarkAsRead?: (userNotifId: number) => Promise<void> | void; // 2. Now supports async DB calls
   onMarkAllAsRead?: () => Promise<void> | void;
 }
 
@@ -31,51 +34,43 @@ export const NotificationManager = ({
 }: NotificationManagerProps) => {
   
   const [notifications, setNotifications] = useState<Notification[]>(data);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     setNotifications(data);
   }, [data]);
 
-  const handleMarkAsRead = async (id: string) => {
+  const handleMarkAsRead = async (id: number) => {
     // Save a backup of the current state in case the database fails
     const previousNotifications = [...notifications];
     
     // 1. Optimistic UI: Instantly hide it from the screen
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
-    
-    try {
-      // 2. Tell the parent component to update Supabase
-      if (onMarkAsRead) {
-        await onMarkAsRead(id);
-      }
-    } catch (error) {
-      // 3. ROLLBACK: If Supabase fails, put the notification back on the screen!
-      console.error("Failed to update database:", error);
-      setNotifications(previousNotifications);
-    }
+    startTransition(async () => {
+      await executeAction(async () => {
+        const res = await updateUserNotificationAction (id);
+        if (!res.success) throw res;
+        return res;
+      }, "Notification marked as read!");
+    });
   };
 
   const handleMarkAllAsRead = async () => {
     const previousNotifications = [...notifications];
     setNotifications([]);
+    await executeAction(async () => {
+      const res = await markAllNotificationsAsReadAction()
+      if (!res.success) throw res;
+      return res;
+    }, "All notifications marked as read!");
     
-    try {
-      if (onMarkAllAsRead) {
-        await onMarkAllAsRead();
-      }
-    } catch (error) {
-      console.error("Failed to update database:", error);
-      setNotifications(previousNotifications);
-    }
   };
 
   return (
     <div className="space-y-6">
-      <div className="shadow-sm border-gray-200 p-8">
+      <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h2 className="text-xl font-bold text-gray-800">System Notifications</h2>
-            <p className="text-sm font-medium text-gray-500">Manage your inventory alerts and order updates.</p>
+            <h2 className="text-xl font-bold text-gray-800">Notifications</h2>
           </div>
           
           {notifications.length > 0 && !isLoading && (
@@ -88,9 +83,11 @@ export const NotificationManager = ({
               Mark all as read
             </Button>
           )}
-        </div>
+        </div> 
+        </Card>
 
         <Card className="shadow-sm border-gray-200 rounded-2xl overflow-hidden p-6 bg-gray-50/30">
+          <LoadingOverlay isLoading={isPending} message="Loading..." />
           <div className="space-y-3">
             {isLoading ? (
               // The Loading State (Prevents flashing "All caught up" while fetching)
@@ -102,12 +99,12 @@ export const NotificationManager = ({
               // The Data State
               notifications.map((notif) => (
                 <NotificationItem
-                  key={notif.id}
-                  id={notif.id}
-                  type={notif.type}
-                  title={notif.title}
+                  key={notif.userNotifId}
+                  userNotifId={notif.userNotifId}
                   description={notif.description}
-                  timeLabel={notif.timeLabel}
+                  createdAt={notif.createdAt}
+                  targetId={notif.targetId}
+                  additionalDescription={notif.additionalDescription}
                   isFullPage={true}
                   onMarkAsRead={handleMarkAsRead}
                 />
@@ -125,8 +122,7 @@ export const NotificationManager = ({
               </div>
             )}
           </div>
-        </Card>
-      </div>
+      </Card>
     </div>
   );
 };

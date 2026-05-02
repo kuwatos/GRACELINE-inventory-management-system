@@ -7,6 +7,7 @@ import {
   UsersRound,
   BellDot,
   Truck,
+  Hammer,
   PackageCheck,
   FolderDot, // Added for Projects
   LucideIcon // Better type safety than 'unknown'
@@ -66,7 +67,12 @@ export const sideBarNav: SideBarConfig = {
       icon: Truck
     },
     {
-      label: "Completed Orders",
+      label: "Supplier Items",
+      href: "/admin/supplier-items",
+      icon: Hammer
+    },
+    {
+      label: "Completed Orders Notifs",
       href: "/admin/completed",
       icon: PackageCheck
     },
@@ -107,6 +113,21 @@ export const sideBarNav: SideBarConfig = {
       icon: Truck
     },
     {
+      label: "Supplier Items",
+      href: "/purchasing/supplier-items",
+      icon: Hammer
+    },
+    {
+      label: "Completed Orders Notifs",
+      href: "/purchasing/completed",
+      icon: PackageCheck
+    },
+    {
+      label: "Projects", 
+      href: "/purchasing/projects",
+      icon: FolderDot
+    },
+    {
       label: "Notifications",
       href: "/purchasing/notifications",
       icon: BellDot
@@ -121,11 +142,6 @@ export const sideBarNav: SideBarConfig = {
       label: "Dashboard",
       href: "/finance/dashboard",
       icon: LayoutDashboard
-    },
-    {
-      label: "Completed Orders",
-      href: "/finance/completed",
-      icon: PackageCheck
     }
   ],
 
@@ -139,9 +155,9 @@ export const sideBarNav: SideBarConfig = {
       icon: LayoutDashboard
     },
     {
-      label: "Projects", // 👈 Added to Warehouse
-      href: "/warehouse/projects",
-      icon: FolderDot
+      label: "Orders", // 👈 Added to Warehouse
+      href: "/warehouse/orders",
+      icon: ShoppingBag
     },
     {
       label: "Inventory",

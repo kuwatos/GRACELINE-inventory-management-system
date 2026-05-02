@@ -1,41 +1,104 @@
 "use client";
-
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
-import { projectFormSchema, ProjectFormValues } from "@/lib/validations"; // Adjust path if needed
+import { projectFormSchema, ProjectFormValues } from "@/lib/validations"; 
+import { createProjectAction } from "@/lib/action/project.action";
+import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
-export function NewProjectModal({ open, onOpenChange }: { open: boolean, onOpenChange: (o: boolean) => void }) {
-  const form = useForm<ProjectFormValues>({ resolver: zodResolver(projectFormSchema), defaultValues: { name: "" } });
-  const { isSubmitting, errors } = form.formState;
 
-  const onSubmit = async (data: ProjectFormValues) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); 
-    console.log("Saving to DB:", data);
+interface NewProjectModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const form = useForm<ProjectFormValues>({ 
+    resolver: zodResolver(projectFormSchema), 
+    defaultValues: { projectName: "" } 
+  });
+
+  async function onSubmit(data: ProjectFormValues) {
+    setIsSubmitting(true);
+    await executeAction(async () => {
+    
+    // If THIS line fails (Zod Error), it stops and goes to the wrapper's catch.
+    const validatedData = projectFormSchema.parse(data);
+
+    const res = await createProjectAction(validatedData);
+
+    // If THIS line runs, we manually trigger the wrapper's catch by throwing the result.
+    if (!res.success) {
+      throw res; 
+    }
     form.reset();
-    onOpenChange(false);
-  };
+    onClose();
+    return res;
+  }, "Project added successfully!");
+
+  setIsSubmitting(false);
+};
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) form.reset(); onOpenChange(isOpen); }}>
-      <DialogContent className="max-w-md bg-white p-6 rounded-xl">
-        <DialogHeader><DialogTitle className="text-xl font-bold">Create New Project</DialogTitle></DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">Project Name</label>
-            <Input {...form.register("name")} placeholder="e.g., Warehouse Expansion" className="h-11 border-slate-200" />
-            {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
-          </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancel</Button>
-            <Button type="submit" className="bg-zinc-900 hover:bg-zinc-800 px-6 h-10" disabled={isSubmitting}>
-              {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : "Create Project"}
-            </Button>
-          </div>
-        </form>
+    <Dialog 
+      open={isOpen} 
+      onOpenChange={(open) => {
+        if (!open) {
+          form.reset();
+          onClose();
+        }
+      }}
+    >
+      <DialogContent className="max-w-md p-0 overflow-hidden border-none shadow-2xl bg-white">
+        <DialogHeader className="px-8 py-8 border-b border-slate-100 flex justify-center items-center bg-slate-50/50">
+          <DialogTitle className="text-xl font-bold text-gray-900">Create New Project</DialogTitle>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="p-8 space-y-6">
+              <FormField
+                control={form.control}
+                name="projectName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-semibold text-slate-700 ml-1">Project Name</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        placeholder="e.g., Warehouse Expansion" 
+                        className="h-12 rounded-xl border-slate-200 focus-visible:ring-black/5" 
+                      />
+                    </FormControl>
+                    <FormMessage className="text-xs text-red-500 ml-1" />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3">
+              <Button type="button" variant="outline" onClick={onClose} className="px-10 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/90 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {isSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+        <LoadingOverlay isLoading={isSubmitting} message="Creating Project..." />
       </DialogContent>
     </Dialog>
   );

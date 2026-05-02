@@ -1,0 +1,1 @@
+ALTER TABLE "log_tb" ALTER COLUMN "target_id" SET DATA TYPE text;

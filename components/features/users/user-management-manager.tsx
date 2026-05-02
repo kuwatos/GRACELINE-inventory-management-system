@@ -1,7 +1,7 @@
 "use client";
 
 import { deleteUserAction } from "@/lib/action/user.action"; // Make sure this path matches!
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Search, ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,15 @@ import { Card } from "@/components/ui/card";
 import { UserTable, User } from "./user-table";
 import { NewUserModal } from "./new-user-modal";
 import { EditUserModal } from "./edit-user-modal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface UserManagementManagerProps {
   data?: User[];
@@ -20,6 +29,7 @@ export const UserManagementManager = ({ data = [] }: UserManagementManagerProps)
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   // UPDATED: Search filter logic mimicking the Inventory and Supplier tabs
   const filteredData = data.filter((user) => {
@@ -30,7 +40,7 @@ export const UserManagementManager = ({ data = [] }: UserManagementManagerProps)
     const matchesSearch = 
       fullName.includes(searchLower) ||
       user.username.toLowerCase().includes(searchLower) ||
-      user.userId.toString().includes(searchLower) || // Changed from id to userId.toString()
+      user.id.toString().includes(searchLower) || // Changed from id to userId.toString()
       user.department.toLowerCase().includes(searchLower);
 
     // 2. Check if the dropdown matches the user's department
@@ -47,26 +57,23 @@ export const UserManagementManager = ({ data = [] }: UserManagementManagerProps)
 
  const handleDeleteClick = async (user: User) => {
     // 1. Ask for confirmation so they don't accidentally delete someone!
-    const isConfirmed = window.confirm(`Are you sure you want to deactivate ${user.firstName} ${user.lastName}?`);
-    
-    if (isConfirmed) {
-      try {
-        // 2. Send the ID across the bridge to your Robot Butler
-        const result = await deleteUserAction(user.userId);
-
-        if (!result.success) {
-          console.error("Failed to delete user:", result.error);
-          alert("Failed to delete user. Please try again.");
+      startTransition(async () => {
+      const isConfirmed = window.confirm(`Are you sure you want to deactivate ${user.firstName} ${user.lastName}?`);
+      
+      if (isConfirmed) {
+          await executeAction(async () => { 
+            const res = await deleteUserAction(user.id)
+            if (!res.success) throw res;
+            return res;
+          }, "User deleted successfully!");
         }
-      } catch (error) {
-        console.error("Server error during deletion:", error);
-      }
-    }
-  };
+  });
+}
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-sm border-gray-200 p-8">
+      <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
+        <LoadingOverlay isLoading={isPending} message="Loading..." />
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <h2 className="text-xl font-bold text-gray-800">System Users</h2>
           
@@ -77,24 +84,57 @@ export const UserManagementManager = ({ data = [] }: UserManagementManagerProps)
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by Name, Username, ID..." // Updated placeholder
-                className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-green-500 focus-visible:ring-2"
+                className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-black/5"
               />
             </div>
             
-            <div className="relative">
-              <select 
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="appearance-none h-11 px-5 bg-[#E5E7EB] rounded-xl text-sm font-medium pr-10 focus:outline-none cursor-pointer"
+            <Select 
+              value={roleFilter} 
+              onValueChange={(value) => setRoleFilter(value)}
+            >
+              {/* 👇 Forced !h-11 height and flat gray styling */}
+             <SelectTrigger className="h-11! w-[200px] px-5 bg-[#E5E7EB] border-none shadow-none rounded-xl text-sm font-medium text-gray-900! focus:ring-0 focus:ring-offset-0 focus:outline-none cursor-pointer hover:bg-gray-300 transition-colors">
+                  <SelectValue placeholder="Filter by Roles" />
+                </SelectTrigger>
+              
+              {/* The 5px gap dropdown menu */}
+              <SelectContent 
+                position="popper" 
+                sideOffset={5} 
+                className="rounded-xl border-slate-200 shadow-lg bg-white p-1"
               >
-                <option value="">All Roles</option>
-                <option value="Admin">Admin</option>
-                <option value="Finance">Finance</option>
-                <option value="Purchasing">Purchasing</option> {/* Fixed Typo */}
-                <option value="Warehouse">Warehouse</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-            </div>
+                <SelectItem 
+                  value="all" 
+                  className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                >
+                  All Roles
+                </SelectItem>
+                <SelectItem 
+                  value="admin" 
+                  className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                >
+                  Admin
+                </SelectItem>
+                <SelectItem 
+                  value="finance" 
+                  className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                >
+                  Finance
+                </SelectItem>
+                <SelectItem 
+                  value="purchasing" 
+                  className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                >
+                  Purchasing
+                </SelectItem>
+                <SelectItem 
+                  value="warehouse" 
+                  className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
+                >
+                  Warehouse
+                </SelectItem>
+              </SelectContent>
+            </Select>
 
             <Button 
               onClick={() => setIsNewModalOpen(true)}

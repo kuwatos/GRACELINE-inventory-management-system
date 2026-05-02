@@ -9,6 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { createSupplierAction } from "@/lib/action/supplier.action";
+import { useState } from "react";
+import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface NewSupplierModalProps {
   isOpen: boolean;
@@ -16,18 +20,36 @@ interface NewSupplierModalProps {
 }
 
 export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const form = useForm<z.infer<typeof newSupplierSchema>>({
     resolver: zodResolver(newSupplierSchema),
     defaultValues: { 
       name: "", 
-      contact: "", 
-      email: "" },
+      supplierLandline: "", 
+      supplierEmail: "",
+      supplierMobile: "" 
+    },
   });
 
-  function onSubmit(values: z.infer<typeof newSupplierSchema>) {
-    console.log("Ready to send to database:", values);
-    form.reset();
-    onClose();
+  async function onSubmit(values: z.infer<typeof newSupplierSchema>) {
+    setIsSubmitting(true);
+        
+    await executeAction(async () => {
+      
+      const validatedData = newSupplierSchema.parse(values);
+  
+      const res = await createSupplierAction(validatedData);
+  
+      if (!res.success) {
+        throw res; 
+      }
+      form.reset();
+      onClose();
+      return res;
+    }, "Supplier added successfully!");
+  
+    setIsSubmitting(false);
   }
 
   return (
@@ -45,27 +67,41 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
                 <FormItem className="space-y-1.5">
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier Name</FormLabel>
                   <FormControl>
-                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                    {/* 👇 Applied standard focus ring */}
+                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>
               )} />
 
-              <FormField control={form.control} name="contact" render={({ field }) => (
+              <FormField control={form.control} name="supplierLandline" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Contact Person</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Landline</FormLabel>
                   <FormControl>
-                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                    {/* 👇 Applied standard focus ring */}
+                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>
               )} />
 
-              <FormField control={form.control} name="email" render={({ field }) => (
+              <FormField control={form.control} name="supplierEmail" render={({ field }) => (
                 <FormItem className="space-y-1.5">
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Email Address</FormLabel>
                   <FormControl>
-                    <Input {...field} type="email" className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                    {/* 👇 Applied standard focus ring */}
+                    <Input {...field} type="email" className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
+                  </FormControl>
+                  <FormMessage className="text-xs text-red-500 ml-1" />
+                </FormItem>
+              )} />
+
+              <FormField control={form.control} name="supplierMobile" render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Mobile Number</FormLabel>
+                  <FormControl>
+                    {/* 👇 Applied standard focus ring */}
+                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>
@@ -76,12 +112,14 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
               <Button type="button" variant="outline" onClick={() => { form.reset(); onClose(); }} className="px-8 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
                 Cancel
               </Button>
-              <Button type="submit" className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/70">
-                Add Supplier
+              {/* 👇 Applied #0f172a hover state and isSubmitting disabled state */}
+              <Button type="submit" disabled={isSubmitting} className="bg-[#0f172a] hover:bg-[#0f172a]/90 text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10">
+                {isSubmitting ? "Adding..." : "Add Supplier"}
               </Button>
             </DialogFooter>
           </form>
         </Form>
+        <LoadingOverlay isLoading={isSubmitting} message="Creating Supplier..." />
       </DialogContent>
     </Dialog>
   );

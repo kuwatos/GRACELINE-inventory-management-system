@@ -1,9 +1,11 @@
 import { SuppliersManager } from '@/components/features/suppliers/suppliers-manager'
 import React from 'react'
+import { readSuppliers } from '@/src/entity/supplier/supplier.query'
 
-function page() {
+async function page() {
+  const suppliers = await readSuppliers();
   return (
-    <SuppliersManager/>
+    <SuppliersManager data={suppliers}/>
   )
 }
 

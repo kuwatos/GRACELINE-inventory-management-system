@@ -1,10 +1,9 @@
 import { FinanceDashboard } from '@/components/features/dashboard/finance-dashboard'
-import React from 'react'
+import { readUserNotifications } from '@/src/entity/user_notifications/user_notifications.query';
 
-function page() {
+export default async function FinanceDashboardPage() {
+  const notifications = await readUserNotifications();
   return (
-    <FinanceDashboard/>
-  )
+      <FinanceDashboard notifications={notifications} />
+  );
 }
-
-export default page

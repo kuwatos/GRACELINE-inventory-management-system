@@ -2,7 +2,7 @@
 
 import { Plus, UserCircle, Search } from "lucide-react"; 
 import { Input } from "@/components/ui/input"; 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { OrderHistoryTable, OrderRecord } from "./order-history-table";
@@ -10,133 +10,182 @@ import { ViewOrderModal } from "./view-order-modal";
 import { ReceiveOrderModal } from "./receive-order-modal";
 import { NewOrderModal } from "./new-order-modal"; 
 import { EditOrderModal } from "./edit-order-modal"; 
+import { authClient } from "@/lib/auth-client";
+import { useTransition } from "react";
+import { approveOrderAction, changeOrderStatusAction, deleteOrderAction, receiveOrderAction } from "@/lib/action/order.action";
+import { SupplierOption, SupplierProduct, ProjectOption } from "@/lib/action/order.action";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import { executeAction } from "@/lib/error.handler";
 
-// MOCK DATA
-const MOCK_ORDERS: OrderRecord[] = [
-  { 
-    id: "1", poId: "DRAFT-001", supplierName: "TechSupply Co.", dateCreated: "2026-03-04", expectedDelivery: "2026-03-10", status: "pending",
-    products: [{ productId: "Keyboard", expectedQty: 10, unitPrice: 45.00 }, { productId: "Mouse", expectedQty: 15, unitPrice: 20.00 }]
-  },
-  { 
-    id: "2", poId: "PO-2026-0847", supplierName: "GlobalParts Ltd", dateCreated: "2026-03-01", expectedDelivery: "2026-03-05", status: "official",
-    products: [{ productId: "Monitor", expectedQty: 5, unitPrice: 150.00 }]
-  },
-  { 
-    id: "3", poId: "PO-2026-0848", supplierName: "Industrial Valve Inc.", dateCreated: "2026-02-28", expectedDelivery: "2026-03-02", status: "awaiting",
-    products: [{ productId: "Valve A", expectedQty: 100, unitPrice: 12.50 }, { productId: "Pipe B", expectedQty: 50, unitPrice: 8.00 }]
-  },
-];
 
-export type Role = "admin" | "warehouse";
+export type Role = "admin" | "warehouse" | "purchasing" | "finance";
 
-export const OrdersManager = () => {
+interface OrdersManagerProps {
+  initialOrders: OrderRecord[];
+  suppliers: SupplierOption[];
+  supplierProducts: SupplierProduct[];
+  projects: ProjectOption[];           // ADD
+}
 
-  // --- AUTH SIMULATION ---
-  const [role, setRole] = useState<Role>("admin");
+export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, projects }: OrdersManagerProps) => {
+  
+  // --- AUTH ---
+  const { data: session, isPending:isSessionPending } = authClient.useSession();
+  const role = session?.user.department;
   
   // --- STATE ---
-  const [activeTab, setActiveTab] = useState<OrderRecord["status"]>("pending");
+  const [isPending, startTransition] = useTransition();
+  const [activeTab, setActiveTab] = useState<OrderRecord["status"]>("Draft");
+  useEffect(() => {
+    if (role === "warehouse") {
+      setActiveTab("Awaiting Delivery");
+    }
+  }, [role]);
+
   const [searchQuery, setSearchQuery] = useState(""); 
-  const [orders, setOrders] = useState<OrderRecord[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<OrderRecord[]>(initialOrders);
   
+  useEffect(() => {
+    setOrders(initialOrders);
+  }, [initialOrders]);
+  
+
   // MODAL STATES
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<OrderRecord | null>(null);
   const [viewingOrder, setViewingOrder] = useState<OrderRecord | null>(null);
   const [receivingOrder, setReceivingOrder] = useState<OrderRecord | null>(null);
 
-  // --- FILTERING ---
-  const currentTab = role === "warehouse" ? "awaiting" : activeTab;
+  
+
+  // --- FILTERING ---\
+  const warehouseTabs = ["Awaiting Delivery", "Incomplete"];
+
+  const allTabs = ["Draft", "Official", "Awaiting Delivery", "Incomplete", "Complete"] as const;
+  const visibleTabs =
+  role === "warehouse"
+    ? allTabs.filter(tab => warehouseTabs.includes(tab))
+    : allTabs;
   
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
-      const matchesTab = order.status === currentTab;
+      const matchesTab = order.status === activeTab;
+
       const searchLower = searchQuery.toLowerCase();
-      const matchesSearch = 
-        order.poId.toLowerCase().includes(searchLower) ||
+      const matchesSearch =
+        order.poId.toString().toLowerCase().includes(searchLower) ||
         order.supplierName.toLowerCase().includes(searchLower);
-        
+
       return matchesTab && matchesSearch;
     });
-  }, [orders, currentTab, searchQuery]);
+  }, [orders, activeTab, searchQuery]);
+
+  
+  // Loading Display
+  if (isSessionPending) {
+    return (
+      <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
+        Loading...
+      </div>
+    );
+  }
 
   // --- DATABASE READY ACTIONS ---
-  const handleApprovePending = (id: string) => {
-    setOrders(curr => curr.map(o => o.id === id ? { ...o, status: "official", poId: o.poId.replace("DRAFT", "PO") } : o));
+  const handleApprovePending = (poId: number, ) => {
+    startTransition(async () => {
+      await approveOrderAction(poId);
+    });
   };
 
-  const handleMoveToAwaiting = (id: string) => {
-    setOrders(curr => curr.map(o => o.id === id ? { ...o, status: "awaiting" } : o));
+  // replace with action for placing the order
+  const handleMoveToAwaiting = (poId: number) => {
+    startTransition(async () => {
+      await changeOrderStatusAction(
+        poId,
+        "Awaiting Delivery"
+      );
+    });
   };
 
-  const handleDelete = (id: string) => {
-    setOrders(curr => curr.filter(o => o.id !== id));
+  const handleDelete = async (poId: number) => {
+    // We wrap the call in startTransition so Next.js knows to 
+    // refresh the server data (revalidatePath) after it finishes.
+    startTransition(async () => {
+      // 1. Ask for confirmation so they don't accidentally delete
+        const isConfirmed = window.confirm(`Are you sure you want to delete draft: ${poId}?`);
+        
+        if (isConfirmed) {
+          try {
+            // 2. Send the ID across the bridge to your Robot Butler
+            const result = await deleteOrderAction(poId);;
+    
+            if (!result.success) {
+              console.error("Failed to delete order:", result.error);
+              alert("Failed to delete order. Please try again.");
+            }
+          } catch (error) {
+            console.error("Server error during deletion:", error);
+          }
+        }
+    });
   };
+
 
   // Blind Receiving Logic
-  const handleProcessReceipt = (orderId: string, receivedCounts: Record<string, number>) => {
-    const today = new Date().toLocaleDateString();
-    
-    setOrders(curr => curr.map(order => {
-      if (order.id !== orderId) return order;
+  const handleProcessReceipt = async (
+    orderId: number,
+    receivedCounts: Record<number, number>
+  ) => {
+    const order = orders.find((o) => o.poId === orderId);
+    if (!order) return;
 
-      let isPerfectMatch = true;
-      const updatedProducts = order.products.map(p => {
-        const rQty = receivedCounts[p.productId] || 0;
-        if (rQty !== p.expectedQty) isPerfectMatch = false; 
-        return { ...p, receivedQty: rQty };
-      });
+    // Build payload BEFORE startTransition — captures receivedCounts synchronously
+    const payload = {
+      products: order.products.map((p) => ({
+        productId: p.orderProductId,
+        quantity: receivedCounts[p.orderProductId] ?? 0,
+      })),
+    };
 
-      return {
-        ...order,
-        products: updatedProducts,
-        status: isPerfectMatch ? "complete" : "incomplete",
-        dateReceived: today
-      };
-    }));
+    startTransition(async () => {
+      await executeAction(async () => {
+      const res = await receiveOrderAction(orderId, payload);
+      if (!res.success) throw res;
+      return res;
+    }, "Order received successfully!");
+  });
   };
-
+  
   return (
     <div className="space-y-6">
       
       {/* MAIN ENCLOSING CARD (Matched to InventoryManager) */}
-      <Card className="shadow-sm border-gray-200 p-8">
-        
+      <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
+         <LoadingOverlay isLoading={isPending} message="Updating Orders..." />
         {/* HEADER SECTION (Matched to InventoryManager) */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h2 className="text-xl font-bold text-gray-800">
-              Orders Dashboard
+              Orders
             </h2>
-            <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest font-semibold">
-              Role: <span className={role === "admin" ? "text-blue-600" : "text-green-600"}>{role}</span>
-            </p>
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto flex-wrap md:flex-nowrap">
             
             {/* ADDED: THE NEW SEARCH BAR */}
-            <div className="relative flex-1 md:w-64 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <div className="relative flex-1 md:w-80">
+             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search PO ID or Supplier..."
-                className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-black focus-visible:ring-2"
+                className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-black/5"
               />
             </div>
 
-            {/* ROLE TOGGLES (Added setSearchQuery("") so it clears on switch) */}
-            <Button variant={role === "admin" ? "secondary" : "outline"} onClick={() => { setRole("admin"); setActiveTab("pending"); setSearchQuery(""); }} className="h-11 rounded-xl">
-              <UserCircle className="w-4 h-4 mr-2" /> Admin
-            </Button>
-            <Button variant={role === "warehouse" ? "secondary" : "outline"} onClick={() => { setRole("warehouse"); setSearchQuery(""); }} className="h-11 rounded-xl">
-              <UserCircle className="w-4 h-4 mr-2" /> Warehouse
-            </Button>
-
             {/* CREATE ORDER BUTTON */}
-            {role === "admin" && (
+            {(role === "admin" || role === "purchasing") && (
               <Button 
                 onClick={() => setIsNewModalOpen(true)}
                 className="bg-[#0f172a] text-white hover:bg-[#0f172a]/70 h-11 px-6 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-black/10 gap-2"
@@ -148,20 +197,20 @@ export const OrdersManager = () => {
           </div>
         </div>
 
-        {/* TABS (Admin Only) */}
-        {role === "admin" && (
+        {/* TABS */}
+        {(role === "admin" || role === "purchasing" || role === "warehouse") && (
           <div className="flex border-b border-gray-100 mb-6 gap-6 overflow-x-auto">
-            {(["pending", "official", "awaiting", "incomplete", "complete"] as const).map((tab) => (
+            {visibleTabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${currentTab === tab ? "text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
+                className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === tab ? "text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 <span className="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-[10px] font-bold">
                   {orders.filter(o => o.status === tab).length}
                 </span>
-                {currentTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0f172a] rounded-t-full" />}
+                {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0f172a] rounded-t-full" />}
               </button>
             ))}
           </div>
@@ -170,21 +219,32 @@ export const OrdersManager = () => {
         {/* THE TABLE */}
         <OrderHistoryTable 
           data={filteredOrders} 
-          currentRole={role}
-          viewMode={currentTab} 
+          currentRole={role as "admin" | "warehouse" | "purchasing" | "finance"}
+          viewMode={activeTab} 
           onView={setViewingOrder}
           onEdit={setEditingOrder} 
           onReceive={setReceivingOrder}
           onApprovePending={handleApprovePending}
           onMoveToAwaiting={handleMoveToAwaiting}
           onDelete={handleDelete}
-          onDownload={(order) => console.log("Download PDF", order)}
         />
       </Card>
 
       {/* --- ALL MODALS --- */}
-      <NewOrderModal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} />
-      <EditOrderModal order={editingOrder} isOpen={!!editingOrder} onClose={() => setEditingOrder(null)} />
+      <NewOrderModal
+        isOpen={isNewModalOpen}
+        onClose={() => setIsNewModalOpen(false)}
+        suppliers={suppliers}
+        supplierProducts={supplierProducts}
+        projects={projects}             // ADD
+      />
+      <EditOrderModal
+        order={editingOrder}
+        isOpen={!!editingOrder}
+        onClose={() => setEditingOrder(null)}
+        supplierProducts={supplierProducts}
+        projects={projects}             // ADD
+      />
       <ViewOrderModal orderData={viewingOrder} isOpen={!!viewingOrder} onClose={() => setViewingOrder(null)} />
       <ReceiveOrderModal orderData={receivingOrder} isOpen={!!receivingOrder} onClose={() => setReceivingOrder(null)} onSubmitReceipt={handleProcessReceipt} />
 

@@ -1,21 +1,21 @@
 // CRUD lives here
 import { db } from "../../index";
-import { reportsTable } from "../../db/schema";
+import { reportsTable,usersTable } from "../../db/schema";
 import { eq, count, ilike, or, and } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import { createUserNotificationService } from "../user_notifications/user_notifications.service";
+import { validateSessionUser } from "../user/user.repository";
 
 //CREATE
 export async function createReport(data: {
-  userId: number;
-  reportType: string;
-  //   dateCreated: Date; //removed because it defaults to now() in the schema, so it can be optional in the input
+  reportType: string; 
   dateStart: Date;
   dateEnd: Date;
 }) {
   return await db.transaction(async (tx) => {
       // Insert the new supplier
-      const [newReport] = await tx.insert(reportsTable).values(data).returning();
+      const user = await validateSessionUser()
+      const [newReport] = await tx.insert(reportsTable).values({ ...data, userId: user.id }).returning();
   
       if (newReport) {
         // Loop through every field in the newly created supplier
@@ -23,6 +23,7 @@ export async function createReport(data: {
           // Log every column that has a value
           if (val !== null && val !== undefined) {
             await createLog({
+              userId: user.id,
               actionId: 20,                  
               targetId: newReport.reportId,
               columnName: key,               
@@ -32,7 +33,12 @@ export async function createReport(data: {
             }, tx);
           }
         }
-        await createUserNotificationService({ notifId: 7 }, tx);
+        const getUserName = await tx
+          .select({ userName: usersTable.username })
+          .from(usersTable)
+          .where(eq(usersTable.id, user.id))
+          .limit(1);
+        await createUserNotificationService({ notifId: 7, targetId: newReport.reportId, additionalDescription: getUserName[0]?.userName || "Unknown User" }, tx);
       }
   
       return newReport;

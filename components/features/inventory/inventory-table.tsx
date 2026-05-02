@@ -10,26 +10,40 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Edit3,Trash2 } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+
 
 // 1. Define exactly what a row of data looks like
 export interface InventoryItem {
-  id: string;
-  code: string;
-  name: string;
-  category: string;
-  quantity: number;
-  reorderLevel: number;
+  productId: number;
+  productName: string;
+  productCategory1: string | null;
+  productCategory2: string | null;
+  productCategory3: string | null;
+  productCategory4: string | null;
+  productCategory5: string | null;
+  productDesc: string | null;
+  productQuantity: number | null;
+  reorderLevel: number | null;
+  measurement: string;
+  projectId?: number; // Add projectId to the interface
 }
 
 // 2. Add 'data' to your props so the parent can pass it down
 interface InventoryTableProps {
   data: InventoryItem[]; 
   onEdit: (item: InventoryItem) => void; // Removed the 'any' type!
+  onDelete: (item: InventoryItem) => void; // Removed the 'any' type!
+
 }
 
-export const InventoryTable = ({ data, onEdit }: InventoryTableProps) => {
+export const InventoryTable = ({ data, onEdit, onDelete }: InventoryTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
+  const session = authClient.useSession();
+  const userDept = session.data?.user?.department?.toLowerCase(); // Assuming the field is 'dept'
+  const isWarehouse = userDept === "warehouse";
   
   // 1. THE FIX: Put the safety check FIRST before any math happens!
   if (!data || !Array.isArray(data) || data.length === 0) {
@@ -58,7 +72,25 @@ export const InventoryTable = ({ data, onEdit }: InventoryTableProps) => {
               Item Name
             </TableHead>
             <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
-              Category
+              Category 1
+            </TableHead>
+            <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
+              Category 2
+            </TableHead>
+            <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
+              Category 3
+            </TableHead>
+            <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
+              Category 4
+            </TableHead>
+            <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
+              Category 5
+            </TableHead>
+            <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
+              Measurement
+            </TableHead>
+            <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
+              Description
             </TableHead>
             <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
               Current Quantity
@@ -66,49 +98,74 @@ export const InventoryTable = ({ data, onEdit }: InventoryTableProps) => {
             <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
               Reorder Level
             </TableHead>
-            <TableHead className="px-4 py-3 text-right text-gray-400 font-medium uppercase text-[10px] tracking-widest">
-              Action
+            <TableHead className="px-4 py-3 text-gray-400 font-medium uppercase text-[10px] tracking-widest">
+              Actions
             </TableHead>
+            
           </TableRow>
         </TableHeader>
         <TableBody>
           {currentItems.map((item) => {
-            const isLowStock = item.quantity <= item.reorderLevel;
+            const isLowStock = item.productQuantity && item.reorderLevel ? item.productQuantity <= item.reorderLevel : false;
             return (
               <TableRow 
-                key={item.id} 
-                className="group transition-colors hover:bg-black cursor-default border-b border-gray-50"
+                key={item.productId} 
+                className="group transition-colors hover:bg-[#0f172a] cursor-default border-b border-gray-50"
               >
-                <TableCell className="px-4 py-4 font-mono text-xs text-gray-500 group-hover:text-zinc-400">
-                  {item.code}
+                <TableCell className="px-4 py-4 font-medium text-gray-800 group-hover:text-white transition-colors">
+                  {item.productId}
                 </TableCell>
-                <TableCell className="px-4 py-4 font-medium text-gray-800 group-hover:text-white">
-                  {item.name}
+                <TableCell className="px-4 py-4 font-medium text-gray-800 group-hover:text-white transition-colors">
+                  {item.productName}
                 </TableCell>
-                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-zinc-300">
-                  {item.category}
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
+                  {item.productCategory1}
                 </TableCell>
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
+                  {item.productCategory2}
+                </TableCell>
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
+                  {item.productCategory3}
+                </TableCell>
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
+                  {item.productCategory4}
+                </TableCell>
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
+                  {item.productCategory5}
+                </TableCell>
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
+                  {item.measurement}
+                </TableCell>
+                <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
+                  {item.productDesc}
+                </TableCell>
+                
                 <TableCell className="px-4 py-4">
-                  <span className={`flex items-center gap-1 ${
+                  <span className={`flex items-center gap-1 transition-colors ${
                     isLowStock 
                       ? "text-red-600 font-semibold group-hover:text-red-400" 
                       : "text-gray-700 group-hover:text-white"
                   }`}>
-                    {item.quantity} {isLowStock && <span className="text-[10px] font-normal uppercase">(low)</span>}
+                    {item.productQuantity} {isLowStock && <span className="text-[10px] font-normal uppercase">(low)</span>}
                   </span>
                 </TableCell>
-                <TableCell className="px-4 py-4 text-gray-500 group-hover:text-zinc-400">
+                <TableCell className="px-4 py-4 text-gray-500 group-hover:text-white transition-colors">
                   {item.reorderLevel}
                 </TableCell>
-                <TableCell className="px-4 py-4 text-right">
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(item)}
-                    className="h-7 px-4 text-[10px] font-bold uppercase bg-white text-black border-gray-200 opacity-0 group-hover:opacity-100 transition-all hover:bg-gray-100"
-                  >
-                    Edit
-                  </Button>
+                <TableCell className="px-6 py-6 text-right">
+                  <div className="flex items-center justify-end gap-3">
+                    
+                    <button onClick={() => onEdit(item)} className="text-slate-400 group-hover:text-white transition-colors">
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+
+                    {!isWarehouse && (
+                      <button onClick={() => onDelete(item)} className="text-slate-400 group-hover:text-white hover:!text-red-400 transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+
+                  </div>
                 </TableCell>
               </TableRow>
             );

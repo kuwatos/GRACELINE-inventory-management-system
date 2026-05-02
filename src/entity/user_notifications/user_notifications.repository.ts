@@ -1,11 +1,14 @@
 import { db } from "../../index";
 import { userNotificationsTable } from "../../db/schema";
 import { eq, and } from "drizzle-orm";
+import { validateSessionUser } from "../user/user.repository";
 
 //CREATE
 export async function createUserNotification(data: {
   notifId: number;
-  userId: number;
+  userId: string;
+  targetId: number;
+  additionalDescription: string; // specific description for this notification instance
   //   createdAt: Date; //removed because it defaults to now() in the schema, so it can be optional in the input
 }, tx?: any) {
   const client = tx || db; 
@@ -18,7 +21,7 @@ export async function readUserNotification() {
 }
 
 //READ UNSEEN NOTIFICATIONS OF A USER
-export async function readUnseenUserNotifications(userId: number) {
+export async function readUnseenUserNotifications(userId: string) {
   return db
     .select()
     .from(userNotificationsTable)
@@ -34,15 +37,21 @@ export async function readUnseenUserNotifications(userId: number) {
 //This is the toggle function for marking a notification as read or unread
 export async function updateUserNotification(data: {
   id: number;
-  isRead: boolean;
 }) {
   return db
     .update(userNotificationsTable)
     .set({
-      isRead: data.isRead,
+      isRead: true,
     })
     .where(eq(userNotificationsTable.userNotifId, data.id));
 }
 
-//DELETE
-// Delete function not needed
+export async function markAllAsReadNotfification() {
+  const user = await validateSessionUser();
+  return db
+    .update(userNotificationsTable)
+    .set({
+      isRead: true,
+    })
+    .where(eq(userNotificationsTable.userId, user.id));
+}

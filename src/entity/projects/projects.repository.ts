@@ -10,7 +10,17 @@ export async function createProject(data: { projectName: string }) {
 
 //READ
 export async function readProjects() {
-  return db.select().from(projectsTable);
+  return db.select().from(projectsTable).where(eq(projectsTable.archived, false));
+}
+
+export async function readProjecstNameAndId() {
+  return db
+    .select({
+      projectId: projectsTable.projectId,
+      projectName: projectsTable.projectName,
+    })
+    .from(projectsTable)
+    .where(eq(projectsTable.archived, false));
 }
 
 //SEARCH
@@ -38,3 +48,22 @@ export async function deleteProject(id: number) {
     .returning();
   return { success: true }
 }
+
+export async function findExistingProject(name:string) {
+  return db.select().from(projectsTable).where(ilike(projectsTable.projectName, name)).limit(1);
+}
+
+export async function restoreProject(
+  id:number,
+  data: {
+    projectName: string;
+  }) {
+  return await db.transaction(async (tx) => {
+    // Restore the project
+    const [restoredProject] = await tx.update(projectsTable)
+      .set({ ...data, archived: false })
+      .where(eq(projectsTable.projectId, id))
+      .returning();
+
+    return restoredProject;
+  })}

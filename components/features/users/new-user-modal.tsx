@@ -6,13 +6,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
-import { Eye, EyeOff } from "lucide-react"; 
+import { Eye, EyeOff, Loader2 } from "lucide-react"; 
 import { newUserSchema } from "@/lib/validations";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface NewUserModalProps {
   isOpen: boolean;
@@ -22,6 +24,7 @@ interface NewUserModalProps {
 export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof newUserSchema>>({
     resolver: zodResolver(newUserSchema),
@@ -29,7 +32,7 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
       department: "",
       firstName: "",
       lastName: "",
-      username: "", // 1. Added username here!
+      username: "", 
       password: "",
       confirmPassword: "",
     },
@@ -43,22 +46,24 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
   };
 
   async function onSubmit(values: z.infer<typeof newUserSchema>) {
-    try {
-      const result = await createUserAction(values);
+    setIsSubmitting(true);
 
-      if (result.success) {
-        handleClose();
-      } else {
-        // If it fails, attach the error message directly to the username field!
-        form.setError("username", {
-          type: "manual",
-          message: result.error, // This prints the friendly message we wrote in the action
-        });
+    await executeAction(async () => {
+          
+          const validatedData = newUserSchema.parse(values);
+      
+          const res = await createUserAction(validatedData);
+      
+          if (!res.success) {
+            throw res; 
+          }
+          form.reset();
+          onClose();
+          return res;
+        }, "User added successfully!");
+      
+        setIsSubmitting(false);
       }
-    } catch (error) {
-      console.error("Server error:", error);
-    }
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -76,15 +81,15 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Department</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className={cn("h-11 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-0", !field.value && "text-gray-400")}>
+                      <SelectTrigger className={cn("h-11! w-full rounded-xl border-gray-200 focus:ring-black/5", !field.value && "text-gray-400")}>
                         <SelectValue placeholder="Select department" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Finance">Finance</SelectItem>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="Warehouse">Warehouse</SelectItem>
-                      <SelectItem value="Purchasing">Purchasing</SelectItem>
+                      <SelectItem value="finance">Finance</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="warehouse">Warehouse</SelectItem>
+                      <SelectItem value="purchasing">Purchasing</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage className="text-xs text-red-500 ml-1" />
@@ -95,7 +100,7 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
                 <FormItem className="space-y-1.5">
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">First Name</FormLabel>
                   <FormControl>
-                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                    <Input {...field} className="h-11! w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>
@@ -105,18 +110,17 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
                 <FormItem className="space-y-1.5">
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Last Name</FormLabel>
                   <FormControl>
-                    <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                    <Input {...field} className="h-11! w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>
               )} />
 
-              {/* 2. ADDED THE USERNAME FIELD HERE */}
               <FormField control={form.control} name="username" render={({ field }) => (
                 <FormItem className="space-y-1.5">
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Username</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="jdoe" className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                    <Input {...field} placeholder="jdoe" className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
                   <FormMessage className="text-xs text-red-500 ml-1" />
                 </FormItem>
@@ -127,7 +131,7 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Password</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <Input {...field} type={showPassword ? "text" : "password"} placeholder="Enter Password" className="h-11 w-full pr-10 rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                      <Input {...field} type={showPassword ? "text" : "password"} placeholder="Enter Password" className="h-11 w-full pr-10 rounded-xl border-gray-200 focus-visible:ring-black/5" />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -142,7 +146,7 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
                   <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Confirm Password</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <Input {...field} type={showConfirmPassword ? "text" : "password"} placeholder="Re-enter Password" className="h-11 w-full pr-10 rounded-xl border-gray-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-0" />
+                      <Input {...field} type={showConfirmPassword ? "text" : "password"} placeholder="Re-enter Password" className="h-11 w-full pr-10 rounded-xl border-gray-200 focus-visible:ring-black/5" />
                       <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
                         {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -155,18 +159,21 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
             </div>
 
             <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3">
-              <Button type="button" variant="outline" onClick={handleClose} className="px-8 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
+              <Button type="button" variant="outline" onClick={handleClose} className="px-10 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
                 Cancel
               </Button>
               <Button 
                 type="submit" 
-                disabled={form.formState.isSubmitting} //disables the button while loading
-                className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/70">
-                {form.formState.isSubmitting ? "Adding...":"Add User"}
+                disabled={isSubmitting}
+                className="bg-[#0f172a] hover:bg-[#0f172a]/90 text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 transition-all active:scale-95"
+              >
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {isSubmitting ? "Adding..." : "Add User"}
               </Button>
             </DialogFooter>
           </form>
         </Form>
+        <LoadingOverlay isLoading={isSubmitting} message="Creating User..." />
       </DialogContent>
     </Dialog>
   );

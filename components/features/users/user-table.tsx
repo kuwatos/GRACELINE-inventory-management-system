@@ -14,12 +14,12 @@ import {
 
 // 1. UPDATED INTERFACE to match the database exactly
 export interface User {
-  userId: number; 
+  id: string; 
   firstName: string;
   lastName: string;
   username: string;
   department: string;
-  status: string; // Kept for TypeScript, but we won't show it in the table
+  active: boolean; // Kept for TypeScript, but we won't show it in the table
 }
 
 interface UserTableProps {
@@ -46,10 +46,10 @@ export const UserTable = ({ data = [], onEdit, onDelete }: UserTableProps) => {
   const totalPages = Math.ceil(data.length / itemsPerPage);
 
   return (
-    <div className="rounded-2xl border border-gray-100 overflow-hidden">
-      <Table className="text-sm border-collapse">
+    <div className="rounded-2xl border border-gray-100 overflow-hidden bg-white">
+      <Table className="text-sm border-collapse w-full">
         <TableHeader>
-          <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
+          <TableRow className="bg-gray-50/50 hover:bg-transparent border-b border-gray-100">
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">User ID</TableHead>
             <TableHead className="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Name</TableHead>
             {/* 2. ADDED USERNAME HEADER */}
@@ -61,31 +61,38 @@ export const UserTable = ({ data = [], onEdit, onDelete }: UserTableProps) => {
         <TableBody>
           {currentItems.map((user) => (
             <TableRow 
-              key={user.userId} // Changed from user.id
-              className="group hover:bg-black transition-colors cursor-default border-b border-gray-50"
+              key={user.id} 
+              className="group hover:bg-[#0f172a] transition-colors cursor-default border-b border-gray-50 last:border-0"
             >
-              <TableCell className="px-6 py-5 font-mono text-xs text-gray-500 group-hover:text-zinc-400">
-                {`EMP-${String(user.userId).padStart(4, '0')}`}
+              <TableCell className="px-6 py-5 font-mono text-xs text-gray-500 group-hover:text-white transition-colors">
+                {`EMP-${String(user.id).padStart(4, '0')}`}
               </TableCell>
-              <TableCell className="px-6 py-5 font-medium text-gray-800 group-hover:text-white">
+              <TableCell className="px-6 py-5 font-medium text-gray-800 group-hover:text-white transition-colors">
                 {user.firstName} {user.lastName}
               </TableCell>
               {/* 3. ADDED USERNAME CELL */}
-              <TableCell className="px-6 py-5 font-medium text-gray-600 group-hover:text-gray-300">
+              <TableCell className="px-6 py-5 font-medium text-gray-600 group-hover:text-white transition-colors">
                 @{user.username}
               </TableCell>
               <TableCell className="px-6 py-5">
-                <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase group-hover:bg-white/10 group-hover:text-white">
+                <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase group-hover:bg-white/20 group-hover:text-white transition-colors">
                   {user.department}
                 </span>
               </TableCell>
               <TableCell className="px-6 py-5 text-right">
-                {/* Removed opacity-0 and group-hover:opacity-100 */}
-                <div className="flex items-center justify-end gap-3 transition-opacity">
-                  <button onClick={() => onEdit(user)} className="text-zinc-400 hover:text-indigo-400 transition-colors">
+                <div className="flex items-center justify-end gap-2 group-hover:text-white transition-colors">
+                  <button 
+                    onClick={() => onEdit(user)} 
+                    className="p-2 rounded-lg text-slate-400 group-hover:text-white hover:bg-white/10 transition-colors"
+                    title="Edit"
+                  >
                     <Edit3 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => onDelete(user)} className="text-zinc-400 hover:text-red-400 transition-colors">
+                  <button 
+                    onClick={() => onDelete(user)} 
+                    className="p-2 rounded-lg text-slate-400 group-hover:text-white hover:bg-red-500/20 hover:!text-red-400 transition-colors"
+                    title="Delete"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -117,7 +124,7 @@ export const UserTable = ({ data = [], onEdit, onDelete }: UserTableProps) => {
               onClick={() => setCurrentPage(i + 1)}
               className={`h-8 w-8 p-0 text-[11px] ${
                 currentPage === i + 1 
-                  ? "bg-black text-white hover:bg-zinc-800" 
+                  ? "bg-[#0f172a] text-white hover:bg-[#0f172a]/90" 
                   : "border-gray-200 hover:bg-gray-50 text-gray-600"
               }`}
             >

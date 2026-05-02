@@ -1,9 +1,14 @@
 // CRUD lives here
 import { db } from "../../index";
 import { itemsTable } from "../../db/schema";
-import { eq, lte, ilike, or, and } from "drizzle-orm";
+import { eq, lte, ilike, or, and, isNotNull, isNull } from "drizzle-orm";
 import { createLog } from "../log/log.repository";
 import {createUserNotificationService} from "../user_notifications/user_notifications.service";
+import { validateSessionUser } from "../user/user.repository";
+import { PgTransaction } from "drizzle-orm/pg-core";
+
+// Type definition for the transaction context
+type Transaction = PgTransaction<any, any, any>;
 
 // CREATE
 export async function createItem(data: {
@@ -16,8 +21,10 @@ export async function createItem(data: {
   productDesc?: string;
   productQuantity?: number;
   reorderLevel?: number;
+  measurement: string;
 }) {
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser();
     // 1. Insert Item
     const [newItem] = await tx.insert(itemsTable).values(data).returning();
 
@@ -27,6 +34,7 @@ export async function createItem(data: {
         // We only log if the value actually exists (not null/undefined)
         if (val !== null && val !== undefined) {
           await createLog({
+            userId: user.id,
             actionId: 8,                    // Added a New Inventory Item
             targetId: newItem.productId,
             columnName: key,                // Dynamic: productName, productCategory1, etc.
@@ -37,8 +45,8 @@ export async function createItem(data: {
         }
       }
     }
-
-    await createUserNotificationService({ notifId: 1 }, tx); // Assuming notifId 1 is for new item notifications
+    const additionalDesc = `${newItem.productName} - ${newItem.productCategory1} (${newItem.measurement})`;
+    await createUserNotificationService({ notifId: 1, targetId: newItem.productId, additionalDescription: additionalDesc }, tx); // Assuming notifId 1 is for new item notifications
     return newItem;
   });
 }
@@ -53,7 +61,7 @@ export async function readLowStockItems() {
   return db
     .select()
     .from(itemsTable)
-    .where(lte(itemsTable.productQuantity, itemsTable.reorderLevel));
+    .where(and(lte(itemsTable.productQuantity, itemsTable.reorderLevel), eq(itemsTable.archived, false)));
 }
 
 // SEARCH (No changes needed for Search)
@@ -95,76 +103,85 @@ export async function updateItem(data: {
   productCategory5?: string;
   productDesc?: string;
   productQuantity?: number;
+  newQuantity?: number; // 👈 UI might send this
   reorderLevel?: number;
-}) {
-  const { id, ...incomingFields } = data;
+  remarks?: string;      // 👈 Extract this for logging
+  measurement?: string;
+  projectId?: number | null;   // 👈 Extract this for logging
+}, prevTx?: Transaction) {
+  const { id, remarks: globalRemarks, ...rest } = data;
+  const client = prevTx ?? db;
 
-  return await db.transaction(async (tx) => {
-    // 1. Get current state for comparison
+  return await client.transaction(async (tx) => {
+    const user = await validateSessionUser() 
     const [existing] = await tx
       .select()
       .from(itemsTable)
       .where(eq(itemsTable.productId, id))
       .limit(1);
 
-    if (!existing) throw new Error("Item not found");
+  if (!existing) throw new Error("Item not found");
 
-    const updates: Record<string, any> = {};
+  // 1. Prepare the final fields for comparison
+  const incomingFields: Record<string, any> = { ...rest };
+  
 
-    // 2. Iterate and Log individual changes
-    for (const [key, val] of Object.entries(incomingFields)) {
-      const oldValue = (existing as any)[key];
+  const updates: Record<string, any> = {};
 
-      if (val !== undefined && String(val) !== String(oldValue)) {
-        updates[key] = val;
+  // 3. Iterate and Log
+  for (const [key, val] of Object.entries(incomingFields)) {
+    // Only process fields that actually exist in your itemsTable schema
+    const oldValue = (existing as any)[key];
 
-        let actionId: number;
-        let remarks: string | null = null;
+    if (val !== undefined && String(val) !== String(oldValue)) {
+      updates[key] = val;
 
-        // 3. Logic for specific Action IDs
-        if (key === "productQuantity") {
-          actionId = 10; // Edited an Item’s Quantity
-          const newQty = Number(val);
-          const reorderLevel = Number(existing.reorderLevel);
+      let actionId: number;
 
-          if (!isNaN(newQty) && !isNaN(reorderLevel) && newQty <= reorderLevel) {
-            // Trigger Low Stock Notification (notifId: 2)
-            await createUserNotificationService({ notifId: 2 }, tx);
-          }
-        } else if (key === "reorderLevel") {
-          actionId = 7; // Set the reorder level
-        } else {
-          actionId = 11; // Edited an Item (General)
+      if (key === "productQuantity") {
+        actionId = 10;
+        const reorderLevel = Number(existing.reorderLevel);
+        const additionalDesc = `${existing.productName} - ${existing.productCategory1} (${existing.measurement})`;
+
+        if (!isNaN(val) && !isNaN(reorderLevel) && val <= reorderLevel) {
+          await createUserNotificationService({ notifId: 2, targetId: id, additionalDescription: additionalDesc }, tx);
         }
-
-        // 4. Use the createLog helper with columnName
-        await createLog({
-          actionId: actionId,
-          targetId: id,
-          columnName: key, // DYNAMIC: e.g., "productName", "productCategory1", etc.
-          prevValue: oldValue?.toString() || null,
-          newValue: val.toString(),
-          remarks: remarks,
-        }, tx);
+      } else if (key === "reorderLevel") {
+        actionId = 7;
+      } else {
+        actionId = 11;
       }
+
+      await createLog({
+        userId: user.id,
+        actionId,
+        targetId: id,
+        columnName: key,
+        prevValue: oldValue?.toString() || null,
+        newValue: val.toString(),
+        remarks: globalRemarks || null, // 👈 Use the passed-in reason here!
+        projectId: data.projectId || null, // 👈 Pass projectId for logging
+      }, tx);
     }
+  }
 
-    if (Object.keys(updates).length === 0) return { message: "No changes" };
+  if (Object.keys(updates).length === 0) return { message: "No changes" };
 
-    // 5. Finalize update
-    const [updatedItem] = await tx
-      .update(itemsTable)
-      .set(updates)
-      .where(eq(itemsTable.productId, id))
-      .returning();
+  // 4. Finalize update (Drizzle will only see valid columns now)
+  const [updatedItem] = await tx
+    .update(itemsTable)
+    .set(updates)
+    .where(eq(itemsTable.productId, id))
+    .returning();
 
-    return updatedItem;
+  return updatedItem;
   });
 }
 
 // DELETE
 export async function deleteItem(id: number) {
   return await db.transaction(async (tx) => {
+    const user = await validateSessionUser()
     const [item] = await tx 
       .select()
       .from(itemsTable)
@@ -178,6 +195,7 @@ export async function deleteItem(id: number) {
 
     // Log Deletion (Action ID 9)
     await createLog({
+      userId: user.id,
       actionId: 9,
       targetId: id,
       columnName: "product_name",
@@ -188,3 +206,98 @@ export async function deleteItem(id: number) {
     return { success: true };
   });
 }
+
+export async function findCategories() {
+  return await db
+    .select({ 
+      name: itemsTable.productCategory1 
+    })
+    .from(itemsTable)
+    .where(isNotNull(itemsTable.productCategory1)) // 👈 Hide empty categories
+    .groupBy(itemsTable.productCategory1);
+}
+
+export async function findMeasurement() {
+  return await db
+    .select({
+      name: itemsTable.measurement
+    })
+    .from(itemsTable)
+    .where(isNotNull(itemsTable.measurement))
+    .groupBy(itemsTable.measurement);
+}
+
+export async function findExistingItem(data: {
+  productName: string;
+  category1: string;
+  category2?: string | null;
+  category3?: string | null;
+  category4?: string | null;
+  category5?: string | null;
+  measurement: string;
+}) {
+  const conditions = [
+    ilike(itemsTable.productName, data.productName),
+    eq(itemsTable.productCategory1, data.category1),
+    eq(itemsTable.measurement, data.measurement)
+  ];
+
+  if (data.category2 !== undefined) {
+    conditions.push(data.category2 === null ? isNull(itemsTable.productCategory2) : eq(itemsTable.productCategory2, data.category2));
+  }
+  if (data.category3 !== undefined) {
+    conditions.push(data.category3 === null ? isNull(itemsTable.productCategory3) : eq(itemsTable.productCategory3, data.category3));
+  }
+  if (data.category4 !== undefined) {
+    conditions.push(data.category4 === null ? isNull(itemsTable.productCategory4) : eq(itemsTable.productCategory4, data.category4));
+  }
+  if (data.category5 !== undefined) {
+    conditions.push(data.category5 === null ? isNull(itemsTable.productCategory5) : eq(itemsTable.productCategory5, data.category5));
+  }
+
+  return db.select().from(itemsTable).where(and(...conditions)).limit(1);
+}
+
+export async function restoreItem(
+  id:number,
+  data: {productName: string;
+  productCategory1: string;
+  productCategory2?: string;
+  productCategory3?: string;
+  productCategory4?: string;
+  productCategory5?: string;
+  productDesc?: string;
+  productQuantity?: number;
+  reorderLevel?: number;
+  measurement: string;
+}) {
+  return await db.transaction(async (tx) => {
+    const user = await validateSessionUser()
+
+    const [restoredItem] = await tx
+      .update(itemsTable)
+      .set({ ...data, archived: false })
+      .where(eq(itemsTable.productId, id))
+      .returning();
+  
+  if (restoredItem) {
+      for (const [key, val] of Object.entries(restoredItem)) {
+        // We only log if the value actually exists (not null/undefined)
+        if (val !== null && val !== undefined) {
+          await createLog({
+            userId: user.id,
+            actionId: 8,                    // Added a New Inventory Item
+            targetId: restoredItem.productId,
+            columnName: key,                // Dynamic: productName, productCategory1, etc.
+            prevValue: null,                // It's a creation, so previous is always null
+            newValue: val.toString(),
+            remarks: null
+          }, tx);
+        }
+      }
+    }
+    const additionalDesc = `${restoredItem.productName} - ${restoredItem.productCategory1} (${restoredItem.measurement})`;
+    await createUserNotificationService({ notifId: 1, targetId: restoredItem.productId, additionalDescription: additionalDesc }, tx); // Assuming notifId 1 is for new item notifications
+    return restoredItem;
+  });
+};

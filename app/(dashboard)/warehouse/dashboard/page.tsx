@@ -1,10 +1,20 @@
 import { WarehouseDashboard } from '@/components/features/dashboard/warehouse-dashboard'
-import React from 'react'
+import { getOrdersAction } from '@/lib/action/order.action';
+import { readUserNotifications } from '@/src/entity/user_notifications/user_notifications.query';
 
-function page() {
+export default async function WarehouseDashboardPage() {
+  const [notifications, allOrders] = await Promise.all([
+    readUserNotifications(),
+    getOrdersAction(),
+  ]);
+
+  // Filter to only awaiting delivery on the server
+  const pendingOrders = allOrders.filter((o) => o.status === "Awaiting Delivery");
+
   return (
-    <WarehouseDashboard/>
-  )
+      <WarehouseDashboard
+        notifications={notifications}
+        pendingOrders={pendingOrders}
+      />
+  );
 }
-
-export default page
