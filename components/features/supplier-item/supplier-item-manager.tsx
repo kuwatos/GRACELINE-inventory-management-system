@@ -84,7 +84,7 @@ export const SupplierItemManager = ({
           const res = await deleteSupplierItemAction(item.supplierItemId);
           if (!res.success) throw res;
           return res;
-        }, "Supplier-product link deleted successfully!");
+        }, "Supplier-product link removed successfully!");
       })
   };
 }

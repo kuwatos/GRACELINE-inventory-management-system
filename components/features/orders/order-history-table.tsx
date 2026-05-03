@@ -9,6 +9,8 @@ export interface OrderProduct {
   orderProductId: number;  // ADD
   productId: number;
   productName: string;
+  productCategory1: string;   // ADD
+  measurement: string;        // ADD
   expectedQty: number;
   unitPrice: number;
   receivedQty?: number;
@@ -28,7 +30,6 @@ export interface OrderRecord {
   orderedValue?: string;    // ADD
   receivedValue?: string;   // ADD
   products: OrderProduct[];
-  projectName?: string;
 }
 
 interface OrderHistoryTableProps {
@@ -139,6 +140,11 @@ export const OrderHistoryTable = ({
                           </Button>
                         )}
                         <DownloadOrderButton order={order} />
+                        {(currentRole === "admin" || currentRole === "purchasing") && (
+                        <Button variant="ghost" size="sm" className="text-slate-400 group-hover:text-white hover:!text-red-400 hover:bg-slate-800 transition-colors" onClick={() => onDelete(order.poId)} title="Cancel Order">
+                          Cancel
+                        </Button>
+                        )}
                       </>
                     )}
 
@@ -157,6 +163,11 @@ export const OrderHistoryTable = ({
                           <Button variant="outline" size="sm" className="bg-green-900 text-white hover:bg-green-800 gap-2 ml-1 transition-colors border-none" onClick={() => onReceive(order)}>
                             <PackageCheck className="w-4 h-4" /> Receive Items
                           </Button>
+                        )}
+                        {(currentRole === "admin" || currentRole === "purchasing") && (
+                        <Button variant="ghost" size="sm" className="text-slate-400 group-hover:text-white hover:!text-red-400 hover:bg-slate-800 transition-colors" onClick={() => onDelete(order.poId)} title="Cancel Order">
+                          Cancel
+                        </Button>
                         )}
                       </>
                     )}

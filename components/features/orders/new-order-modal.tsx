@@ -175,30 +175,17 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                       <FormMessage className="text-xs text-red-500 ml-1" />
                     </FormItem>
                   )} />
-
-                  {/* ADDED: Assigned Project Combobox (Spans both columns) */}
-                  <div className="col-span-2">
-                    <FormField control={form.control} name="projectName" render={({ field }) => (
-                      <FormItem className="space-y-1.5">
-                        <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Assigned Project</FormLabel>
-                        <FormControl>
-                          <ProjectCombobox value={field.value || ""} onChange={field.onChange} />
-                        </FormControl>
-                        <FormMessage className="text-xs text-red-500 ml-1" />
-                      </FormItem>
-                    )} />
-                  </div>
                 </div>
 
                 {/* Row 2: Project (optional) */}
                 <FormField control={form.control} name="projectId" render={({ field }) => (
                   <FormItem className="space-y-1.5">
                     <FormLabel className="text-sm font-semibold text-gray-700 ml-1">
-                      Project <span className="text-gray-400 font-normal">(optional)</span>
+                      Project <span className="text-gray-400 font-normal"></span>
                     </FormLabel>
                     <Select
-                      onValueChange={(val) => field.onChange(val === "none" ? undefined : Number(val))}
-                      value={field.value ? String(field.value as number) : "none"}
+                      onValueChange={(val) => field.onChange(val === "none" ? null : Number(val))}
+                      value={field.value ? String(field.value) : "none"}
                     >
                       <FormControl>
                         {/* 👇 Applied standard focus ring */}
@@ -207,7 +194,6 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">No project</SelectItem>
                         {projects.map((p) => (
                           <SelectItem key={p.projectId} value={String(p.projectId)}>{p.projectName}</SelectItem>
                         ))}
@@ -268,7 +254,12 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                                         <SelectContent>
                                           {dropdownOptions.map((p) => (
                                             <SelectItem key={p.productId} value={String(p.productId)}>
-                                              {p.productName}
+                                              <div className="flex flex-col gap-0.5 py-0.5">
+                                                <span className="font-medium text-gray-900">{p.productName}</span>
+                                                <span className="text-[11px] text-gray-400">
+                                                  {p.productCategory1} · {p.measurement}
+                                                </span>
+                                              </div>
                                             </SelectItem>
                                           ))}
                                         </SelectContent>

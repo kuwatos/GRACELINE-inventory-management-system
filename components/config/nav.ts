@@ -142,7 +142,13 @@ export const sideBarNav: SideBarConfig = {
       label: "Dashboard",
       href: "/finance/dashboard",
       icon: LayoutDashboard
-    }
+    },
+    {
+      label: "Reports",
+      href: "/finance/reports",
+      icon: ChartLine
+    },
+
   ],
 
   // -------------------------------------------------------

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, Eye, Edit, Trash2, Folder, Loader2 } from "lucide-react";
+import { Archive, Plus, Search, Eye, Edit, Trash2, Folder, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -84,7 +84,7 @@ export function ProjectTable({
                         onClick={() => onDeleteProject(p)} 
                         className="h-8 w-8 hover:text-red-600 hover:bg-red-50"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Archive className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>

@@ -49,6 +49,8 @@ export async function readSupplierProducts() {
       supplierId: supplierItemsTable.supplierId,
       productId: supplierItemsTable.productId, // change to supplierItemId
       productName: itemsTable.productName,
+      productCategory1: itemsTable.productCategory1,   // ADD
+      measurement: itemsTable.measurement,             // ADD
       unitPrice: supplierItemsTable.unitPrice,
     })
     .from(supplierItemsTable)

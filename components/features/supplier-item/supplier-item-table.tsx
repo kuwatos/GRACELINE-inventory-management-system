@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, Edit3, Trash2, Calendar } from "lucide-react";
+import { Archive, Eye, Edit3, Trash2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -124,7 +124,7 @@ export const SupplierItemTable = ({ data = [], onView, onEdit, onDelete }: Suppl
                     onClick={() => onDelete(item)} 
                     className="p-2 rounded-lg text-slate-400 group-hover:text-white hover:bg-red-500/20 hover:!text-red-400 transition-colors"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Archive className="w-4 h-4" />
                   </button>
                 </div>
               </TableCell>

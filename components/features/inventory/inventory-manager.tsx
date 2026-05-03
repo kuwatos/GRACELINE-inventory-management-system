@@ -68,7 +68,7 @@ export const InventoryManager = ({ data = [], suppliers = [], categories = [], m
   const handleDeleteClick = async (item: InventoryItem) => {
     startTransition(async () => {
       setSelectedItem(item);
-      const isConfirmed = window.confirm(`Are you sure you want to delete inventory item: ${item.productName}?`);
+      const isConfirmed = window.confirm(`Are you sure you want to archive Inventory Item: ${item.productId} (${item.productName})?`);
         if (isConfirmed) {
           await executeAction(async () => {
                 const res = await deleteItemAction(item.productId);

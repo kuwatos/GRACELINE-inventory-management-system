@@ -12,6 +12,7 @@ import { ReportViewerModal } from "./report-viewer-modal";
 import { PrintableReport } from "./printable-report";
 import { deleteReportAction, generateReportAction, getMonthlyReportAction } from "@/lib/action/report.action";
 import { cn } from "@/lib/utils";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface ReportsManagerProps {
   data: Report[];
@@ -93,13 +94,28 @@ const handleViewReport = async (report: Report) => {
 };
 
 const handleDeleteReport = async (report: Report) => {
-  setSelectedReport(report);
-  const result = await deleteReportAction(report.reportId);
+  startTransition(async () => {
+    setSelectedReport(report);
+        // 1. Ask for confirmation so they don't accidentally delete
+          const isConfirmed = window.confirm(`Are you sure you want to delete Report: ${report.reportId}?`);
+          
+          if (isConfirmed) {
+            try {
+              // 2. Send the ID across the bridge to your Robot Butler
+              const result = await deleteReportAction(report.reportId);
+      
+              if (!result.success) {
+                console.error("Failed to delete report:", result.error);
+                alert("Failed to delete report. Please try again.");
+              }
+              // Manually remove it from the local state
+              setReports((prev) => prev.filter(r => r.reportId !== report.reportId));
+            } catch (error) {
+              console.error("Server error during deletion:", error);
+            }
+          }
+      });
 
-  if (result.success) {
-    // Manually remove it from the local state
-    setReports((prev) => prev.filter(r => r.reportId !== report.reportId));
-  }
 }
 
 const isInvalidDateRange = 
@@ -114,6 +130,7 @@ const isInvalidDateRange =
   return (
     <div className="space-y-6">
       <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
+        <LoadingOverlay isLoading={isPending} message="Updating Reports..." />
         <div className="mb-8 flex items-center gap-3">
           <div>
             <h2 className="text-xl font-bold text-gray-800">Month-End Report</h2>
@@ -149,6 +166,7 @@ const isInvalidDateRange =
       </Card>
 
       <Card className="shadow-sm border-gray-200 p-8 rounded-2xl min-h-[400px]">
+        <LoadingOverlay isLoading={isPending} message="Updating Reports..." />
         <div className="flex justify-end mb-6 ">
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

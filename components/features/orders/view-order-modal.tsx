@@ -29,7 +29,7 @@ export const ViewOrderModal = ({ isOpen, onClose, orderData }: ViewOrderModalPro
   
   const isWarehouse = role === "warehouse";
   const canSeePrices = role === "admin" || role === "purchasing" || role === "finance";
-  const isAudited = orderData.status === "Complete" || orderData.status === "Incomplete";
+  const isAudited = (orderData.status === "Complete" || orderData.status === "Incomplete") ;
 
   // Use Big.js for accurate decimal arithmetic
   const grandTotal = orderData.products.reduce((acc, p) => {
@@ -140,14 +140,14 @@ export const ViewOrderModal = ({ isOpen, onClose, orderData }: ViewOrderModalPro
                     {/* Warehouse only sees product name and received qty if audited */}
                     {isWarehouse ? (
                       isAudited && (
-                        <TableHead className="font-bold text-right text-purple-600">Received</TableHead>
+                        <TableHead className="font-bold text-right">Received Qty</TableHead>
                       )
                     ) : (
                       <>
                         <TableHead className="font-bold text-right">Unit Price</TableHead>
-                        <TableHead className="font-bold text-right text-blue-600">Expected Qty</TableHead>
-                        {isAudited && (
-                          <TableHead className="font-bold text-right text-purple-600">Actual Received</TableHead>
+                        <TableHead className="font-bold text-right">Expected Qty</TableHead>
+                        {isAudited  && (
+                          <TableHead className="font-bold text-right "> Received Qty</TableHead>
                         )}
                         <TableHead className="font-bold text-right">Row Total</TableHead>
                       </>
@@ -167,7 +167,7 @@ export const ViewOrderModal = ({ isOpen, onClose, orderData }: ViewOrderModalPro
 
                     return (
                       <TableRow key={item.productId}>
-                        <TableCell className="font-medium">{item.productName}</TableCell>
+                        <TableCell className="font-medium"> {item.productCategory1} - {item.productName} - {item.measurement}</TableCell>
 
                         {isWarehouse ? (
                           isAudited && (

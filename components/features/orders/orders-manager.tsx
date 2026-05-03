@@ -112,7 +112,7 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, proj
     // refresh the server data (revalidatePath) after it finishes.
     startTransition(async () => {
       // 1. Ask for confirmation so they don't accidentally delete
-        const isConfirmed = window.confirm(`Are you sure you want to delete draft: ${poId}?`);
+        const isConfirmed = window.confirm(`Are you sure you want to delete Order: ${poId}?`);
         
         if (isConfirmed) {
           try {

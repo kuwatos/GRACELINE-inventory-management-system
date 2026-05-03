@@ -55,7 +55,7 @@ export const SuppliersManager = ({ data = [] }: SuppliersManagerProps) => {
     setSelectedSupplier(supplier);
     startTransition(async () => {
     // 1. Ask for confirmation so they don't accidentally delete
-    const isConfirmed = window.confirm(`Are you sure you want to archive supplier: ${supplier.supplierName}?`);
+    const isConfirmed = window.confirm(`Are you sure you want to archive Supplier: ${supplier.supplierName}?`);
     
     if (isConfirmed) {
           await executeAction(async () => { 

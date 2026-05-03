@@ -25,13 +25,6 @@ export const PrintOrder = ({ order }: PrintOrderProps) => {
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold text-gray-900">PO #{order.poId}</p>
-          <span className={`inline-block mt-1 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider
-            ${order.status === "Complete" ? "bg-green-100 text-green-700" :
-              order.status === "Incomplete" ? "bg-red-100 text-red-700" :
-              order.status === "Awaiting Delivery" ? "bg-blue-100 text-blue-700" :
-              "bg-gray-100 text-gray-600"}`}>
-            {order.status}
-          </span>
         </div>
       </div>
 
@@ -45,10 +38,12 @@ export const PrintOrder = ({ order }: PrintOrderProps) => {
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Project</p>
           <p className="font-bold text-gray-900">{order.projectName ?? "—"}</p>
         </div>
-        <div>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Date Placed</p>
-          <p className="font-bold text-gray-900">{order.dateCreated}</p>
-        </div>
+        {order.status === "Awaiting Delivery" && (
+          <div>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Date Placed</p>
+            <p className="font-bold text-gray-900">{order.dateCreated}</p>
+          </div>
+        )}
         <div>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Expected Delivery</p>
           <p className="font-bold text-gray-900">{order.expectedDelivery}</p>

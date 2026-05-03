@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit3,Trash2 } from "lucide-react";
+import { Archive,Edit3,Trash2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 
@@ -155,13 +155,13 @@ export const InventoryTable = ({ data, onEdit, onDelete }: InventoryTableProps) 
                 <TableCell className="px-6 py-6 text-right">
                   <div className="flex items-center justify-end gap-3">
                     
-                    <button onClick={() => onEdit(item)} className="text-slate-400 group-hover:text-white transition-colors">
+                    <button onClick={() => onEdit(item)} className="text-slate-400 group-hover:text-white transition-colors hover:!text-blue-400 transition-colors">
                       <Edit3 className="w-4 h-4" />
                     </button>
 
                     {!isWarehouse && (
                       <button onClick={() => onDelete(item)} className="text-slate-400 group-hover:text-white hover:!text-red-400 transition-colors">
-                        <Trash2 className="w-4 h-4" />
+                        <Archive className="w-4 h-4" />
                       </button>
                     )}
 

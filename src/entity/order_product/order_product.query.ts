@@ -8,6 +8,8 @@ export async function readOrderProducts(data: { id: number }) {
       orderProductId: orderProductsTable.orderProductId,   // ADD
       productId: orderProductsTable.productId,
       productName: itemsTable.productName,         // for display in modals
+      productCategory1: itemsTable.productCategory1,   // ADD
+      measurement: itemsTable.measurement,             // ADD
       expectedQty: orderProductsTable.expectedOrderProductQuantity,
       receivedQty: orderProductsTable.deliveredOrderProductQuantity,
       unitPrice: supplierItemsTable.unitPrice,     // text in DB, parsed to number later

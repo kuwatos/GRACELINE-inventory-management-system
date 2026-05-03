@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, Edit3, Trash2 } from "lucide-react";
+import { Archive, Eye, Edit3, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -75,7 +75,7 @@ export const SupplierTable = ({ data = [], onView, onEdit, onDelete }: SupplierT
                   {/* View Button */}
                   <button 
                     onClick={() => onView(sup)} 
-                    className="p-2 rounded-lg text-slate-400 group-hover:text-white hover:bg-white/10 transition-colors" 
+                    className="p-2 rounded-lg text-slate-400 group-hover:text-white hover:bg-white/10 transition-colors hover:!text-blue-400 transition-colors" 
                     title="View"
                   >
                     <Eye className="w-4 h-4" />
@@ -84,7 +84,7 @@ export const SupplierTable = ({ data = [], onView, onEdit, onDelete }: SupplierT
                   {/* Edit Button */}
                   <button 
                     onClick={() => onEdit(sup)} 
-                    className="p-2 rounded-lg text-slate-400 group-hover:text-white hover:bg-white/10 transition-colors" 
+                    className="p-2 rounded-lg text-slate-400 group-hover:text-white hover:bg-white/10 transition-colors hover:!text-blue-400 transition-colors" 
                     title="Edit"
                   >
                     <Edit3 className="w-4 h-4" />
@@ -96,7 +96,7 @@ export const SupplierTable = ({ data = [], onView, onEdit, onDelete }: SupplierT
                     className="p-2 rounded-lg text-slate-400 group-hover:text-white hover:bg-red-500/20 hover:!text-red-400 transition-colors" 
                     title="Delete"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Archive className="w-4 h-4" />
                   </button>
                 </div>
               </TableCell>

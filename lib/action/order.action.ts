@@ -213,6 +213,8 @@ export async function getOrdersAction(): Promise<OrderRecord[]> {
             orderProductId: p.orderProductId,
             productId: p.productId!,
             productName: p.productName,
+            productCategory1: p.productCategory1,   // ADD
+            measurement: p.measurement,             // ADD
             expectedQty: p.expectedQty,
             unitPrice: p.unitPrice ? parseFloat(p.unitPrice) : 0,
             receivedQty: p.receivedQty ?? undefined,
@@ -233,6 +235,8 @@ export type SupplierProduct = {
   supplierId: number;
   productId: number;
   productName: string;
+  productCategory1: string;   // ADD
+  measurement: string;        // ADD
   unitPrice: string;
 };
 
@@ -251,6 +255,8 @@ export async function getSupplierProductsAction(): Promise<SupplierProduct[]> {
       supplierId: r.supplierId!,
       productId: r.productId!,
       productName: r.productName,
+      productCategory1: r.productCategory1.toUpperCase(),   // ADD
+      measurement: r.measurement,             // ADD
       unitPrice: r.unitPrice ?? "0.00",
     }));
   } catch {
