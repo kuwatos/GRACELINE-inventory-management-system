@@ -11,13 +11,14 @@ export const baseItemSchema = z.object({
   category1: z
     .string()
     .trim()
-    .min(1, "Invalid category")
-    .max(25, "Invalid category"),
-
-  category2: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
-  category3: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
-  category4: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
-  category5: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
+    .min(1, "Category is required")
+    .toLowerCase(), // ✅ Standardizes "FOOD" or "Food" to "food"
+  
+  // Apply to other optional categories as well
+  category2: z.string().trim().toLowerCase().optional().or(z.literal("")),
+  category3: z.string().trim().toLowerCase().optional().or(z.literal("")),
+  category4: z.string().trim().toLowerCase().optional().or(z.literal("")),
+  category5: z.string().trim().toLowerCase().optional().or(z.literal("")),
   measurement: z.string().min(1, "Please select a unit of measurement"),
 
   productDesc: z
@@ -62,6 +63,8 @@ export const newItemSchema = baseItemSchema.extend({
       const num = parseFloat(val);
       return num <= 9999999.99;
     }, "Price exceeds the maximum limit of 9,999,999.99"),
+  
+  
 });
 
 // 3. EDIT ITEM (Essentials + Identity + Adjustments)
@@ -86,10 +89,15 @@ const baseSupplierSchema = z.object({
   supplierLandline: z
     .string()
     .trim()
-    .min(7, "Landline number must be at least 7 digits")
-    .max(15, "Landline number must be at most 15 digits")
     .optional()
-    .or(z.literal("")), // Allow empty string as well
+    .or(z.literal(""))
+    .pipe(
+      z.string().refine((val) => {
+        if (!val) return true; // Skip validation if empty/optional
+        // PH Standard: 0 + Area Code + 7 or 8-digit number (Total 10 digits)
+        return /^0\d{9}$/.test(val);
+      }, "Landline must follow the format 0XXXXXXXXX (10 digits)")
+    ),
   supplierEmail: z
     .string()
     .trim()
@@ -98,8 +106,9 @@ const baseSupplierSchema = z.object({
     .or(z.literal("")), // Allow empty string as well
   supplierMobile: z
     .string()
-    .trim().min(7, "Mobile number must be at least 7 digits")
-    .max(15, "Mobile number must be at most 15 digits")
+    .trim()
+    .min(1, "Mobile number is required")
+    .regex(/^09\d{9}$/, "Mobile number must follow the format 09XXXXXXXXX (11 digits)"),
 
 });
 
