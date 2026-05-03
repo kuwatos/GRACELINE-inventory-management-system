@@ -86,10 +86,15 @@ const baseSupplierSchema = z.object({
   supplierLandline: z
     .string()
     .trim()
-    .min(7, "Landline number must be at least 7 digits")
-    .max(15, "Landline number must be at most 15 digits")
     .optional()
-    .or(z.literal("")), // Allow empty string as well
+    .or(z.literal(""))
+    .pipe(
+      z.string().refine((val) => {
+        if (!val) return true; // Skip validation if empty/optional
+        // PH Standard: 0 + Area Code + 7 or 8-digit number (Total 10 digits)
+        return /^0\d{9}$/.test(val);
+      }, "Landline must follow the format 0XXXXXXXXX (10 digits)")
+    ),
   supplierEmail: z
     .string()
     .trim()
@@ -98,8 +103,9 @@ const baseSupplierSchema = z.object({
     .or(z.literal("")), // Allow empty string as well
   supplierMobile: z
     .string()
-    .trim().min(7, "Mobile number must be at least 7 digits")
-    .max(15, "Mobile number must be at most 15 digits")
+    .trim()
+    .min(1, "Mobile number is required")
+    .regex(/^09\d{9}$/, "Mobile number must follow the format 09XXXXXXXXX (11 digits)"),
 
 });
 
