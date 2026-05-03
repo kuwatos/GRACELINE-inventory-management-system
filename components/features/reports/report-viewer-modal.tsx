@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Wallet, Package, ClipboardList, ArrowRight } from "lucide-react";
 import { Report } from "./reports-history-table";
+import { cn } from "@/lib/utils";
 
 export const ReportViewerModal = ({ isOpen, onClose, reportData, auditResults }: { 
   isOpen: boolean; 
@@ -71,16 +72,40 @@ export const ReportViewerModal = ({ isOpen, onClose, reportData, auditResults }:
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {financialSummary.map((row, i) => (
-                  <TableRow key={i} className="hover:bg-gray-50/50">
-                    <TableCell className="font-bold">{row.name}</TableCell>
-                    <TableCell className="text-right">₱{row.purchased.toLocaleString()}</TableCell>
-                    <TableCell className="text-right text-green-600 font-bold">₱{row.paid.toLocaleString()}</TableCell>
-                    <TableCell className="text-right text-red-600 font-mono text-xs">
-                      ₱{(row.purchased - row.paid).toLocaleString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {financialSummary.map((row, i) => {
+                  const balance = row.purchased - row.paid;
+
+                  // Helper to format numbers consistently
+                  const formatCurrency = (num: number) => 
+                    num.toLocaleString(undefined, { 
+                      minimumFractionDigits: 2, 
+                      maximumFractionDigits: 2 
+                    });
+
+                  return (
+                    <TableRow key={i} className="hover:bg-gray-50/50">
+                      <TableCell className="font-bold">{row.name}</TableCell>
+                      
+                      {/* Updated formatting for Purchased */}
+                      <TableCell className="text-right">
+                        ₱{formatCurrency(row.purchased)}
+                      </TableCell>
+                      
+                      {/* Updated formatting for Paid */}
+                      <TableCell className="text-right text-green-600 font-bold">
+                        ₱{formatCurrency(row.paid)}
+                      </TableCell>
+                      
+                      {/* Updated formatting for Balance */}
+                      <TableCell className={cn(
+                        "text-right font-mono text-xs",
+                        balance > 0 ? "text-red-600 font-bold" : "text-gray-500"
+                      )}>
+                        ₱{formatCurrency(balance)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </section>
@@ -134,8 +159,8 @@ export const ReportViewerModal = ({ isOpen, onClose, reportData, auditResults }:
                     </div>
                     <ArrowRight className="w-3 h-3 text-gray-300" />
                     <div className="text-right">
-                      <p className="text-[9px] font-black text-red-400">END</p>
-                      <p className="font-black text-sm text-red-600">{item.endQty}</p>
+                      <p className="text-[9px] font-black text-gray-400">END</p>
+                      <p className="font-black text-sm text-green-600">{item.endQty}</p>
                     </div>
                   </div>
                 </div>
