@@ -45,6 +45,11 @@ export const InventoryTable = ({ data, onEdit, onDelete }: InventoryTableProps) 
   const userDept = session.data?.user?.department?.toLowerCase(); // Assuming the field is 'dept'
   const isWarehouse = userDept === "warehouse";
   
+  const formatCategory = (cat: string | null) => {
+  if (!cat) return "—"; // Return an em-dash for empty/null categories
+  return cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
+};
+
   // 1. THE FIX: Put the safety check FIRST before any math happens!
   if (!data || !Array.isArray(data) || data.length === 0) {
     return (
@@ -119,19 +124,19 @@ export const InventoryTable = ({ data, onEdit, onDelete }: InventoryTableProps) 
                   {item.productName}
                 </TableCell>
                 <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
-                  {item.productCategory1}
+                  {formatCategory(item.productCategory1)}
                 </TableCell>
                 <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
-                  {item.productCategory2}
+                  {formatCategory(item.productCategory2)}
                 </TableCell>
                 <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
-                  {item.productCategory3}
+                  {formatCategory(item.productCategory3)}
                 </TableCell>
                 <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
-                  {item.productCategory4}
+                  {formatCategory(item.productCategory4)}
                 </TableCell>
                 <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
-                  {item.productCategory5}
+                  {formatCategory(item.productCategory5)}
                 </TableCell>
                 <TableCell className="px-4 py-4 text-gray-600 group-hover:text-white transition-colors">
                   {item.measurement}

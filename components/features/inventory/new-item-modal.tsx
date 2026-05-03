@@ -33,6 +33,19 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
   const [openCombobox2, setOpenCombobox2] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+ const formattedCategories = Array.from(
+  new Map(
+    categories.map((cat) => {
+      const formattedName = 
+        cat.name.charAt(0).toUpperCase() + cat.name.slice(1).toLowerCase();
+      
+      // Using formattedName as the Map key automatically overwrites 
+      // identical names, leaving you with a unique list.
+      return [formattedName, { ...cat, name: formattedName }];
+    })
+  ).values()
+);
+
   const form = useForm<z.input<typeof newItemSchema>>({
     resolver: zodResolver(newItemSchema),
     defaultValues: {
@@ -141,17 +154,27 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
                             <CommandList>
                               <CommandEmpty>No existing category found. Type to create new.</CommandEmpty>
                               <CommandGroup>
-                                {categories.map((category) => (
+                                {formattedCategories.map((cat) => (
                                   <CommandItem
-                                    key={category.name}
-                                    value={category.name}
+                                    key={cat.name}
+                                    value={cat.name}
                                     onSelect={() => {
-                                      form.setValue("category1", category.name);
+                                      // Set the value in the form
+                                      // If your Zod schema uses .toLowerCase(), it will convert this automatically
+                                      form.setValue("category1", cat.name);
                                       setOpenCombobox(false);
                                     }}
                                   >
-                                    <Check className={cn("mr-2 h-4 w-4", category.name === field.value ? "opacity-100" : "opacity-0")} />
-                                    {category.name}
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        // Case-insensitive check for the checkmark visibility
+                                        cat.name.toLowerCase() === field.value?.toLowerCase() 
+                                          ? "opacity-100" 
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                    {cat.name}
                                   </CommandItem>
                                 ))}
                               </CommandGroup>
