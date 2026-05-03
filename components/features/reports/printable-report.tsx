@@ -61,16 +61,20 @@ export const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(
                 </tr>
               </thead>
               <tbody>
-                {financialSummary.map((row, i) => (
-                  <tr key={i} className="border-b border-black">
-                    <td className="p-3 font-bold border-r border-black">{row.name}</td>
-                    <td className="p-3 text-right border-r border-black">{formatCurrency(row.purchased)}</td>
-                    <td className="p-3 text-right border-r border-black text-green-700 font-bold">{formatCurrency(row.paid)}</td>
-                    <td className="p-3 text-right font-black text-red-600">
-                      {formatCurrency(row.purchased - row.paid)}
-                    </td>
-                  </tr>
-                ))}
+                {financialSummary.map((row, i) => {
+                  const balance = row.purchased - row.paid;
+                  return (
+                    <tr key={i} className="border-b border-black">
+                      <td className="p-3 font-bold border-r border-black">{row.name}</td>
+                      <td className="p-3 text-right border-r border-black">{formatCurrency(row.purchased)}</td>
+                      <td className="p-3 text-right border-r border-black text-green-700 font-bold">{formatCurrency(row.paid)}</td>
+                      {/* 👇 Conditional red styling for balance */}
+                      <td className={`p-3 text-right font-black ${balance > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                        {formatCurrency(balance)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
