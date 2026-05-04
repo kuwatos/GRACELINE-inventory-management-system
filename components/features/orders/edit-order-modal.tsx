@@ -135,7 +135,13 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
   }
 
    return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (isSubmitting) return;
+        if (!open) handleClose();
+      }}
+    >
       <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden border-none shadow-2xl flex flex-col h-[90vh] max-h-[90vh]">
         <LoadingOverlay isLoading={isSubmitting} message="Saving changes..." />
         <DialogHeader className="px-8 py-8 border-b border-gray-100 flex justify-center items-center shrink-0">

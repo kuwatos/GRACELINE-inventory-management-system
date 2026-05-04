@@ -15,6 +15,8 @@ export const LoadingOverlay = ({
   return (
     <div
       className={cn("absolute inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-[2px] rounded-[inherit]", className)}
+      onPointerDown={(e) => e.preventDefault()}
+      onMouseDown={(e) => e.preventDefault()}
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-2xl shadow-lg border border-gray-100">

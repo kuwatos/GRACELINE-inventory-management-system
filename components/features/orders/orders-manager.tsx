@@ -16,6 +16,8 @@ import { approveOrderAction, changeOrderStatusAction, deleteOrderAction, receive
 import { SupplierOption, SupplierProduct, ProjectOption } from "@/lib/action/order.action";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { executeAction } from "@/lib/error.handler";
+import { useNavigationLoader } from "@/components/providers/navigation-loader";
+import { set } from "zod";
 
 
 export type Role = "admin" | "warehouse" | "purchasing" | "finance";
@@ -51,6 +53,7 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, proj
   
 
   // MODAL STATES
+  const { setBusy } = useNavigationLoader();
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<OrderRecord | null>(null);
   const [viewingOrder, setViewingOrder] = useState<OrderRecord | null>(null);
@@ -110,7 +113,9 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, proj
   const handleDelete = async (poId: number) => {
     // We wrap the call in startTransition so Next.js knows to 
     // refresh the server data (revalidatePath) after it finishes.
+    setBusy(true);
     startTransition(async () => {
+      
       // 1. Ask for confirmation so they don't accidentally delete
         const isConfirmed = window.confirm(`Are you sure you want to delete Order: ${poId}?`);
         
@@ -127,6 +132,7 @@ export const OrdersManager = ({ initialOrders, suppliers, supplierProducts, proj
             console.error("Server error during deletion:", error);
           }
         }
+    setBusy(false);
     });
   };
 

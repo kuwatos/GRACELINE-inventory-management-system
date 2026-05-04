@@ -62,7 +62,13 @@ export const ReceiveOrderModal = ({ isOpen, onClose, orderData, onSubmitReceipt 
   if (!orderData) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (isSubmitting) return;
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-[600px] p-0 border-none shadow-2xl rounded-3xl bg-white">
         <LoadingOverlay isLoading={isSubmitting} message="Confirming receipt..." />
         <DialogHeader className="px-8 py-6 bg-black text-white rounded-t-3xl text-center">

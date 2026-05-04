@@ -16,7 +16,7 @@ import Link from "next/link"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
-  const { startLoading } = useNavigationLoader()   // ADD
+  const { startLoading, isLoading: isNavigating } = useNavigationLoader()
 
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => { setMounted(true); }, []);
@@ -48,6 +48,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar {...props} className="bg-[#0f172a] border-0! text-white [&>div]:bg-transparent p-1">
+       {isNavigating && (
+        <div
+          className="absolute inset-0 z-50 cursor-not-allowed"
+          onPointerDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
