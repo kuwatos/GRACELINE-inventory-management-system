@@ -71,7 +71,13 @@ export function EditProjectModal({ isOpen, onClose, project, isViewOnly = false 
   const title = isViewOnly ? `View Project: ${project?.projectId}` : `Edit Project: ${project?.projectId}`;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (isSubmitting) return;  // block close while loading
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="max-w-md bg-white p-0 overflow-hidden border-none shadow-2xl">
         <DialogHeader className="px-8 py-8 border-b border-slate-100 flex justify-center items-center">
           <DialogTitle className="text-xl font-bold text-gray-900">{title}</DialogTitle>

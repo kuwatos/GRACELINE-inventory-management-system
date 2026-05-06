@@ -109,7 +109,13 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
   if (!item) return null;
 
   return (
-  <Dialog open={isOpen} onOpenChange={onClose}>
+  <Dialog
+    open={isOpen}
+    onOpenChange={(open) => {
+      if (isSubmitting) return;  // block close while loading
+      if (!open) onClose();
+    }}
+  >
     <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden border-none shadow-2xl">
       <DialogHeader className="px-8 py-6 border-b border-gray-100 bg-gray-50/50">
         <DialogTitle className="text-xl font-bold text-gray-900">

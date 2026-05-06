@@ -89,7 +89,7 @@ const baseSupplierSchema = z.object({
     .optional()
     .or(z.literal(""))
     .pipe(
-      z.string().refine((val) => {
+      z.string().optional().refine((val) => {
         if (!val) return true; // Skip validation if empty/optional
         // PH Standard: 0 + Area Code + 7 or 8-digit number (Total 10 digits)
         return /^0\d{9}$/.test(val);

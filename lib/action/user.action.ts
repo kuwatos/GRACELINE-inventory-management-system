@@ -60,8 +60,9 @@ export async function updateUserAction(userId: string, values: z.infer<typeof ed
   try {
     const validData = editUserSchema.parse(values);
     const existingUser = await findExistingUser(validData.username);
-    
-    if (existingUser && existingUser.length > 0) {    
+    const isTakenBySomeoneElse = existingUser.some(user => user.id !== userId);
+
+    if (isTakenBySomeoneElse) {    
       return { success: false, error: "Username already exists. Please try a different one." };
     }
 

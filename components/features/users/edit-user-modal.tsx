@@ -79,7 +79,13 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
       }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (isSubmitting) return;  // block close while loading
+        if (!open) handleClose();
+      }}
+    >
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl">
         <DialogHeader className="px-8 py-8 border-b border-gray-100 flex justify-center items-center">
           <DialogTitle className="text-2xl font-medium text-gray-900">

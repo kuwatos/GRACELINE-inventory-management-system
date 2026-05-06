@@ -90,7 +90,13 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
   const title = isViewOnly ? `View Supplier: ${supplier?.supplierId}` : `Edit Supplier: ${supplier?.supplierId}`;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (isSubmitting) return;  // block close while loading
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-[600px] p-0 border-none shadow-2xl rounded-2xl bg-white overflow-hidden text-left">
         <Form {...form}>
           <form onSubmit={handleFormSubmit}>

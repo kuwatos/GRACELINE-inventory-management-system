@@ -53,7 +53,13 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (isSubmitting) return;  // block close while loading
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden border-none shadow-2xl">
         <DialogHeader className="px-8 py-8 border-b border-gray-100 flex justify-center items-center">
           <DialogTitle className="text-2xl font-medium text-gray-900">Add New Supplier</DialogTitle>

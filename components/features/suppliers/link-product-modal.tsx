@@ -13,6 +13,7 @@ export const LinkProductModal = ({ isOpen, onClose, supplierId, inventoryItems, 
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [unitPrice, setUnitPrice] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
 
   const filteredItems = inventoryItems?.filter((item: any) => 
     item.product_name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -44,7 +45,13 @@ export const LinkProductModal = ({ isOpen, onClose, supplierId, inventoryItems, 
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (isLoading) return;  // block close while loading
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-[480px] p-0 border-none shadow-2xl rounded-3xl bg-white overflow-hidden">
         <DialogHeader className="px-10 py-10 border-b border-gray-100 flex flex-col items-start text-left">
           <DialogTitle className="text-3xl font-black text-gray-900 tracking-tighter uppercase leading-none">

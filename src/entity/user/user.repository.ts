@@ -55,7 +55,7 @@ export async function createUser(data: {
             targetId: newUser.user.id,
             columnName: key,                // Dynamic: productName, productCategory1, etc.
             prevValue: null,                // It's a creation, so previous is always null
-            newValue: val,
+            newValue: val.toString(),
             remarks: null
           });
         }
@@ -125,7 +125,6 @@ export async function updateUser(data: {
   password?: string | undefined; // Notice this is optional (?)
 }) {
     const { id, password, username, firstName, lastName, department } = data;
-    console.log("checking")
     const oldUser = await auth.api.getUser({
       query: { id },
       headers: await headers(),
