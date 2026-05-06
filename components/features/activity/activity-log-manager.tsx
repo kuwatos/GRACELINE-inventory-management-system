@@ -60,44 +60,7 @@ export const ActivityLogManager = ({ data = [] }: ActivityLogManagerProps) => {
                 className="pl-9 h-11 border-gray-200 rounded-xl focus-visible:ring-black/5"
               />
             </div>
-            
-            {/* 3. Hooked up the state and corrected the SelectItem values */}
-            <Select value={filterAction} onValueChange={setFilterAction}>
-              <SelectTrigger className="!h-11 w-40 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 shadow-sm hover:border-slate-300 hover:shadow-md hover:text-slate-900 transition-all">
-                <SelectValue placeholder="Filter by Action" />
-              </SelectTrigger>
-              
-              <SelectContent 
-                position="popper" 
-                sideOffset={5} 
-                className="rounded-xl border-slate-200 shadow-lg bg-white p-1"
-              >
-                <SelectItem 
-                  value="all" 
-                  className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
-                >
-                  All Actions
-                </SelectItem>
-                <SelectItem 
-                  value="Updated Stock" 
-                  className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
-                >
-                  Updated Stock
-                </SelectItem>
-                <SelectItem 
-                  value="Created Order" 
-                  className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
-                >
-                  Created Order
-                </SelectItem>
-                <SelectItem 
-                  value="Added User" 
-                  className="focus:bg-slate-100 focus:text-[#0f172a] cursor-pointer rounded-lg font-medium transition-colors py-2.5"
-                >
-                  Added User
-                </SelectItem>
-              </SelectContent>
-            </Select>
+  
           </div>
         </div>
 

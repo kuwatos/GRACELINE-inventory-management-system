@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition, useState, useTransition } from "react";
 import { FileText, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { updateUserNotificationAction } from "@/lib/action/user_notification.action";
+import { executeAction } from "@/lib/error.handler";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 interface NotificationProps {
   userNotifId: number;
@@ -18,26 +20,30 @@ export const CompletedOrders = ({ data = [] }: { data: NotificationProps[] }) =>
   // Initialize state with props. 
   // Because of the 'key' in page.tsx, this resets automatically when data changes.
   const [orders, setOrders] = useState<NotificationProps[]>(data);
+  const [isPending, startTransition] = useTransition();
 
   const handleArchive = async (id: number) => {
-    const previousOrders = [...orders];
-    
-    // 1. Optimistic UI: Remove it immediately
-    setOrders((current) => current.filter((o) => o.userNotifId !== id));
-
-    try {
-      // 2. Call the server action
-      await updateUserNotificationAction(id);
-    } catch (error) {
-      console.error("Database sync failed:", error);
-      setOrders(previousOrders); // Rollback on failure
-    }
+    startTransition(async () => {
+      const previousOrders = [...orders];
+      
+      // 1. Optimistic UI: Remove it immediately
+      setOrders((current) => current.filter((o) => o.userNotifId !== id));
+        await executeAction(async () => {
+          const res = await updateUserNotificationAction(id);
+          if (!res.success) {
+            setOrders(previousOrders);
+            throw res
+          };
+          return res;
+        }, "Marked as read!");
+    })
   };
 
   return (
     <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
+      <LoadingOverlay isLoading={isPending} message="Loading..." />
       <div className="mb-6">
-        <h2 className="text-xl font-medium text-gray-900 text-left">Completed Orders</h2>
+        <h2 className="text-xl font-medium text-gray-900 text-left">Received Orders</h2>
       </div>
 
       {orders.length === 0 ? (

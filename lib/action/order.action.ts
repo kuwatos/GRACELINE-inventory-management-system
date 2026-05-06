@@ -17,7 +17,6 @@ import Big from "big.js";
 
 export async function createOrderAction(values: z.infer<typeof newOrderSchema>) {
     try {
-        console.log("creating.....")
         const user = await validateSessionUser()
         const validData = newOrderSchema.parse(values);
        

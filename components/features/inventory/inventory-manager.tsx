@@ -82,7 +82,7 @@ export const InventoryManager = ({ data = [], suppliers = [], categories = [], m
   return (
     <div className="space-y-6">
       <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
-        <LoadingOverlay isLoading={isPending} message="Updating..." />
+        <LoadingOverlay isLoading={isPending} message="Loading..." />
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <h2 className="text-xl font-bold text-gray-800">
             {filterStatus === "low-stock" ? "🚨 Low Stock Warning" : "Current Stock Levels"}

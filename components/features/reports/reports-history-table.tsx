@@ -3,6 +3,7 @@
 import { Download, Eye, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 export interface Report {
   reportId: number;
@@ -18,7 +19,7 @@ const formatDate = (date: Date | string | null) => {
     return new Date(date).toLocaleString()
   };
 
-export const ReportsHistoryTable = ({ data, onView, onDelete, onDownload }: any) => {
+export const ReportsHistoryTable = ({ data, onView, onDelete, onDownload, isPending }: any) => {
   return (
     <div className="rounded-2xl border border-gray-100 overflow-hidden">
       <Table className="text-sm border-collapse w-full">

@@ -94,19 +94,29 @@ export function EditProjectModal({ isOpen, onClose, project, isViewOnly = false 
                 </FormItem>
               )} />
             </div>
-
+              
             <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3">
-              <Button type="button" variant="outline" onClick={onClose} className="px-10 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900">
-                Cancel
-              </Button>
+              {/* The Cancel button stays, but the label changes based on isViewOnly */}
               <Button 
-                type="submit" 
-                disabled={isSubmitting} 
-                className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/90 transition-all active:scale-95 disabled:opacity-50"
+                type="button" 
+                variant="outline" 
+                onClick={onClose} 
+                className="px-10 h-11 rounded-xl font-bold text-gray-500 hover:text-gray-900"
               >
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                {isSubmitting ? "Saving..." : "Save Changes"}
+                {isViewOnly ? "Close" : "Cancel"}
               </Button>
+
+              {/* The Save button only renders if isViewOnly is false */}
+              {!isViewOnly && (
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting} 
+                  className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/90 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  {isSubmitting ? "Saving..." : "Save Changes"}
+                </Button>
+              )}
             </DialogFooter>
           </form>
         </Form>

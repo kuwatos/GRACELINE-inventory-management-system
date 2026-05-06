@@ -194,11 +194,11 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                 <FormField control={form.control} name="projectId" render={({ field }) => (
                   <FormItem className="space-y-1.5">
                     <FormLabel className="text-sm font-semibold text-gray-700 ml-1">
-                      Project <span className="text-gray-400 font-normal">(optional)</span>
+                      Project <span className="text-gray-400 font-normal"></span>
                     </FormLabel>
                     <Select
-                      onValueChange={(val) => field.onChange(val === "none" ? undefined : Number(val))}
-                      value={field.value ? String(field.value as number) : "none"}
+                      onValueChange={(val) => field.onChange(val === "none" ? null : Number(val))}
+                      value={field.value ? String(field.value) : "none"}
                     >
                       <FormControl>
                         {/* 👇 Applied standard focus ring */}
@@ -207,7 +207,6 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">No project</SelectItem>
                         {projects.map((p) => (
                           <SelectItem key={p.projectId} value={String(p.projectId)}>{p.projectName}</SelectItem>
                         ))}

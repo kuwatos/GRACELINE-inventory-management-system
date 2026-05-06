@@ -20,6 +20,8 @@ import { signIn, validateSessionUser} from "@/src/entity/user/user.repository"; 
 import { redirectToDashboard } from "@/lib/action/user.action"
 import { executeAction } from "@/lib/error.handler"
 import { useRouter } from "next/navigation"
+import { useState } from "react" // Import useState
+import { Eye, EyeOff } from "lucide-react" // Import Icons
 
 
 const formSchema = z.object({
@@ -37,6 +39,7 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -108,12 +111,28 @@ export function LoginForm({
                   <FormItem className="space-y-2">
                     <FormLabel className="font-semibold text-gray-900">Password</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="password"
-                        className="h-11 rounded-xl border-gray-200 focus-visible:ring-black/5"
-                        {...field}
-                      />
+                      <div className="relative"> {/* Container for positioning */}
+                        <Input
+                          type={showPassword ? "text" : "password"} // Dynamic type
+                          placeholder="password"
+                          className="h-11 rounded-xl border-gray-200 focus-visible:ring-black/5 pr-10" // Added padding-right
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                          <span className="sr-only">
+                            {showPassword ? "Hide password" : "Show password"}
+                          </span>
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

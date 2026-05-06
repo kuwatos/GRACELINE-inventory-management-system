@@ -42,10 +42,6 @@ export const PrintOrder = ({ order }: PrintOrderProps) => {
           <p className="font-bold text-gray-900">{order.supplierName}</p>
         </div>
         <div>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Project</p>
-          <p className="font-bold text-gray-900">{order.projectName ?? "—"}</p>
-        </div>
-        <div>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Date Placed</p>
           <p className="font-bold text-gray-900">{order.dateCreated}</p>
         </div>
@@ -53,12 +49,6 @@ export const PrintOrder = ({ order }: PrintOrderProps) => {
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Expected Delivery</p>
           <p className="font-bold text-gray-900">{order.expectedDelivery}</p>
         </div>
-        {order.dateReceived && (
-          <div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Actual Delivery</p>
-            <p className="font-bold text-green-700">{order.dateReceived}</p>
-          </div>
-        )}
       </div>
 
       {/* Products Table */}

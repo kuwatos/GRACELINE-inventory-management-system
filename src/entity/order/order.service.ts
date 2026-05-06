@@ -8,7 +8,7 @@ import { success } from "zod";
 export async function createOrderService(data: {
   supplierId: number;
   expectedDeliveryDate: Date;
-  projectId?: number;
+  projectId?: number | null;
   createdBy: string;
   items: {
     productId: number;
