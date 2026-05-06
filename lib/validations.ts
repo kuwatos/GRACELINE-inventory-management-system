@@ -11,13 +11,14 @@ export const baseItemSchema = z.object({
   category1: z
     .string()
     .trim()
-    .min(1, "Invalid category")
-    .max(25, "Invalid category"),
-
-  category2: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
-  category3: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
-  category4: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
-  category5: z.union([z.literal(""), z.string().trim().min(1).max(25)]).optional(),
+    .min(1, "Category is required")
+    .toLowerCase(), // ✅ Standardizes "FOOD" or "Food" to "food"
+  
+  // Apply to other optional categories as well
+  category2: z.string().trim().toLowerCase().optional().or(z.literal("")),
+  category3: z.string().trim().toLowerCase().optional().or(z.literal("")),
+  category4: z.string().trim().toLowerCase().optional().or(z.literal("")),
+  category5: z.string().trim().toLowerCase().optional().or(z.literal("")),
   measurement: z.string().min(1, "Please select a unit of measurement"),
 
   productDesc: z
@@ -62,6 +63,8 @@ export const newItemSchema = baseItemSchema.extend({
       const num = parseFloat(val);
       return num <= 9999999.99;
     }, "Price exceeds the maximum limit of 9,999,999.99"),
+  
+  
 });
 
 // 3. EDIT ITEM (Essentials + Identity + Adjustments)
@@ -182,11 +185,21 @@ export const baseOrderSchema = z.object({
     .number()
     .int()
     .min(1, "Please select a supplier"),
-  projectId: z.coerce
-    .number()
-    .int()
-    .transform((val) => (val === 0 || val === null) ? undefined : val), // strip 0
-  deliveryDate: z.coerce.date().min(new Date().setHours(0, 0, 0, 0), "Choose a delivery date, and it must be at least today"),
+  projectId: z.preprocess(
+    (val) => {
+      // If it's the string "none", a null, or NaN, return null
+      if (val === "none" || val === null || val === undefined || Number.isNaN(val)) {
+        return null;
+      }
+      return val;
+    },
+    z.coerce.number().int().min(1, "Please select a project")
+  ),
+  deliveryDate: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? undefined : new Date(val as string)),
+    z.date({ error: "Please choose a delivery date" })
+      .min(new Date(new Date().setHours(24, 0, 0, 0)), "Delivery date must be at least tomorrow")
+  ),
   products: z.array(orderProductSchema).min(1, "You must add at least one product"),
   projectName: z.string().optional(),
 });

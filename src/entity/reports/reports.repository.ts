@@ -24,7 +24,7 @@ export async function createReport(data: {
           if (val !== null && val !== undefined) {
             await createLog({
               userId: user.id,
-              actionId: 20,                  
+              actionId: 22,                  
               targetId: newReport.reportId,
               columnName: key,               
               prevValue: null,

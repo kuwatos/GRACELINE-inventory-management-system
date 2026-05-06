@@ -44,7 +44,7 @@ export const UserManagementManager = ({ data = [] }: UserManagementManagerProps)
       user.department.toLowerCase().includes(searchLower);
 
     // 2. Check if the dropdown matches the user's department
-    const matchesRole = roleFilter === "" || user.department === roleFilter;
+    const matchesRole = roleFilter === "" || user.department === roleFilter || roleFilter === "all"; // "all" means show everyone regardless of department
 
     // 3. Return true ONLY if both match!
     return matchesSearch && matchesRole;

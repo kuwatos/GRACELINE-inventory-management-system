@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useRef, useTransition, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
-import { Search, Loader2, FileText, Plus, Calendar } from "lucide-react";
+import { Search, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,7 +20,6 @@ interface ReportsManagerProps {
 
 export const ReportsManager = ({ data=[] }: ReportsManagerProps) => {
   const [reports, setReports] = useState<Report[]>(data);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -28,70 +27,101 @@ export const ReportsManager = ({ data=[] }: ReportsManagerProps) => {
   const [endDate, setEndDate] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
   
+  // Printing states
+  const [isReadyToPrint, setIsReadyToPrint] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
-
+  const [auditData, setAuditData] = useState<any>(null);
   const [isPending, startTransition] = useTransition();
-  const handlePrint = useReactToPrint({
+
+  // 1. Hook MUST be at the top level
+  const triggerPrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `GraceLine-MonthEnd-${selectedReport?.dateCreated || "Report"}`,
   });
 
-  const [auditData, setAuditData] = useState<any>(null);
-
-  const handleGenerateClick = async () => {
-    if (!startDate || !endDate) return;
-    setIsGenerating(true);
-    
-    const res = await getMonthlyReportAction(startDate, endDate);
-  
-  if (res.success) {
-    setAuditData(res.data); // Store the results
-    const newReportRecord = { 
-      reportId: Date.now(), // Temporary ID for UI
-      reportType: "Live Generated Audit",
-      dateCreated: new Date(),
-      dateStart: new Date(startDate),
-      dateEnd: new Date(endDate)
-    };
-    setSelectedReport(
-      newReportRecord
-    );
-    const result=await generateReportAction({
-      reportType: "Live Generated Audit",
-      dateStart: startDate,
-      dateEnd: endDate
-    });
-
-    if (result.success) {
-      // 3. UPDATE LOCAL STATE so the table refreshes
-      // In a real app, you might want the saved object back from the server
-      setReports((prev) => [newReportRecord, ...prev]); 
+  // 2. Effect watches for print readiness
+  useEffect(() => {
+    if (isReadyToPrint && selectedReport && auditData) {
+      triggerPrint();
+      setIsReadyToPrint(false); // Reset flag after printing
     }
-  }
-  setIsViewerOpen(true);
-  setIsGenerating(false);
-};
+  }, [isReadyToPrint, selectedReport, auditData, triggerPrint]);
 
-const handleViewReport = async (report: Report) => {
-  setIsGenerating(true); // Show a loader while fetching historical numbers
+  const handleGenerateClick = () => {
+    startTransition(async () => {
+      if (!startDate || !endDate) return;
+      setIsGenerating(true);
+      
+      const res = await getMonthlyReportAction(startDate, endDate);
+    
+      if (res.success) {
+        setAuditData(res.data);
+        const newReportRecord = { 
+          reportId: Date.now(), // Temporary ID for UI
+          reportType: "Live Generated Audit",
+          dateCreated: new Date(),
+          dateStart: new Date(startDate),
+          dateEnd: new Date(endDate)
+        };
+        setSelectedReport(newReportRecord);
 
-  // Fetch the actual audit numbers based on the saved report's dates
-  const res = await getMonthlyReportAction(
-    new Date(report.dateStart).toISOString(), 
-    new Date(report.dateEnd).toISOString()
-  );
+        const result = await generateReportAction({
+          reportType: "Live Generated Audit",
+          dateStart: startDate,
+          dateEnd: endDate
+        });
 
-  if (res.success) {
-    setAuditData(res.data); // Fill the gap!
-    setSelectedReport(report);
-    setIsViewerOpen(true);
-  } else {
-    // Handle error (e.g., toast.error("Failed to load report data"))
-    console.error(res.error);
-  }
+        if (result.success) {
+          setReports((prev) => [newReportRecord, ...prev]); 
+        }
+      }
+      setIsViewerOpen(true);
+      setIsGenerating(false);
+    });
+  };
 
-  setIsGenerating(false);
-};
+  const handleViewReport = (report: Report) => {
+    startTransition(async () => {
+      setIsGenerating(true); 
+
+      const res = await getMonthlyReportAction(
+        new Date(report.dateStart).toISOString(), 
+        new Date(report.dateEnd).toISOString()
+      );
+
+      if (res.success) {
+        setAuditData(res.data); 
+        setSelectedReport(report);
+        setIsViewerOpen(true);
+      } else {
+        console.error(res.error);
+      }
+
+      setIsGenerating(false);
+    });
+  };
+
+  // 3. Restored missing download handler
+  const handleDownloadReport = (report: Report) => {
+    startTransition(async () => {
+      setIsGenerating(true);
+      
+      const res = await getMonthlyReportAction(
+        new Date(report.dateStart).toISOString(), 
+        new Date(report.dateEnd).toISOString()
+      );
+
+      if (res.success) {
+        setAuditData(res.data);
+        setSelectedReport(report);
+        setIsReadyToPrint(true); // This tells the useEffect to trigger the print
+      } else {
+        console.error(res.error);
+      }
+      
+      setIsGenerating(false);
+    });
+  };
 
 const handleDeleteReport = async (report: Report) => {
   startTransition(async () => {
@@ -118,17 +148,20 @@ const handleDeleteReport = async (report: Report) => {
 
 }
 
-const isInvalidDateRange = 
-  startDate !== "" && 
-  endDate !== "" && 
-  new Date(endDate) < new Date(startDate);
+  const isInvalidDateRange = 
+    startDate !== "" && 
+    endDate !== "" && 
+    new Date(endDate) < new Date(startDate);
 
   const filteredData = reports.filter((r) => 
     r.dateCreated?.toLocaleString().includes(searchQuery) || r.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Moved LoadingOverlay to the top of the container so it covers everything nicely */}
+      <LoadingOverlay isLoading={isPending} message="Loading..." />
+
       <Card className="p-8 rounded-2xl border-2 shadow-sm bg-white">
         <LoadingOverlay isLoading={isPending} message="Updating Reports..." />
         <div className="mb-8 flex items-center gap-3">
@@ -139,17 +172,17 @@ const isInvalidDateRange =
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           <div className="space-y-3">
-            <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+            <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
               <Calendar className="w-3 h-3" /> Start Date
             </Label>
-            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-12 rounded-xl border-gray-200 shadow-sm" />
+            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-12 rounded-xl border-gray-200 shadow-sm focus:ring-black/5" />
           </div>
 
           <div className="space-y-3">
-            <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+            <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
               <Calendar className="w-3 h-3" /> End Date
             </Label>
-            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-12 rounded-xl border-gray-200 shadow-sm" />
+            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-12 rounded-xl border-gray-200 shadow-sm focus:ring-black/5" />
           </div>
         </div>
         
@@ -157,8 +190,8 @@ const isInvalidDateRange =
           onClick={handleGenerateClick} 
           disabled={isGenerating || !startDate || !endDate || isInvalidDateRange} 
           className={cn(
-            "w-full md:w-auto h-12 rounded-xl font-bold px-10 transition-all",
-            isInvalidDateRange ? "bg-red-100 text-red-600 cursor-not-allowed" : "bg-black text-white"
+            "w-full md:w-auto h-12 rounded-xl font-bold px-10 transition-all active:scale-95",
+            isInvalidDateRange ? "bg-red-100 text-red-600 cursor-not-allowed" : "bg-black text-white hover:bg-black/90"
           )}
         >
           {isInvalidDateRange ? "Invalid Date Range" : "Generate Report"}
@@ -181,13 +214,19 @@ const isInvalidDateRange =
         <ReportsHistoryTable 
           data={filteredData} 
           onView={handleViewReport} 
-          onDownload={(r: any) => { setSelectedReport(r); setTimeout(() => handlePrint(), 100); }} 
+          onDownload={handleDownloadReport} 
           onDelete={handleDeleteReport} 
+          isPending={isPending}
         />
       </Card>
 
       <ReportViewerModal isOpen={isViewerOpen} onClose={() => setIsViewerOpen(false)} reportData={selectedReport} auditResults={auditData} />
-      <PrintableReport ref={printRef} reportData={selectedReport} auditData={auditData} />
+      
+      {/* 4. Restored the hidden wrapper so it doesn't break your UI */}
+      <div className="hidden">
+        <PrintableReport ref={printRef} reportData={selectedReport} auditData={auditData} />
+      </div>
+      
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { db } from "../../index";
-import { and, gte, lte, eq, sql, desc, inArray } from "drizzle-orm";import { 
+import { and, gte, lte, eq, sql, desc, inArray, asc } from "drizzle-orm";import { 
   logsTable, 
   ordersTable, 
   orderProductsTable, 
@@ -100,39 +100,60 @@ export async function generateMonthlyAudit(startDate: Date, endDate: Date) {
     ));
   // 4. Start and End Inventory (Reconstructed from logsTable)
   const inventorySnapshot = await db.transaction(async (tx) => {
-    const items = await tx.select().from(itemsTable);
-    
-    const snapshots = await Promise.all(items.map(async (item) => {
-      // Find quantity at the start of the range
-      const startLog = await tx.query.logsTable.findFirst({
+  const items = await tx.select().from(itemsTable);
+
+  const snapshots = await Promise.all(items.map(async (item) => {
+    const targetId = item.productId.toString();
+
+    // 1. Find the most recent log ON or BEFORE the startDate
+    const startLog = await tx.query.logsTable.findFirst({
+      where: and(
+        eq(logsTable.targetId, targetId),
+        eq(logsTable.columnName, 'product_quantity'),
+        lte(logsTable.logDate, startDate)
+      ),
+      orderBy: [desc(logsTable.logDate)]
+    });
+
+    let calculatedStartQty = 0;
+
+    if (startLog) {
+      // If we found a log before the start date, its 'newValue' was the state at that time
+      calculatedStartQty = parseInt(startLog.newValue || "0");
+    } else {
+      // FALLBACK: Find the FIRST ever log for this item to get the 'oldValue'
+      const firstEverLog = await tx.query.logsTable.findFirst({
         where: and(
-          eq(logsTable.targetId, item.productId.toString()),
-          eq(logsTable.columnName, 'product_quantity'),
-          lte(logsTable.logDate, startDate)
+          eq(logsTable.targetId, targetId),
+          eq(logsTable.columnName, 'product_quantity')
         ),
-        orderBy: [desc(logsTable.logDate)]
+        orderBy: [asc(logsTable.logDate)]
       });
+      
+      // If the first log happened AFTER our startDate, the startQty is the 'oldValue' of that first log
+      calculatedStartQty = firstEverLog ? parseInt(firstEverLog.prevValue || "0") : 0;
+    }
 
-      // Find quantity at the end of the range
-      const endLog = await tx.query.logsTable.findFirst({
-        where: and(
-          eq(logsTable.targetId, item.productId.toString()),
-          eq(logsTable.columnName, 'product_quantity'),
-          lte(logsTable.logDate, endDate)
-        ),
-        orderBy: [desc(logsTable.logDate)]
-      });
+    // 2. Find the most recent log ON or BEFORE the endDate
+    const endLog = await tx.query.logsTable.findFirst({
+      where: and(
+        eq(logsTable.targetId, targetId),
+        eq(logsTable.columnName, 'product_quantity'),
+        lte(logsTable.logDate, endDate)
+      ),
+      orderBy: [desc(logsTable.logDate)]
+    });
 
-      return {
-        productName: item.productName,
-        measurement: item.measurement,
-        startQty: startLog ? parseInt(startLog.newValue || "0") : 0,
-        endQty: endLog ? parseInt(endLog.newValue || "0") : item.productQuantity,
-      };
-    }));
+    return {
+      productName: item.productName,
+      measurement: item.measurement,
+      startQty: calculatedStartQty,
+      endQty: endLog ? parseInt(endLog.newValue || "0") : item.productQuantity,
+    };
+  }));
 
-    return snapshots;
-  });
+  return snapshots;
+});
 
   return {
     purchased: totalPurchased,
@@ -142,5 +163,3 @@ export async function generateMonthlyAudit(startDate: Date, endDate: Date) {
 
   };
 }
-
-

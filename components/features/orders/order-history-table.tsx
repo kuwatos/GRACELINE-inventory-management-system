@@ -93,7 +93,7 @@ export const OrderHistoryTable = ({
                     <div>Expected: {order.expectedDelivery}</div>
                     {(order.status === "Complete" || order.status === "Incomplete") && (
                       <div className={order.dateReceived && (new Date(order.dateReceived) <= new Date(order.expectedDelivery)) ? "text-green-600 group-hover:text-white transition-colors" : "text-red-400 group-hover:text-white transition-colors" }>
-                        Recieved: {order.dateReceived ?? "—"}
+                        Received: {order.dateReceived ?? "—"}
                       </div>
                     )}
                   </div>

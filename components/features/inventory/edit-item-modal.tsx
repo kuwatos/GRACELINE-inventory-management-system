@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { editItemSchema } from "@/lib/validations"; 
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Minus, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import {
@@ -59,6 +59,20 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
   const [openCombobox2, setOpenCombobox2] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Standardize names to Capital Case (e.g., "hardware" -> "Hardware")
+  const formattedCategories = Array.from(
+  new Map(
+    categories.map((cat) => {
+      const formattedName = 
+        cat.name.charAt(0).toUpperCase() + cat.name.slice(1).toLowerCase();
+      
+      // Using formattedName as the Map key automatically overwrites 
+      // identical names, leaving you with a unique list.
+      return [formattedName, { ...cat, name: formattedName }];
+    })
+  ).values()
+);
+
   const userDept = user?.department?.toLowerCase(); 
   const isWarehouse = userDept === "warehouse";
   const isPurchasing = userDept === "purchasing";
@@ -73,7 +87,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
       category4: item?.productCategory4 || "",
       category5: item?.productCategory5 || "",
       productDesc: item?.productDesc || "",
-      productQuantity: item?.productQuantity || 0,
+      productQuantity: 0,
       reorderLevel: item?.reorderLevel || 0,
       measurement: item?.measurement || "",
       reason: "Initial edit", 
@@ -82,19 +96,31 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
   });
   
   const watchReason = form.watch("reason");
+  // Track values to calculate the final result
+  const watchDeduction = Number(form.watch("productQuantity")) || 0;
+  const currentStock = item?.productQuantity || 0;
+  const resultingStock = currentStock - watchDeduction;
+
+  // The safeguard condition: 
+  // Prevent negative totals unless the reason is a manual 'correction'
+  const isInvalidDeduction = resultingStock < 0 && watchReason !== 'correction';
 
   async function onSubmit(data: z.input<typeof editItemSchema>) {
     setIsSubmitting(true);
     
     await executeAction(async () => {
-      if (!item) {
-        throw new Error("Missing item context. Please refresh and try again.");
-      } 
-      
+      if (!item) throw new Error("Missing item context.");
+
+      // 1. Validate the data first
       const validatedData = editItemSchema.parse(data);
-  
-      const res = await updateItemAction(item.productId,validatedData);
-  
+
+      // 2. LOGIC CHANGE: I-subtract ang input sa current quantity bago i-save
+      const finalQuantity = currentStock - validatedData.productQuantity;
+
+      const res = await updateItemAction(item.productId, {
+        ...validatedData,
+        productQuantity: finalQuantity, // Ito ang ise-save na final total sa DB
+      });
       if (!res.success) {
         throw res; 
       }
@@ -170,16 +196,26 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                           <CommandList>
                             <CommandEmpty>No matches. Type to create new.</CommandEmpty>
                             <CommandGroup>
-                              {categories.map((cat) => (
+                              {formattedCategories.map((cat) => (
                                 <CommandItem
                                   key={cat.name}
                                   value={cat.name}
                                   onSelect={() => {
+                                    // Set the value in the form
+                                    // If your Zod schema uses .toLowerCase(), it will convert this automatically
                                     form.setValue("category1", cat.name);
                                     setOpenCombobox(false);
                                   }}
                                 >
-                                  <Check className={cn("mr-2 h-4 w-4", cat.name === field.value ? "opacity-100" : "opacity-0")} />
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      // Case-insensitive check for the checkmark visibility
+                                      cat.name.toLowerCase() === field.value?.toLowerCase() 
+                                        ? "opacity-100" 
+                                        : "opacity-0"
+                                    )}
+                                  />
                                   {cat.name}
                                 </CommandItem>
                               ))}
@@ -277,96 +313,94 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
             {/* SECTION: STOCK & ADJUSTMENTS */}
             
             {!isPurchasing && (
-              <div className="bg-blue-50/30 p-6 rounded-2xl border border-blue-100 space-y-4">
-              <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wider">Inventory Adjustment</h3>
-              
-              <div className="grid grid-cols-3 gap-4">
-                {/* Current Quantity (Visual Only) */}
-                <div className="space-y-2">
-                  <FormLabel className="text-gray-500 text-xs">Current Stock</FormLabel>
-                  <Input 
-                    readOnly 
-                    value={(item.productQuantity?.toString() ?? "")}
-                    className="h-11 rounded-xl bg-gray-100 border-none text-gray-500 cursor-not-allowed" 
-                  />
-                </div>
+                <div className="bg-red-50/30 p-6 rounded-2xl border border-red-100 space-y-4">
+                  <h3 className="text-sm font-bold text-red-900 uppercase tracking-wider flex items-center gap-2">
+                    <Minus className="w-4 h-4" /> Stock Deduction
+                  </h3>
+                  {resultingStock < 0 && watchReason !== 'correction' && (
+                      <p className="text-[10px] text-red-600 font-bold">
+                        Cannot deduct more than current stock.
+                      </p>
+                    )}
+                  <div className="grid grid-cols-3 gap-4 items-end">
+                    {/* Current stock (ReadOnly) */}  
+                    <div className="space-y-2">
+                      <FormLabel className="text-gray-500 text-xs">Current Stock</FormLabel>
+                      <Input readOnly value={currentStock} className="h-11 rounded-xl bg-gray-100 border-none text-gray-500 cursor-not-allowed" />
+                    </div>
 
-                {/* New Quantity Input */}
-                <FormField control={form.control} name="productQuantity" render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="font-bold text-gray-700 text-xs">Adjusted Stock</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={(field.value as string) ?? ""} type="number" className="h-11 rounded-xl border-blue-200 focus-visible:ring-blue-500/30" placeholder="0" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                {/* Reorder Level */}
-                <FormField control={form.control} name="reorderLevel" render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="font-bold text-gray-700 text-xs">Reorder Level</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={(field.value as string) ?? ""} type="number" className="h-11 rounded-xl border-gray-200 focus-visible:ring-black/5" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
-
-              {/* NEW: Reason & Project Row */}
-              <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="reason" render={({ field }) => (
-                  <FormItem className={watchReason === "project" ? "col-span-1" : "col-span-2"}>
-                    <FormLabel className="font-bold text-gray-700 text-xs">Reason for Adjustment</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-11 rounded-xl bg-white border-gray-200 focus:ring-black/5">
-                          <SelectValue placeholder="Why is this changing?" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="project">Used for a Project</SelectItem>
-                        <SelectItem value="audit">Inventory Audit</SelectItem>
-                        <SelectItem value="damage">Damaged / Expired</SelectItem>
-                        <SelectItem value="manual restock">Manual Restock</SelectItem>
-                        <SelectItem value="correction">Typo Correction</SelectItem>
-                        <SelectItem value="returned">Returned to Supplier</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                {/* Project Dropdown - Only visible when reason is 'project' */}
-                {watchReason === "project" && (
-                  <FormField control={form.control} name="projectId" render={({ field }) => (
-                    <FormItem className="col-span-1 animate-in fade-in slide-in-from-left-2 duration-300">
-                      <FormLabel className="font-bold text-gray-700 text-xs">Target Project</FormLabel>
-                      <Select 
-                        onValueChange={(v) => field.onChange(Number(v))} 
-                        value={field.value?.toString()}
-                      >
+                    {/* Amount to subtract */}
+                    <FormField control={form.control} name="productQuantity" render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className="font-bold text-red-700 text-xs">Amount to Minus</FormLabel>
                         <FormControl>
-                          <SelectTrigger className="h-11 rounded-xl bg-white border-blue-200 focus:ring-blue-500/30">
-                            <SelectValue placeholder="Choose project..." />
-                          </SelectTrigger>
+                          <Input 
+                            {...field} 
+                            type="number" 
+                            min={0}
+                            value={(field.value as number | string) ?? ""}
+                            onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+                            className="h-11 rounded-xl border-red-200 focus-visible:ring-red-500/30" 
+                          />
                         </FormControl>
-                        <SelectContent>
-                          {projects.map((p) => (
-                            <SelectItem key={p.id} value={p.id.toString()}>
-                              {p.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    {/* Visual Preview */}
+                    <div className="space-y-2">
+                      <FormLabel className="text-gray-500 text-xs">Resulting Stock</FormLabel>
+                      <div className="h-11 rounded-xl bg-gray-100 text-white flex items-center justify-between px-4">
+                        <span className={cn("font-bold font-mono", resultingStock < 0 ? "text-red-400" : "text-green-400")}>
+                          {resultingStock}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <FormField control={form.control} name="reorderLevel" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-bold text-gray-700 text-xs">Reorder Level</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={(field.value as string) ?? ""} type="number" className="h-11 rounded-xl" />
+                      </FormControl>
                     </FormItem>
                   )} />
-                )}
-              </div>
-            </div>
-                        )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="reason" render={({ field }) => (
+                      <FormItem className={watchReason === "project" ? "col-span-1" : "col-span-2"}>
+                        <FormLabel className="font-bold text-gray-700 text-xs">Reason for Deduction</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl><SelectTrigger className="h-11 rounded-xl bg-white"><SelectValue /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            <SelectItem value="project">Used for a Project</SelectItem>
+                            <SelectItem value="audit">Inventory Audit</SelectItem>
+                            <SelectItem value="damage">Damaged / Expired</SelectItem>
+                            <SelectItem value="manual restock">Manual Restock</SelectItem>
+                            <SelectItem value="correction">Typo Correction</SelectItem>
+                            <SelectItem value="returned">Returned to Supplier</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )} />
+
+                    {watchReason === "project" && (
+                      <FormField control={form.control} name="projectId" render={({ field }) => (
+                        <FormItem className="col-span-1">
+                          <FormLabel className="font-bold text-gray-700 text-xs">Target Project</FormLabel>
+                          <Select onValueChange={(v) => field.onChange(Number(v))} value={field.value?.toString()}>
+                            <FormControl><SelectTrigger className="h-11 rounded-xl bg-white"><SelectValue /></SelectTrigger></FormControl>
+                            <SelectContent>
+                              {projects.map((p) => <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )} />
+                    )}
+                  </div>
+                </div>
+              )}
           </div>
 
           <DialogFooter className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-3">
@@ -375,7 +409,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
               </Button>
               <Button 
                 type="submit" 
-                disabled={isSubmitting} 
+                disabled={isSubmitting || isInvalidDeduction}
                 className="bg-[#0f172a] text-white px-10 h-11 rounded-xl font-bold shadow-lg shadow-black/10 hover:bg-[#0f172a]/90 transition-all active:scale-95 disabled:opacity-50"
               >
                 {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
