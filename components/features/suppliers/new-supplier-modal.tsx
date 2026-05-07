@@ -71,7 +71,7 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
               
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier Name</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     {/* 👇 Applied standard focus ring */}
                     <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
@@ -104,7 +104,7 @@ export const NewSupplierModal = ({ isOpen, onClose }: NewSupplierModalProps) => 
 
               <FormField control={form.control} name="supplierMobile" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Mobile Number</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Mobile Number <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     {/* 👇 Applied standard focus ring */}
                     <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />

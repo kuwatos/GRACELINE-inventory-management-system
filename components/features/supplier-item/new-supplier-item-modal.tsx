@@ -89,7 +89,7 @@ export const NewSupplierItemModal = ({
               {/* Supplier Selection */}
               <FormField control={form.control} name="supplierId" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier <span className="text-red-500">*</span></FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={""}>
                     <FormControl>
                       {/* 👇 Applied standard focus ring */}
@@ -112,7 +112,7 @@ export const NewSupplierItemModal = ({
               {/* Product Selection */}
               <FormField control={form.control} name="productId" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Product</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Product <span className="text-red-500">*</span></FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={""}>
                     <FormControl>
                       {/* 👇 Applied standard focus ring */}
@@ -135,7 +135,7 @@ export const NewSupplierItemModal = ({
               {/* Unit Price Input */}
               <FormField control={form.control} name="unitPrice" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Unit Price</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Unit Price <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₱</span>

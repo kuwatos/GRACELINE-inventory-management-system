@@ -84,7 +84,7 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
               
               <FormField control={form.control} name="department" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Department</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Department <span className="text-red-500">*</span></FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger className={cn("h-11! w-full rounded-xl border-gray-200 focus:ring-black/5", !field.value && "text-gray-400")}>
@@ -104,7 +104,7 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
 
               <FormField control={form.control} name="firstName" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">First Name</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">First Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input {...field} className="h-11! w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
@@ -114,7 +114,7 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
 
               <FormField control={form.control} name="lastName" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Last Name</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Last Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input {...field} className="h-11! w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
@@ -124,7 +124,7 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
 
               <FormField control={form.control} name="username" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Username</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Username <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="jdoe" className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
@@ -134,7 +134,7 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
 
               <FormField control={form.control} name="password" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Password</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Password <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input {...field} type={showPassword ? "text" : "password"} placeholder="Enter Password" className="h-11 w-full pr-10 rounded-xl border-gray-200 focus-visible:ring-black/5" />
@@ -149,7 +149,7 @@ export const NewUserModal = ({ isOpen, onClose }: NewUserModalProps) => {
 
               <FormField control={form.control} name="confirmPassword" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Confirm Password</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Confirm Password <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input {...field} type={showConfirmPassword ? "text" : "password"} placeholder="Re-enter Password" className="h-11 w-full pr-10 rounded-xl border-gray-200 focus-visible:ring-black/5" />

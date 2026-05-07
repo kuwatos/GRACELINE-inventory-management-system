@@ -210,7 +210,7 @@ export const EditOrderModal = ({ isOpen, onClose, order, supplierProducts, proje
                 {/* Products */}
                 <div className="space-y-4 pt-4 border-t border-gray-100">
                   <div className="flex items-center justify-between">
-                    <FormLabel className="text-lg font-bold text-gray-800 ml-1">Products</FormLabel>
+                    <FormLabel className="text-lg font-bold text-gray-800 ml-1">Products <span className="text-red-500">*</span></FormLabel>
                     <FormMessage className="text-xs text-red-500">
                       {form.formState.errors.products?.root?.message}
                     </FormMessage>

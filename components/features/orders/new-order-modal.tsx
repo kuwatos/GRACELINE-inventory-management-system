@@ -140,7 +140,7 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                 <div className="grid grid-cols-2 gap-5">
                   <FormField control={form.control} name="supplierId" render={({ field }) => (
                     <FormItem className="flex flex-col gap-2">
-                      <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier</FormLabel>
+                      <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier <span className="text-red-500">*</span></FormLabel>
                       <Select
                         onValueChange={(val) => {
                           const id = Number(val);
@@ -168,7 +168,7 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
 
                   <FormField control={form.control} name="deliveryDate" render={({ field }) => (
                     <FormItem className="flex flex-col gap-2 ">
-                      <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Expected Delivery</FormLabel>
+                      <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Expected Delivery <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         {/* 👇 Applied standard focus ring */}
                         <Input
@@ -212,7 +212,7 @@ export const NewOrderModal = ({ isOpen, onClose, suppliers, supplierProducts, pr
                 {/* Products */}
                 <div className="space-y-4 pt-4 border-t border-gray-100">
                   <div className="flex items-center justify-between">
-                    <FormLabel className="text-lg font-bold text-gray-800 ml-1">Products</FormLabel>
+                    <FormLabel className="text-lg font-bold text-gray-800 ml-1">Products <span className="text-red-500">*</span></FormLabel>
                     <FormMessage className="text-xs text-red-500">
                       {form.formState.errors.products?.root?.message}
                     </FormMessage>

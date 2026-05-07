@@ -99,7 +99,7 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
               
               <FormField control={form.control} name="department" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Department</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Department <span className="text-red-500">*</span></FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className={cn("h-11! w-full rounded-xl border-gray-200 focus:ring-black/5", !field.value && "text-gray-400")}>
@@ -119,7 +119,7 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
 
               <FormField control={form.control} name="firstName" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">First Name</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">First Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
@@ -129,7 +129,7 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
 
               <FormField control={form.control} name="lastName" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Last Name</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Last Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input {...field} className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
@@ -139,7 +139,7 @@ export const EditUserModal = ({ isOpen, onClose, user }: EditUserModalProps) => 
 
               <FormField control={form.control} name="username" render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Username</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Username <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="jdoe" className="h-11 w-full rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>

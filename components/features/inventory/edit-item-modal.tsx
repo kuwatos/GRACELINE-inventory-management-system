@@ -159,7 +159,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
             <div className="grid grid-cols-1 gap-4">
               <FormField control={form.control} name="productName" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-bold text-gray-700">Product Name</FormLabel>
+                  <FormLabel className="font-bold text-gray-700">Product Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Update product name..." className="h-11 rounded-xl border-gray-200 focus-visible:ring-black/5" />
                   </FormControl>
@@ -170,7 +170,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
 
             {/* SECTION: CATEGORIES */}
             <div className="space-y-3">
-              <FormLabel className="font-bold text-gray-700">Categorization</FormLabel>
+              <FormLabel className="font-bold text-gray-700">Categorization <span className="text-red-500">*</span></FormLabel>
               <div className="grid grid-cols-2 gap-3">
                 <FormField control={form.control} name="category1" render={({ field }) => (
                   <FormItem className="col-span-2 flex flex-col">
@@ -243,7 +243,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
             {/* Unit of Measurement Combobox */}
             <FormField control={form.control} name="measurement" render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel className="font-bold text-gray-700">Unit of Measurement</FormLabel>
+                <FormLabel className="font-bold text-gray-700">Unit of Measurement <span className="text-red-500">*</span></FormLabel>
                 <Popover open={openCombobox2} onOpenChange={setOpenCombobox2}>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -370,7 +370,7 @@ export const EditItemModal =  ({ isOpen, onClose, item, categories, measurements
                   <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="reason" render={({ field }) => (
                       <FormItem className={watchReason === "project" ? "col-span-1" : "col-span-2"}>
-                        <FormLabel className="font-bold text-gray-700 text-xs">Reason for Deduction</FormLabel>
+                        <FormLabel className="font-bold text-gray-700 text-xs">Reason for Deduction <span className="text-red-500">*</span></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl><SelectTrigger className="h-11 rounded-xl bg-white"><SelectValue /></SelectTrigger></FormControl>
                           <SelectContent>

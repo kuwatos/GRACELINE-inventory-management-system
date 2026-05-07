@@ -88,7 +88,7 @@ export function EditProjectModal({ isOpen, onClose, project, isViewOnly = false 
             <div className="p-8 space-y-6">
               <FormField control={form.control} name="projectName" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-semibold text-slate-700 ml-1">Project Name</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-slate-700 ml-1">Project Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input 
                       {...field} 

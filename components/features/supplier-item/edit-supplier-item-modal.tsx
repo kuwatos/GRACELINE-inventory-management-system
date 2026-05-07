@@ -114,7 +114,7 @@ export const EditSupplierItemModal = ({
             <div className="p-8 space-y-6">
               <FormField control={form.control} name="supplierId" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Assigned Supplier</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Assigned Supplier <span className="text-red-500">*</span></FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
                     value={field.value?.toString()} 
@@ -139,7 +139,7 @@ export const EditSupplierItemModal = ({
 
               <FormField control={form.control} name="unitPrice" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Negotiated Price</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Negotiated Price <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₱</span>

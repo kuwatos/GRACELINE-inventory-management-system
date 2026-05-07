@@ -111,7 +111,7 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
               {/* Supplier Name */}
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier Name</FormLabel>
+                  <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Supplier Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input {...field} disabled={isViewOnly} className="h-12 rounded-xl border-gray-200 focus-visible:ring-black/5 disabled:bg-gray-50 disabled:text-gray-900" />
                   </FormControl>
@@ -123,7 +123,7 @@ export const EditSupplierModal = ({ isOpen, onClose, supplier, isViewOnly = fals
               <div className="grid grid-cols-2 gap-6">
                 <FormField control={form.control} name="supplierMobile" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Mobile Number</FormLabel>
+                    <FormLabel className="text-sm font-semibold text-gray-700 ml-1">Mobile Number <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input {...field} disabled={isViewOnly} className="h-12 rounded-xl border-gray-200 focus-visible:ring-black/5 disabled:bg-gray-50 disabled:text-gray-900" />
                     </FormControl>

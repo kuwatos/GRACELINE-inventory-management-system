@@ -102,7 +102,7 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="productName" render={({ field }) => (
                   <FormItem className="col-span-2">
-                    <FormLabel className="font-bold text-gray-700">Product Name</FormLabel>
+                    <FormLabel className="font-bold text-gray-700">Product Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       {/* 👇 Applied to text input */}
                       <Input {...field} placeholder="e.g., Ultra-Slim Keyboard" className="h-11 rounded-xl border-gray-200 focus-visible:ring-black/5" />
@@ -113,7 +113,7 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
 
                 <FormField control={form.control} name="supplierId" render={({ field }) => (
                   <FormItem className="col-span-2">
-                    <FormLabel className="font-bold text-gray-700">Supplier</FormLabel>
+                    <FormLabel className="font-bold text-gray-700">Supplier <span className="text-red-500">*</span></FormLabel>
                     <Select onValueChange={(v) => field.onChange(Number(v))} value={field.value?.toString()}>
                       <FormControl>
                         {/* 👇 Kept the w-full fix here */}
@@ -132,7 +132,7 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
 
               {/* SECTION: CATEGORIES */}
               <div className="space-y-3">
-                <FormLabel className="font-bold text-gray-700">Categorization</FormLabel>
+                <FormLabel className="font-bold text-gray-700">Categorization <span className="text-red-500">*</span></FormLabel>
                 <div className="grid grid-cols-2 gap-3">
                   
                   {/* Category 1: Typable Combobox */}
@@ -209,7 +209,7 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
               {/* MEASUREMENT */}
               <FormField control={form.control} name="measurement" render={({ field }) => (
                 <FormItem className="col-span-2 flex flex-col">
-                  <FormLabel className="font-bold text-gray-700">Measurement</FormLabel>
+                  <FormLabel className="font-bold text-gray-700">Measurement <span className="text-red-500">*</span></FormLabel>
                   <Popover open={openCombobox2} onOpenChange={setOpenCombobox2}>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -268,7 +268,7 @@ export const NewItemModal = ({ isOpen, onClose, suppliers = [], categories = [],
 
                 <FormField control={form.control} name="unitPrice" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-gray-700">Unit Price</FormLabel>
+                    <FormLabel className="font-bold text-gray-700">Unit Price <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       {/* 👇 Applied to price input */}
                       <Input {...field} value={(field.value as string) ?? ""} placeholder="0.00" className="h-11 rounded-xl border-gray-200 focus-visible:ring-black/5" />

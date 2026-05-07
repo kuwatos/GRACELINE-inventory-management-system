@@ -69,7 +69,7 @@ export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
                 name="projectName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-semibold text-slate-700 ml-1">Project Name</FormLabel>
+                    <FormLabel className="text-sm font-semibold text-slate-700 ml-1">Project Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input 
                         {...field} 
