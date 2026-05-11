@@ -1,24 +1,25 @@
-import "dotenv/config"; // 👈 Add this at line 1
+import "dotenv/config"; 
 import { 
   createSupplier,
-} from "../entity/supplier/supplier.repository"; // Adjust path as needed
+} from "../entity/supplier/supplier.repository"; 
 import { createItem } from "../entity/item/item.repository";
 
 async function testOrderFlow() {
   console.log("📦 Starting Purchase Order Lifecycle Test...");
-  let testOrderId: number | null = null;
-
+  
   try {
     // --- STEP 1: CREATE ---
     console.log("\n1️⃣ Step: Creating new Purchase Order...");
-    const newOrder = await  createItem
-    ({
+    
+    const newOrder = await createItem({
       productName: "Test Product",
       productCategory1: "Test Category",
       productDesc: "This is a test product",
+      measurement: "Unit", // ✨ Added this to fix the Type Error
     });
+
+    console.log("✅ Created Item:", newOrder);
     return newOrder;
-    
 
   } catch (error) {
     console.error("\n❌ TEST FAILED!");
@@ -31,4 +32,4 @@ async function testOrderFlow() {
 
 testOrderFlow();
 
-// npx tsx src/test-scripts/test-create-supplier-item.ts
+// Run with: npx tsx src/test-scripts/test-create-supplier-item.ts
